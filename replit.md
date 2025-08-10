@@ -16,6 +16,13 @@ Preferred communication style: Simple, everyday language.
 - **Automatic user detection** - When entering a mobile number, the app checks if the user is registered and auto-fills their name
 - **Updated database schema** - Offers table now stores recipient phone/name directly instead of referencing contacts table
 - **Simplified UX** - Phone number entry comes first, followed by name field that auto-fills or allows manual entry
+- **Fixed authentication** - JWT tokens now properly included in all API requests for seamless user lookup
+
+### Enhanced Tenure and Repayment Options (August 2025)
+- **Added "Years" to tenure units** - Users can now specify loan tenure in days, weeks, months, or years
+- **Added repayment frequency selection** - For EMI and interest-only payments, users can choose weekly, monthly, or yearly frequency
+- **Smart conditional UI** - Repayment frequency selector only appears when EMI or interest-only repayment types are selected
+- **Improved form validation** - Fixed type coercion for amount, interest rate, and tenure value fields
 
 ## System Architecture
 

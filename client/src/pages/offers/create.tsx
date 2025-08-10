@@ -31,6 +31,7 @@ export default function CreateOffer() {
   const [interestType, setInterestType] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
   const [tenureUnit, setTenureUnit] = useState("");
+  const [repaymentFrequency, setRepaymentFrequency] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
 
 
@@ -139,6 +140,7 @@ export default function CreateOffer() {
       offerType: offerType as any,
       interestType: interestType as any,
       repaymentType: repaymentType as any,
+      repaymentFrequency: repaymentFrequency || null,
       tenureUnit: tenureUnit as any,
       allowPartPayment,
       dueDate,
@@ -397,9 +399,34 @@ export default function CreateOffer() {
                         <SelectItem value="days">📅 Days</SelectItem>
                         <SelectItem value="weeks">🗓️ Weeks</SelectItem>
                         <SelectItem value="months">📆 Months</SelectItem>
+                        <SelectItem value="years">🗓️ Years</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Repayment Frequency - Only show for EMI and Interest Only */}
+                  {(repaymentType === 'emi' || repaymentType === 'interest_only') && (
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium text-sm">
+                        {repaymentType === 'emi' ? 'EMI Frequency' : 'Interest Payment Frequency'}
+                      </Label>
+                      <Select value={repaymentFrequency} onValueChange={setRepaymentFrequency}>
+                        <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
+                          <SelectValue placeholder="Select payment frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">📅 Weekly</SelectItem>
+                          <SelectItem value="monthly">📆 Monthly</SelectItem>
+                          <SelectItem value="yearly">🗓️ Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {repaymentType === 'emi' 
+                          ? 'How often should EMI payments be made?' 
+                          : 'How often should interest payments be made?'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
