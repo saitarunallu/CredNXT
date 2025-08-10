@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertOfferSchema, type InsertOffer, type Contact } from "@shared/schema";
+import { insertOfferSchema, type InsertOffer } from "@shared/schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon } from "lucide-react";
 
 export default function CreateOffer() {
@@ -23,21 +23,15 @@ export default function CreateOffer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [selectedContact, setSelectedContact] = useState("");
-  const [contactInputMode, setContactInputMode] = useState<"select" | "manual">("select");
-  const [manualContactName, setManualContactName] = useState("");
-  const [manualContactPhone, setManualContactPhone] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
   const [tenureUnit, setTenureUnit] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
 
-  const { data: contactsData } = useQuery<{ contacts: Contact[] }>({
-    queryKey: ['/api/contacts'],
-  });
 
-  const contacts: Contact[] = contactsData?.contacts || [];
 
   const {
     register,
@@ -97,39 +91,26 @@ export default function CreateOffer() {
   const onSubmit = async (data: Omit<InsertOffer, 'fromUserId'>) => {
     const dueDate = calculateDueDate();
     
-    // Handle manual contact creation
-    if (contactInputMode === "manual" && manualContactName && manualContactPhone) {
-      try {
-        // First create the contact
-        const contactResponse = await apiRequest('POST', '/api/contacts', {
-          name: manualContactName,
-          phone: manualContactPhone
-        });
-        const contactData = await contactResponse.json();
-        
-        const formData = {
-          ...data,
-          toContactId: contactData.contact.id,
-          offerType: offerType as any,
-          interestType: interestType as any,
-          repaymentType: repaymentType as any,
-          tenureUnit: tenureUnit as any,
-          allowPartPayment,
-          dueDate,
-        };
-        
-        createOfferMutation.mutate(formData);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create contact. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
+    if (!contactName || !contactPhone) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide both contact name and phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // First create or find the contact
+      const contactResponse = await apiRequest('POST', '/api/contacts', {
+        name: contactName,
+        phone: contactPhone
+      });
+      const contactData = await contactResponse.json();
+      
       const formData = {
         ...data,
-        toContactId: selectedContact,
+        toContactId: contactData.contact.id,
         offerType: offerType as any,
         interestType: interestType as any,
         repaymentType: repaymentType as any,
@@ -139,6 +120,12 @@ export default function CreateOffer() {
       };
       
       createOfferMutation.mutate(formData);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create contact. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -202,101 +189,43 @@ export default function CreateOffer() {
                   <div className="space-y-3">
                     <Label className="text-gray-700 font-medium text-sm">Contact Information</Label>
                     
-                    {/* Toggle buttons for contact input mode */}
-                    <div className="flex space-x-2 mb-3">
-                      <Button
-                        type="button"
-                        variant={contactInputMode === "select" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setContactInputMode("select")}
-                        className="h-8 px-3 text-xs"
-                      >
-                        <ContactIcon className="w-3 h-3 mr-1" />
-                        Select from Contacts
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={contactInputMode === "manual" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setContactInputMode("manual")}
-                        className="h-8 px-3 text-xs"
-                      >
-                        <Phone className="w-3 h-3 mr-1" />
-                        Enter Manually
-                      </Button>
-                    </div>
-
-                    {contactInputMode === "select" ? (
-                      <Select value={selectedContact} onValueChange={setSelectedContact}>
-                        <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
-                          <SelectValue placeholder="Choose a contact from your list" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {contacts.length === 0 ? (
-                            <SelectItem value="no-contacts" disabled>
-                              <div className="text-gray-500 text-sm py-2">
-                                No contacts found. Add contacts first or enter manually.
-                              </div>
-                            </SelectItem>
-                          ) : (
-                            contacts.map((contact) => (
-                              <SelectItem key={contact.id} value={contact.id}>
-                                <div className="flex items-center">
-                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                    <User className="w-3 h-3 text-blue-600" />
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-sm">{contact.name}</div>
-                                    <div className="text-xs text-gray-500">{contact.phone}</div>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="h-4 w-4 text-gray-400" />
-                          </div>
-                          <Input
-                            type="text"
-                            value={manualContactName}
-                            onChange={(e) => setManualContactName(e.target.value)}
-                            placeholder="Enter contact name"
-                            className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
-                          />
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-4 w-4 text-gray-400" />
                         </div>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                          </div>
-                          <Input
-                            type="tel"
-                            value={manualContactPhone}
-                            onChange={(e) => setManualContactPhone(e.target.value)}
-                            placeholder="Enter phone number (e.g., +91XXXXXXXXXX)"
-                            className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
-                          />
-                        </div>
-                        {manualContactName && manualContactPhone && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div className="flex items-center text-blue-800">
-                              <Info className="w-4 h-4 mr-2" />
-                              <span className="text-sm font-medium">New Contact</span>
-                            </div>
-                            <div className="text-sm text-blue-700 mt-1">
-                              {manualContactName} - {manualContactPhone}
-                            </div>
-                            <div className="text-xs text-blue-600 mt-1">
-                              This contact will be added to your contact list
-                            </div>
-                          </div>
-                        )}
+                        <Input
+                          type="text"
+                          value={contactName}
+                          onChange={(e) => setContactName(e.target.value)}
+                          placeholder="Enter contact name"
+                          className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
+                        />
                       </div>
-                    )}
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <Input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={(e) => setContactPhone(e.target.value)}
+                          placeholder="Enter mobile number (e.g., +91XXXXXXXXXX)"
+                          className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
+                        />
+                      </div>
+                      {contactName && contactPhone && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="flex items-center text-blue-800">
+                            <ContactIcon className="w-4 h-4 mr-2" />
+                            <span className="text-sm font-medium">Contact Preview</span>
+                          </div>
+                          <div className="text-sm text-blue-700 mt-1">
+                            {contactName} - {contactPhone}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -523,10 +452,7 @@ export default function CreateOffer() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createOfferMutation.isPending || 
-                    (contactInputMode === "select" && !selectedContact) || 
-                    (contactInputMode === "manual" && (!manualContactName || !manualContactPhone)) || 
-                    !offerType}
+                  disabled={createOfferMutation.isPending || !contactName || !contactPhone || !offerType}
                   className="h-10 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                 >
                   {createOfferMutation.isPending ? (
