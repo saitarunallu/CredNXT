@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 
 export default function InvestorSection() {
@@ -62,23 +61,20 @@ export default function InvestorSection() {
           <div className="bg-glass rounded-xl p-8 shadow-glow">
             <h3 className="text-xl font-semibold mb-4">Investment Opportunities</h3>
             <div className="space-y-4">
-              <Button 
-                className="w-full bg-white text-navy-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              <button 
+                className="btn-white-solid w-full"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 data-testid="button-download-pitch"
-                style={{ color: '#1e293b' }}
               >
                 Download Pitch Deck
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-navy-700 transition-colors"
+              </button>
+              <button 
+                className="btn-outline-white w-full"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 data-testid="button-schedule-meeting"
-                style={{ color: '#ffffff', borderColor: '#ffffff' }}
               >
                 Schedule Meeting
-              </Button>
+              </button>
               <p className="text-sm text-blue-200 text-center">
                 Contact: partnerships@crednxt.com
               </p>

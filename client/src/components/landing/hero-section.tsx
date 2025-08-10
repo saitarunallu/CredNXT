@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
   return (
@@ -16,23 +15,20 @@ export default function HeroSection() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/login">
-                <Button 
-                  className="bg-white text-navy-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl shadow-glow" 
+                <button 
+                  className="btn-white-solid shadow-xl shadow-glow" 
                   data-testid="button-start-lending"
-                  style={{ color: '#1e293b' }}
                 >
                   Start Lending Today
-                </Button>
+                </button>
               </Link>
-              <Button 
-                variant="outline" 
-                className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-navy-700 transition-all"
+              <button 
+                className="btn-outline-white"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 data-testid="button-request-demo"
-                style={{ color: '#ffffff', borderColor: '#ffffff' }}
               >
                 Request Demo
-              </Button>
+              </button>
             </div>
             
             <div className="mt-12 grid grid-cols-3 gap-8 text-center">
