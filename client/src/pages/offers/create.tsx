@@ -52,8 +52,13 @@ export default function CreateOffer() {
 
   const handlePhoneChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const phoneNumber = e.target.value;
+    setContactPhone(phoneNumber);
     
-    // Check if user is trying to enter their own phone number
+    // Clear previous state
+    setIsContactFound(false);
+    setContactName("");
+    
+    // Check if user entered their own phone number (after they finish typing)
     if (currentUser?.phone && phoneNumber === currentUser.phone) {
       toast({
         title: "Invalid Phone Number",
@@ -62,12 +67,6 @@ export default function CreateOffer() {
       });
       return;
     }
-    
-    setContactPhone(phoneNumber);
-    
-    // Clear previous state
-    setIsContactFound(false);
-    setContactName("");
     
     // Only check if phone number looks complete (at least 10 digits)
     if (phoneNumber.length >= 10) {
