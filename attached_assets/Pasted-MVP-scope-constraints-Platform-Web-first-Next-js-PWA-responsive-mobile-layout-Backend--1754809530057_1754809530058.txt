@@ -1,0 +1,76 @@
+MVP scope & constraints
+	•	Platform: Web-first (Next.js PWA) — responsive mobile layout.
+	•	Backend: Node.js + TypeScript using NestJS framework.
+	•	Database: PostgreSQL.
+	•	Job Queue: Redis + BullMQ for reminders/notifications.
+	•	Auth: OTP-based login with phone number (Twilio Verify or mock for dev).
+	•	Storage: S3-compatible (MinIO for local dev, AWS S3 for prod).
+	•	Notifications: Email via SendGrid, SMS via Twilio.
+	•	Deployable via Docker + docker-compose (local dev), ready for cloud deployment.
+
+⸻
+
+Functional requirements
+
+Implement the following core features:
+
+1. Authentication
+	•	Phone number OTP login.
+	•	JWT sessions.
+	•	Simple user profile (name, phone, optional email).
+
+2. Contacts (“Known Circle”)
+	•	Add contact manually (name, phone, optional email).
+	•	Bulk upload CSV contacts.
+	•	Store contacts in user’s private contact list.
+	•	Verify contact: mark as verified if they sign up.
+	•	Prevent sending offers to unverified contacts without an invite link.
+
+3. Offer Creation
+
+Form fields:
+	•	offer_type (lend/borrow)
+	•	name (prefilled if contact exists)
+	•	mobile
+	•	amount (decimal)
+	•	interest_rate
+	•	interest_type (fixed/reducing)
+	•	tenure_value + tenure_unit (days/weeks/months)
+	•	repayment_type (emi/interest_only/full_payment)
+	•	allow_part_payment (boolean)
+	•	purpose
+	•	due_date (or computed from tenure)
+	•	note
+
+Rules:
+	•	Validate input (amount > 0, date >= today).
+	•	Save to offers table, linked to contact.
+	•	Status defaults to pending.
+
+4. Offer Workflow
+	•	Send offer via in-app notification + email/SMS invite (for unregistered users).
+	•	Receiver can accept, decline, or negotiate.
+	•	On accept: status → accepted, display payment instructions.
+	•	Track offer in both parties’ dashboards.
+
+5. Payments & Tracking
+	•	Record payments (amount, payment_mode, ref_string).
+	•	Support partial payments if allowed.
+	•	Update status: payment_pending → partial_paid → paid/completed.
+	•	Compute outstanding balance.
+
+6. Dashboard
+	•	Loans given & loans taken.
+	•	Filter by status.
+	•	Upcoming due offers.
+	•	Outstanding balances.
+
+7. Reminders
+	•	Background worker sends repayment reminders:
+	•	T-7 days, T-3 days, T-1 day, due-date, and post-due (T+3, T+7).
+	•	Email/SMS + in-app notifications.
+
+8. Digital Proof
+	•	Generate PDF contract from HTML template.
+	•	Store in S3 (MinIO locally).
+	•	Download link in dashboard.
