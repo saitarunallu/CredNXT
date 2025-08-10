@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
 import { loginSchema, type LoginRequest } from "@shared/schema";
-import { Shield } from "lucide-react";
+import { Shield, IndianRupee } from "lucide-react";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -52,8 +52,9 @@ export default function Login() {
         <Card className="bg-glass border-0 shadow-2xl shadow-glow">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
                 <Shield className="w-10 h-10 text-white" />
+                <IndianRupee className="w-5 h-5 text-white absolute" />
               </div>
             </div>
             <CardTitle className="text-3xl font-bold text-white mb-2">Welcome to CredNXT</CardTitle>

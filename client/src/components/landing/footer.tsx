@@ -1,4 +1,4 @@
-import { Shield } from "lucide-react";
+import { Shield, IndianRupee } from "lucide-react";
 
 export default function Footer() {
   const productLinks = [
@@ -32,8 +32,9 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-navy rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-navy rounded-lg flex items-center justify-center relative">
                 <Shield className="w-6 h-6 text-white" />
+                <IndianRupee className="w-3 h-3 text-white absolute" />
               </div>
               <span className="text-xl font-bold">CredNXT</span>
             </div>
