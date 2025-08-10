@@ -11,7 +11,7 @@ import CompleteProfile from "@/pages/auth/complete-profile";
 import Dashboard from "@/pages/dashboard";
 import Contacts from "@/pages/contacts";
 import OffersPage from "@/pages/offers";
-import CreateOffer from "@/pages/offers/create";
+import CreateOffer from "@/pages/offers/create-simple";
 import ViewOffer from "@/pages/offers/view";
 import Analytics from "@/pages/analytics";
 import Profile from "@/pages/profile";
