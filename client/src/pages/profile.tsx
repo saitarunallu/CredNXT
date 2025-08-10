@@ -1,0 +1,191 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import Navbar from "@/components/layout/navbar";
+import BottomNav from "@/components/layout/bottom-nav";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authService } from "@/lib/auth";
+import { User, Phone, Mail, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
+
+export default function Profile() {
+  const [, setLocation] = useLocation();
+  const user = authService.getUser();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleLogout = () => {
+    authService.logout();
+    setLocation('/');
+  };
+
+  if (!user) {
+    setLocation('/');
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <Navbar />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
+          <p className="text-gray-600">Manage your account and preferences</p>
+        </div>
+
+        {/* Profile Card */}
+        <Card className="bg-white border-0 shadow-sm mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Personal Information</h2>
+                <p className="text-sm text-gray-500">Update your personal details</p>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input 
+                  id="name" 
+                  value={user.name || ''} 
+                  disabled={!isEditing}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input 
+                  id="phone" 
+                  value={user.phone} 
+                  disabled
+                  className="mt-1 bg-gray-50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input 
+                  id="email" 
+                  value={user.email || ''} 
+                  disabled={!isEditing}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              {isEditing ? (
+                <div className="space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setIsEditing(false)}>
+                    Save Changes
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => setIsEditing(true)}>
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Settings */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <Card className="bg-white border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <span>Security</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Two-Factor Authentication</span>
+                  <span className="text-sm font-medium text-green-600">Enabled</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Phone Verification</span>
+                  <span className="text-sm font-medium text-green-600">Verified</span>
+                </div>
+                <Button variant="outline" size="sm" className="w-full mt-4">
+                  Manage Security
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Bell className="w-5 h-5 text-blue-600" />
+                <span>Notifications</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Payment Reminders</span>
+                  <span className="text-sm font-medium text-green-600">On</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">New Offers</span>
+                  <span className="text-sm font-medium text-green-600">On</span>
+                </div>
+                <Button variant="outline" size="sm" className="w-full mt-4">
+                  Manage Notifications
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Support & Help */}
+        <Card className="bg-white border-0 shadow-sm mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <HelpCircle className="w-5 h-5 text-purple-600" />
+              <span>Support & Help</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="h-auto py-4 flex-col">
+                <span className="font-medium">Help Center</span>
+                <span className="text-sm text-gray-500">FAQs & Guides</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col">
+                <span className="font-medium">Contact Support</span>
+                <span className="text-sm text-gray-500">Get Help</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Logout */}
+        <Card className="bg-white border-0 shadow-sm">
+          <CardContent className="p-6">
+            <Button 
+              variant="destructive" 
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center space-x-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <BottomNav />
+    </div>
+  );
+}

@@ -10,8 +10,11 @@ import VerifyOtp from "@/pages/auth/verify-otp";
 import CompleteProfile from "@/pages/auth/complete-profile";
 import Dashboard from "@/pages/dashboard";
 import Contacts from "@/pages/contacts";
+import OffersPage from "@/pages/offers";
 import CreateOffer from "@/pages/offers/create";
 import ViewOffer from "@/pages/offers/view";
+import Analytics from "@/pages/analytics";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,18 +38,26 @@ function Router() {
         </AuthGuard>
       </Route>
       
-      <Route path="/offers/create">
+      <Route path="/offers" nest>
         <AuthGuard>
-          <CreateOffer />
+          <Route path="/" component={OffersPage} />
+          <Route path="/create" component={CreateOffer} />
+          <Route path="/:id">
+            {(params) => <ViewOffer offerId={params.id} />}
+          </Route>
         </AuthGuard>
       </Route>
       
-      <Route path="/offers/:id">
-        {(params) => (
-          <AuthGuard>
-            <ViewOffer offerId={params.id} />
-          </AuthGuard>
-        )}
+      <Route path="/analytics">
+        <AuthGuard>
+          <Analytics />
+        </AuthGuard>
+      </Route>
+      
+      <Route path="/profile">
+        <AuthGuard>
+          <Profile />
+        </AuthGuard>
       </Route>
       
       {/* Fallback to 404 */}

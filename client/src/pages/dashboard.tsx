@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/layout/navbar";
+import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,7 @@ export default function Dashboard() {
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Navbar />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -291,6 +292,8 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+      
+      <BottomNav />
     </div>
   );
 }
