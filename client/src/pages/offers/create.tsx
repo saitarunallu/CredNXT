@@ -630,10 +630,32 @@ export default function CreateOffer() {
                 >
                   Cancel
                 </Button>
+                
+                {/* Debug info */}
+                {(!contactName || !contactPhone || !offerType) && (
+                  <div className="text-xs text-red-500 mb-2">
+                    Button disabled because: 
+                    {!contactName && " Missing contact name"}
+                    {!contactPhone && " Missing contact phone"}
+                    {!offerType && " Missing offer type"}
+                  </div>
+                )}
+                
                 <Button
                   type="submit"
                   disabled={createOfferMutation.isPending || !contactName || !contactPhone || !offerType}
                   className="h-10 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  onClick={() => {
+                    console.log('Button clicked. Current state:', {
+                      contactName,
+                      contactPhone,
+                      offerType,
+                      interestType,
+                      repaymentType,
+                      tenureUnit,
+                      formData: watch()
+                    });
+                  }}
                 >
                   {createOfferMutation.isPending ? (
                     <div className="flex items-center space-x-2">
