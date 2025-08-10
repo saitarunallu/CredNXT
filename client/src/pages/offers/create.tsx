@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { authService } from "@/lib/auth";
 import { insertOfferSchema, type InsertOffer } from "@shared/schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
 
@@ -23,6 +24,7 @@ export default function CreateOffer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const currentUser = authService.getUser();
   const [contactPhone, setContactPhone] = useState("");
   const [contactName, setContactName] = useState("");
   const [isContactFound, setIsContactFound] = useState(false);
@@ -50,6 +52,17 @@ export default function CreateOffer() {
 
   const handlePhoneChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const phoneNumber = e.target.value;
+    
+    // Check if user is trying to enter their own phone number
+    if (currentUser?.phone && phoneNumber === currentUser.phone) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "You cannot create an offer to yourself. Please enter a different phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setContactPhone(phoneNumber);
     
     // Clear previous state
@@ -122,8 +135,9 @@ export default function CreateOffer() {
   };
 
   const onSubmit = async (data: Omit<InsertOffer, 'fromUserId'>) => {
-    const dueDate = calculateDueDate();
+    console.log('Form submit triggered with data:', data);
     
+    // Validate required fields
     if (!contactName || !contactPhone) {
       toast({
         title: "Missing Information",
@@ -132,6 +146,54 @@ export default function CreateOffer() {
       });
       return;
     }
+
+    if (!offerType) {
+      toast({
+        title: "Missing Information",
+        description: "Please select offer type (lend or borrow).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!interestType) {
+      toast({
+        title: "Missing Information", 
+        description: "Please select interest type.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!repaymentType) {
+      toast({
+        title: "Missing Information",
+        description: "Please select repayment type.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!tenureUnit) {
+      toast({
+        title: "Missing Information",
+        description: "Please select tenure unit.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Double-check self-phone validation
+    if (currentUser?.phone && contactPhone === currentUser.phone) {
+      toast({
+        title: "Invalid Recipient",
+        description: "You cannot create an offer to yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const dueDate = calculateDueDate();
     
     const formData = {
       ...data,
@@ -146,6 +208,7 @@ export default function CreateOffer() {
       dueDate,
     };
     
+    console.log('Submitting offer with data:', formData);
     createOfferMutation.mutate(formData);
   };
 
