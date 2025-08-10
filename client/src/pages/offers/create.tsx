@@ -23,8 +23,10 @@ export default function CreateOffer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [isContactFound, setIsContactFound] = useState(false);
+  const [isCheckingContact, setIsCheckingContact] = useState(false);
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
@@ -44,6 +46,36 @@ export default function CreateOffer() {
   });
 
   const tenureValue = watch('tenureValue');
+
+  const handlePhoneChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const phoneNumber = e.target.value;
+    setContactPhone(phoneNumber);
+    
+    // Clear previous state
+    setIsContactFound(false);
+    setContactName("");
+    
+    // Only check if phone number looks complete (at least 10 digits)
+    if (phoneNumber.length >= 10) {
+      setIsCheckingContact(true);
+      
+      try {
+        // Check if contact exists
+        const response = await apiRequest('GET', `/api/contacts/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
+        const data = await response.json();
+        
+        if (data.exists && data.contact) {
+          setContactName(data.contact.name);
+          setIsContactFound(true);
+        }
+      } catch (error) {
+        // Contact doesn't exist or error occurred - user can enter manually
+        console.log('Contact not found or error checking:', error);
+      } finally {
+        setIsCheckingContact(false);
+      }
+    }
+  };
 
   const createOfferMutation = useMutation({
     mutationFn: async (data: Omit<InsertOffer, 'fromUserId'>) => {
@@ -101,16 +133,26 @@ export default function CreateOffer() {
     }
     
     try {
-      // First create or find the contact
-      const contactResponse = await apiRequest('POST', '/api/contacts', {
-        name: contactName,
-        phone: contactPhone
-      });
-      const contactData = await contactResponse.json();
+      let contactId;
+      
+      if (isContactFound) {
+        // Contact already exists, find the ID
+        const checkResponse = await apiRequest('GET', `/api/contacts/check-phone?phone=${encodeURIComponent(contactPhone)}`);
+        const checkData = await checkResponse.json();
+        contactId = checkData.contact.id;
+      } else {
+        // Create new contact
+        const contactResponse = await apiRequest('POST', '/api/contacts', {
+          name: contactName,
+          phone: contactPhone
+        });
+        const contactData = await contactResponse.json();
+        contactId = contactData.contact.id;
+      }
       
       const formData = {
         ...data,
-        toContactId: contactData.contact.id,
+        toContactId: contactId,
         offerType: offerType as any,
         interestType: interestType as any,
         repaymentType: repaymentType as any,
@@ -192,37 +234,59 @@ export default function CreateOffer() {
                     <div className="space-y-3">
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <Input
+                          type="tel"
+                          value={contactPhone}
+                          onChange={handlePhoneChange}
+                          placeholder="Enter mobile number (e.g., +91XXXXXXXXXX)"
+                          className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
+                        />
+                        {isCheckingContact && (
+                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <User className="h-4 w-4 text-gray-400" />
                         </div>
                         <Input
                           type="text"
                           value={contactName}
                           onChange={(e) => setContactName(e.target.value)}
-                          placeholder="Enter contact name"
-                          className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
+                          placeholder={isContactFound ? "Name found from contacts" : "Enter contact name"}
+                          disabled={isContactFound}
+                          className={`pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base ${isContactFound ? 'bg-green-50 border-green-200' : ''}`}
                         />
-                      </div>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <Input
-                          type="tel"
-                          value={contactPhone}
-                          onChange={(e) => setContactPhone(e.target.value)}
-                          placeholder="Enter mobile number (e.g., +91XXXXXXXXXX)"
-                          className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
-                        />
-                      </div>
-                      {contactName && contactPhone && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                          <div className="flex items-center text-blue-800">
-                            <ContactIcon className="w-4 h-4 mr-2" />
-                            <span className="text-sm font-medium">Contact Preview</span>
+                        {isContactFound && (
+                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            </div>
                           </div>
-                          <div className="text-sm text-blue-700 mt-1">
+                        )}
+                      </div>
+                      
+                      {contactName && contactPhone && (
+                        <div className={`border rounded-lg p-3 ${isContactFound ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+                          <div className={`flex items-center ${isContactFound ? 'text-green-800' : 'text-blue-800'}`}>
+                            <ContactIcon className="w-4 h-4 mr-2" />
+                            <span className="text-sm font-medium">
+                              {isContactFound ? 'Existing Contact' : 'New Contact'}
+                            </span>
+                          </div>
+                          <div className={`text-sm mt-1 ${isContactFound ? 'text-green-700' : 'text-blue-700'}`}>
                             {contactName} - {contactPhone}
                           </div>
+                          {!isContactFound && (
+                            <div className="text-xs text-blue-600 mt-1">
+                              This contact will be added to your contact list
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -150,6 +150,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/contacts/check-phone', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { phone } = req.query;
+      
+      if (!phone || typeof phone !== 'string') {
+        return res.status(400).json({ message: 'Phone number is required' });
+      }
+      
+      const contact = await storage.findContactByPhone(req.userId!, phone);
+      
+      if (contact) {
+        res.json({ exists: true, contact });
+      } else {
+        res.json({ exists: false });
+      }
+    } catch (error) {
+      console.error('Check phone error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   app.post('/api/contacts', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const contactData = insertContactSchema.parse({
