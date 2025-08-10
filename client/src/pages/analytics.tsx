@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, DollarSign, Users, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, IndianRupee, Users, Calendar } from "lucide-react";
 
 export default function Analytics() {
   const { data: statsData } = useQuery({
@@ -48,7 +48,7 @@ export default function Analytics() {
                     ₹{(stats.totalLent + stats.totalBorrowed).toLocaleString()}
                   </p>
                 </div>
-                <DollarSign className="h-8 w-8 text-blue-600" />
+                <IndianRupee className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
