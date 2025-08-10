@@ -48,58 +48,63 @@ export default function CompleteProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <Card className="bg-glass-strong border-0 shadow-card-hover shadow-glow animate-scale-in">
-          <CardHeader className="text-center pb-8">
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
-                <Shield className="w-10 h-10 text-white" />
-                <IndianRupee className="w-5 h-5 text-white absolute" />
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-purple-600/20"></div>
+      <div className="w-full max-w-md relative z-10">
+        <Card className="bg-white border-0 shadow-2xl animate-scale-in rounded-3xl overflow-hidden">
+          <CardHeader className="text-center pb-6 pt-10 px-8">
+            <div className="flex items-center justify-center mb-8 space-x-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-xl relative">
+                <Shield className="w-8 h-8 text-white" />
+                <IndianRupee className="w-4 h-4 text-white absolute" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-2xl font-bold text-gray-900">CredNXT</h1>
+                <p className="text-sm text-gray-500">Secure Lending</p>
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-white mb-2">Complete Your Profile</CardTitle>
-            <p className="text-blue-100 text-lg">Tell us a bit about yourself to get started with CredNXT</p>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Complete Your Profile</CardTitle>
+            <p className="text-gray-600 text-base leading-relaxed px-4">Tell us a bit about yourself to get started</p>
           </CardHeader>
         
-          <CardContent className="px-8 pb-8">
+          <CardContent className="px-8 pb-10">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-white font-medium">Full Name</Label>
+              <div className="space-y-3">
+                <Label htmlFor="name" className="text-gray-700 font-semibold text-sm">Full Name</Label>
                 <Input
                   id="name"
                   {...register("name")}
                   placeholder="Enter your full name"
-                  className="bg-glass-strong border-white/30 text-white placeholder:text-blue-200 focus:bg-glass-strong focus:border-white/50 transition-all duration-300 h-12 text-lg rounded-input"
+                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
                 />
                 {errors.name && (
-                  <p className="text-sm text-red-300 mt-1">{errors.name.message}</p>
+                  <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
                 )}
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white font-medium">Email Address (Optional)</Label>
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email Address (Optional)</Label>
                 <Input
                   id="email"
                   type="email"
                   {...register("email")}
                   placeholder="your@email.com"
-                  className="bg-glass-strong border-white/30 text-white placeholder:text-blue-200 focus:bg-glass-strong focus:border-white/50 transition-all duration-300 h-12 text-lg rounded-input"
+                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-300 mt-1">{errors.email.message}</p>
+                  <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
                 )}
               </div>
               
               <Button 
                 type="submit" 
                 size="lg"
-                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-card hover:shadow-card-hover mt-8"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl mt-8 h-14 text-base border-0 rounded-xl transition-all duration-300"
                 disabled={profileMutation.isPending}
               >
                 {profileMutation.isPending ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Completing...</span>
                   </div>
                 ) : (
@@ -108,9 +113,10 @@ export default function CompleteProfile() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-blue-100 leading-relaxed">
-                🔒 Your information is secure and encrypted. We use bank-level security to protect your data.
+            <div className="mt-8 text-center px-4">
+              <p className="text-sm text-gray-500 leading-relaxed flex items-center justify-center space-x-2">
+                <span>🔒</span>
+                <span>Your information is secure and encrypted. We use bank-level security to protect your data.</span>
               </p>
             </div>
           </CardContent>
