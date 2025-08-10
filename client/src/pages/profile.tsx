@@ -6,13 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { authService } from "@/lib/auth";
-import { User, Phone, Mail, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
+import { useTheme } from "@/contexts/theme-context";
+import { User, Phone, Mail, LogOut, Shield, Bell, HelpCircle, Sun, Moon, Monitor } from "lucide-react";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
   const user = authService.getUser();
   const [isEditing, setIsEditing] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     authService.logout();
@@ -25,26 +28,26 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
       <Navbar />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile</h1>
-          <p className="text-gray-600">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
         </div>
 
         {/* Profile Card */}
-        <Card className="bg-white border-0 shadow-sm mb-6">
+        <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">Personal Information</h2>
-                <p className="text-sm text-gray-500">Update your personal details</p>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Personal Information</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Update your personal details</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -97,24 +100,77 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Theme Settings Card */}
+        <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                <Monitor className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Choose your preferred theme</p>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="theme">Theme</Label>
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">
+                      <div className="flex items-center space-x-2">
+                        <Sun className="w-4 h-4" />
+                        <span>Light</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="dark">
+                      <div className="flex items-center space-x-2">
+                        <Moon className="w-4 h-4" />
+                        <span>Dark</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="system">
+                      <div className="flex items-center space-x-2">
+                        <Monitor className="w-4 h-4" />
+                        <span>System Default</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  {theme === 'system' 
+                    ? 'Theme will match your device settings'
+                    : `Using ${theme} theme`
+                  }
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Settings */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white border-0 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-green-600" />
-                <span>Security</span>
+                <Shield className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <span className="text-gray-900 dark:text-gray-100">Security</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Two-Factor Authentication</span>
-                  <span className="text-sm font-medium text-green-600">Enabled</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Two-Factor Authentication</span>
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Enabled</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Phone Verification</span>
-                  <span className="text-sm font-medium text-green-600">Verified</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Phone Verification</span>
+                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Verified</span>
                 </div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   Manage Security
@@ -123,7 +179,7 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border-0 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Bell className="w-5 h-5 text-blue-600" />
