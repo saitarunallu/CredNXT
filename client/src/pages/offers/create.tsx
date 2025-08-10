@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertOfferSchema, type InsertOffer } from "@shared/schema";
-import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon } from "lucide-react";
+import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
 
 export default function CreateOffer() {
   const [, setLocation] = useLocation();
@@ -140,7 +140,7 @@ export default function CreateOffer() {
       offerType: offerType as any,
       interestType: interestType as any,
       repaymentType: repaymentType as any,
-      repaymentFrequency: repaymentFrequency || null,
+      repaymentFrequency: (repaymentFrequency as any) || null,
       tenureUnit: tenureUnit as any,
       allowPartPayment,
       dueDate,
@@ -482,27 +482,73 @@ export default function CreateOffer() {
                 </div>
               </div>
 
-              {/* Due Date Preview */}
-              {tenureValue && tenureUnit && (
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                      <Calendar className="w-4 h-4 text-white" />
+              {/* Loan Summary */}
+              {(watch('amount') || watch('interestRate') || watch('tenureValue')) && (
+                <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
+                  <div className="flex items-center mb-3">
+                    <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                      <DollarSign className="w-4 h-4 text-white" />
                     </div>
-                    <h4 className="text-sm font-semibold text-blue-900">Due Date Preview</h4>
+                    <h4 className="text-sm font-semibold text-green-900">Loan Summary</h4>
                   </div>
-                  <div className="bg-white rounded-lg p-3 border border-blue-200">
-                    <p className="text-blue-800 font-medium text-sm">
-                      📅 This offer will be due on: <span className="font-bold">{calculateDueDate().toLocaleDateString('en-IN', { 
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}</span>
-                    </p>
-                    <p className="text-blue-600 text-xs mt-1">
-                      Duration: {tenureValue} {tenureUnit}
-                    </p>
+                  <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      {watch('amount') && (
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 font-medium">Principal Amount</p>
+                          <p className="text-lg font-bold text-gray-900">₹{watch('amount')}</p>
+                        </div>
+                      )}
+                      {watch('interestRate') && (
+                        <div className="text-center p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 font-medium">Interest Rate</p>
+                          <p className="text-lg font-bold text-gray-900">{watch('interestRate')}%</p>
+                          {interestType && <p className="text-xs text-green-600 mt-1">{interestType === 'fixed' ? 'Fixed' : 'Reducing'}</p>}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {watch('tenureValue') && tenureUnit && (
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 font-medium">Loan Duration</p>
+                        <p className="text-lg font-bold text-gray-900">{watch('tenureValue')} {tenureUnit}</p>
+                        <p className="text-xs text-green-600 mt-1">
+                          Due: {calculateDueDate().toLocaleDateString('en-IN', { 
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+
+                    {repaymentType && (
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 font-medium">Repayment Method</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {repaymentType === 'emi' ? 'EMI Payments' : 
+                           repaymentType === 'interest_only' ? 'Interest Only' : 
+                           'Full Payment at End'}
+                        </p>
+                        {repaymentFrequency && (repaymentType === 'emi' || repaymentType === 'interest_only') && (
+                          <p className="text-xs text-green-600 mt-1">
+                            {repaymentFrequency.charAt(0).toUpperCase() + repaymentFrequency.slice(1)} payments
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {contactName && (
+                      <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-500 font-medium">
+                          {offerType === 'lend' ? 'Lending to' : 'Borrowing from'}
+                        </p>
+                        <p className="text-sm font-semibold text-blue-900">{contactName}</p>
+                        {contactPhone && (
+                          <p className="text-xs text-blue-600 mt-1">{contactPhone}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
