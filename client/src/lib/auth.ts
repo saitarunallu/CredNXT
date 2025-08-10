@@ -1,0 +1,103 @@
+import { apiRequest } from "./queryClient";
+import type { LoginRequest, VerifyOtpRequest, CompleteProfileRequest, User } from "@shared/schema";
+
+class AuthService {
+  private token: string | null = null;
+  private user: User | null = null;
+
+  constructor() {
+    // Initialize from localStorage
+    this.token = localStorage.getItem('auth_token');
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        this.user = JSON.parse(userData);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        this.logout();
+      }
+    }
+  }
+
+  async login(data: LoginRequest) {
+    const response = await apiRequest('POST', '/api/auth/login', data);
+    return response.json();
+  }
+
+  async verifyOtp(data: VerifyOtpRequest) {
+    const response = await apiRequest('POST', '/api/auth/verify-otp', data);
+    const result = await response.json();
+    
+    if (result.token) {
+      this.setAuth(result.token, result.user);
+    }
+    
+    return result;
+  }
+
+  async completeProfile(data: CompleteProfileRequest) {
+    const response = await apiRequest('POST', '/api/auth/complete-profile', data);
+    const result = await response.json();
+    
+    if (result.user) {
+      this.setUser(result.user);
+    }
+    
+    return result;
+  }
+
+  async getCurrentUser() {
+    if (!this.token) return null;
+    
+    try {
+      const response = await apiRequest('GET', '/api/auth/me');
+      const result = await response.json();
+      
+      if (result.user) {
+        this.setUser(result.user);
+      }
+      
+      return result.user;
+    } catch (error) {
+      this.logout();
+      return null;
+    }
+  }
+
+  setAuth(token: string, user: User) {
+    this.token = token;
+    this.user = user;
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('user_data', JSON.stringify(user));
+  }
+
+  setUser(user: User) {
+    this.user = user;
+    localStorage.setItem('user_data', JSON.stringify(user));
+  }
+
+  logout() {
+    this.token = null;
+    this.user = null;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  getUser(): User | null {
+    return this.user;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.token;
+  }
+
+  requiresProfile(): boolean {
+    return this.isAuthenticated() && (!this.user?.name || !this.user?.isVerified);
+  }
+}
+
+export const authService = new AuthService();
