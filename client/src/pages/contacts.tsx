@@ -20,7 +20,7 @@ export default function Contacts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [csvData, setCsvData] = useState<string>("");
 
-  const { data: contactsData, isLoading } = useQuery({
+  const { data: contactsData, isLoading } = useQuery<{ contacts: Contact[] }>({
     queryKey: ['/api/contacts'],
   });
 

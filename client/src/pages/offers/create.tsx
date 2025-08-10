@@ -113,48 +113,48 @@ export default function CreateOffer() {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
-        <div className="flex items-center mb-8">
+        <div className="flex items-center mb-6">
           <Button 
             variant="outline" 
             onClick={() => setLocation('/dashboard')}
-            className="mr-6 bg-white border-gray-200 hover:bg-gray-50 shadow-sm rounded-xl h-12 px-6"
+            className="mr-4 bg-white border-gray-200 hover:bg-gray-50 shadow-sm rounded-lg h-10 px-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Offer</h1>
-            <p className="text-gray-600 text-lg">Set up a secure lending or borrowing agreement</p>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">Create New Offer</h1>
+            <p className="text-gray-600 text-sm">Set up a secure lending or borrowing agreement</p>
           </div>
         </div>
 
         {/* Main Form Card */}
-        <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-          <CardHeader className="bg-white border-b border-gray-100 pb-4 pt-6 px-8">
-            <CardTitle className="flex items-center text-xl font-semibold text-gray-900">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+        <Card className="bg-white border-0 shadow-lg rounded-xl overflow-hidden">
+          <CardHeader className="bg-white border-b border-gray-100 pb-4 pt-5 px-6">
+            <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+              <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                 <FileText className="w-4 h-4 text-blue-600" />
               </div>
               Offer Details
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Basic Information Section */}
-              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+              <div className="bg-gray-50 rounded-xl p-5 space-y-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Basic Information</h3>
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-gray-700 font-semibold">Offer Type</Label>
+                <div className="grid gap-5">
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium text-sm">Offer Type</Label>
                     <Select value={offerType} onValueChange={setOfferType}>
-                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
                         <SelectValue placeholder="What do you want to do?" />
                       </SelectTrigger>
                       <SelectContent>
@@ -164,22 +164,22 @@ export default function CreateOffer() {
                     </Select>
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-gray-700 font-semibold">Select Contact</Label>
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium text-sm">Select Contact</Label>
                     <Select value={selectedContact} onValueChange={setSelectedContact}>
-                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
                         <SelectValue placeholder="Choose a contact" />
                       </SelectTrigger>
                       <SelectContent>
                         {contacts.map((contact) => (
                           <SelectItem key={contact.id} value={contact.id}>
                             <div className="flex items-center">
-                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                <User className="w-4 h-4 text-blue-600" />
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                <User className="w-3 h-3 text-blue-600" />
                               </div>
                               <div>
-                                <div className="font-medium">{contact.name}</div>
-                                <div className="text-sm text-gray-500">{contact.phone}</div>
+                                <div className="font-medium text-sm">{contact.name}</div>
+                                <div className="text-xs text-gray-500">{contact.phone}</div>
                               </div>
                             </div>
                           </SelectItem>
@@ -191,20 +191,20 @@ export default function CreateOffer() {
               </div>
 
               {/* Financial Details Section */}
-              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+              <div className="bg-gray-50 rounded-xl p-5 space-y-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                     <IndianRupee className="w-4 h-4 text-green-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Financial Details</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Financial Details</h3>
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="amount" className="text-gray-700 font-semibold">Amount (₹)</Label>
+                <div className="grid gap-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="amount" className="text-gray-700 font-medium text-sm">Amount (₹)</Label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <IndianRupee className="h-5 w-5 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <IndianRupee className="h-4 w-4 text-gray-400" />
                       </div>
                       <Input
                         id="amount"
@@ -212,22 +212,22 @@ export default function CreateOffer() {
                         step="0.01"
                         {...register("amount", { valueAsNumber: true })}
                         placeholder="Enter amount"
-                        className="pl-12 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                        className="pl-10 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
                       />
                     </div>
                     {errors.amount && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center">
-                        <Info className="w-4 h-4 mr-1" />
+                      <p className="text-xs text-red-500 mt-1 flex items-center">
+                        <Info className="w-3 h-3 mr-1" />
                         {errors.amount.message}
                       </p>
                     )}
                   </div>
 
-                  <div className="space-y-3">
-                    <Label htmlFor="interestRate" className="text-gray-700 font-semibold">Interest Rate (%)</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="interestRate" className="text-gray-700 font-medium text-sm">Interest Rate (%)</Label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Percent className="h-5 w-5 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Percent className="h-4 w-4 text-gray-400" />
                       </div>
                       <Input
                         id="interestRate"
@@ -235,12 +235,12 @@ export default function CreateOffer() {
                         step="0.01"
                         {...register("interestRate", { valueAsNumber: true })}
                         placeholder="Enter rate"
-                        className="pl-12 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                        className="pl-10 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
                       />
                     </div>
                     {errors.interestRate && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center">
-                        <Info className="w-4 h-4 mr-1" />
+                      <p className="text-xs text-red-500 mt-1 flex items-center">
+                        <Info className="w-3 h-3 mr-1" />
                         {errors.interestRate.message}
                       </p>
                     )}
@@ -249,20 +249,19 @@ export default function CreateOffer() {
               </div>
 
               {/* Terms & Timeline Section */}
-              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+              <div className="bg-gray-50 rounded-xl p-5 space-y-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                     <Clock className="w-4 h-4 text-purple-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Terms & Timeline</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Terms & Timeline</h3>
                 </div>
                 
-                {/* Interest and Repayment Types */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-gray-700 font-semibold">Interest Type</Label>
+                <div className="grid gap-5">
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium text-sm">Interest Type</Label>
                     <Select value={interestType} onValueChange={setInterestType}>
-                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
                         <SelectValue placeholder="Choose interest calculation" />
                       </SelectTrigger>
                       <SelectContent>
@@ -272,10 +271,10 @@ export default function CreateOffer() {
                     </Select>
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-gray-700 font-semibold">Repayment Type</Label>
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium text-sm">Repayment Type</Label>
                     <Select value={repaymentType} onValueChange={setRepaymentType}>
-                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
                         <SelectValue placeholder="Choose repayment method" />
                       </SelectTrigger>
                       <SelectContent>
@@ -285,36 +284,33 @@ export default function CreateOffer() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                {/* Tenure Section */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="tenureValue" className="text-gray-700 font-semibold">Tenure Duration</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="tenureValue" className="text-gray-700 font-medium text-sm">Tenure Duration</Label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Calendar className="h-5 w-5 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-4 w-4 text-gray-400" />
                       </div>
                       <Input
                         id="tenureValue"
                         type="number"
                         {...register("tenureValue", { valueAsNumber: true })}
                         placeholder="Enter duration"
-                        className="pl-12 bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                        className="pl-10 bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
                       />
                     </div>
                     {errors.tenureValue && (
-                      <p className="text-sm text-red-500 mt-1 flex items-center">
-                        <Info className="w-4 h-4 mr-1" />
+                      <p className="text-xs text-red-500 mt-1 flex items-center">
+                        <Info className="w-3 h-3 mr-1" />
                         {errors.tenureValue.message}
                       </p>
                     )}
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-gray-700 font-semibold">Tenure Unit</Label>
+                  <div className="space-y-2">
+                    <Label className="text-gray-700 font-medium text-sm">Tenure Unit</Label>
                     <Select value={tenureUnit} onValueChange={setTenureUnit}>
-                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
                         <SelectValue placeholder="Select time unit" />
                       </SelectTrigger>
                       <SelectContent>
@@ -328,37 +324,37 @@ export default function CreateOffer() {
               </div>
 
               {/* Additional Details Section */}
-              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+              <div className="bg-gray-50 rounded-xl p-5 space-y-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
                     <FileText className="w-4 h-4 text-orange-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Additional Details</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Additional Details</h3>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="purpose" className="text-gray-700 font-semibold">Purpose</Label>
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="purpose" className="text-gray-700 font-medium text-sm">Purpose</Label>
                     <Input
                       id="purpose"
                       {...register("purpose")}
                       placeholder="What is this money for? (e.g., Business expansion, Emergency, etc.)"
-                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-12 rounded-xl shadow-sm"
+                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm"
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <Label htmlFor="note" className="text-gray-700 font-semibold">Additional Notes</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="note" className="text-gray-700 font-medium text-sm">Additional Notes</Label>
                     <Textarea
                       id="note"
                       {...register("note")}
                       placeholder="Any additional terms, conditions, or special arrangements..."
-                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 rounded-xl shadow-sm min-h-[100px]"
+                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 rounded-lg shadow-sm min-h-[80px]"
                     />
                   </div>
 
                   {/* Part Payment Option */}
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center space-x-3">
                       <Checkbox 
                         id="allowPartPayment"
@@ -367,10 +363,10 @@ export default function CreateOffer() {
                         className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
                       />
                       <div>
-                        <Label htmlFor="allowPartPayment" className="text-gray-900 font-medium cursor-pointer">
+                        <Label htmlFor="allowPartPayment" className="text-gray-900 font-medium cursor-pointer text-sm">
                           Allow partial payments
                         </Label>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-1">
                           Allow the borrower to make partial repayments before the due date
                         </p>
                       </div>
@@ -381,15 +377,15 @@ export default function CreateOffer() {
 
               {/* Due Date Preview */}
               {tenureValue && tenureUnit && (
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
-                  <div className="flex items-center mb-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-center mb-2">
+                    <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
                       <Calendar className="w-4 h-4 text-white" />
                     </div>
-                    <h4 className="font-semibold text-blue-900">Due Date Preview</h4>
+                    <h4 className="text-sm font-semibold text-blue-900">Due Date Preview</h4>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-blue-200">
-                    <p className="text-blue-800 font-medium text-lg">
+                  <div className="bg-white rounded-lg p-3 border border-blue-200">
+                    <p className="text-blue-800 font-medium text-sm">
                       📅 This offer will be due on: <span className="font-bold">{calculateDueDate().toLocaleDateString('en-IN', { 
                         weekday: 'long',
                         year: 'numeric',
@@ -397,7 +393,7 @@ export default function CreateOffer() {
                         day: 'numeric'
                       })}</span>
                     </p>
-                    <p className="text-blue-600 text-sm mt-2">
+                    <p className="text-blue-600 text-xs mt-1">
                       Duration: {tenureValue} {tenureUnit}
                     </p>
                   </div>
@@ -405,28 +401,28 @@ export default function CreateOffer() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setLocation('/dashboard')}
-                  className="h-12 px-8 rounded-xl border-gray-300 hover:bg-gray-50 transition-all duration-300"
+                  className="h-10 px-6 rounded-lg border-gray-300 hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={createOfferMutation.isPending || !selectedContact || !offerType}
-                  className="h-12 px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  className="h-10 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                 >
                   {createOfferMutation.isPending ? (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Creating Offer...</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating...</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <FileText className="w-5 h-5" />
+                      <FileText className="w-4 h-4" />
                       <span>Create Offer</span>
                     </div>
                   )}
