@@ -357,7 +357,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/payments', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const paymentData = insertPaymentSchema.parse(req.body);
-      const payment = await storage.createPayment(paymentData);
+      const payment = await storage.createPayment({
+        ...paymentData,
+        paidAt: new Date(),
+        status: 'paid'
+      });
       
       // Get offer details to send notification
       const offer = await storage.getOffer(payment.offerId);
