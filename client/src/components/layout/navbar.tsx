@@ -39,14 +39,6 @@ export default function Navbar() {
           Dashboard
         </Button>
       </Link>
-      <Link href="/contacts">
-        <Button 
-          variant={location === '/contacts' ? 'default' : 'ghost'} 
-          className="justify-start"
-        >
-          Contacts
-        </Button>
-      </Link>
       <Link href="/offers/create">
         <Button 
           variant={location === '/offers/create' ? 'default' : 'ghost'} 

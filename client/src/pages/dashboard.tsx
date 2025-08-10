@@ -16,15 +16,15 @@ export default function Dashboard() {
     queryKey: ['/api/offers'],
   });
 
-  const stats = statsData?.stats || {
+  const stats = (statsData as any)?.stats || {
     totalLent: 0,
     totalBorrowed: 0,
     activeOffers: 0,
     pendingOffers: 0
   };
 
-  const sentOffers = offersData?.sentOffers || [];
-  const receivedOffers = offersData?.receivedOffers || [];
+  const sentOffers = (offersData as any)?.sentOffers || [];
+  const receivedOffers = (offersData as any)?.receivedOffers || [];
 
   const recentOffers = [...sentOffers, ...receivedOffers]
     .sort((a, b) => new Date(b.offer.createdAt).getTime() - new Date(a.offer.createdAt).getTime())
@@ -101,7 +101,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
           <Link href="/offers/create">
             <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
               <CardContent className="p-4">
@@ -118,21 +118,19 @@ export default function Dashboard() {
             </Card>
           </Link>
 
-          <Link href="/contacts">
-            <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                    <Users className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-sm">Contacts</h3>
-                    <p className="text-xs text-gray-500">Manage circle</p>
-                  </div>
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Analytics</h3>
+                  <p className="text-xs text-gray-500">View trends</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
             <CardContent className="p-4">
@@ -207,7 +205,7 @@ export default function Dashboard() {
                     <span className="text-sm text-gray-600">Success Rate</span>
                     <span className="text-sm font-semibold text-green-600">
                       {sentOffers.length > 0 ? 
-                        Math.round((sentOffers.filter(o => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0
+                        Math.round((sentOffers.filter((o: any) => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0
                       }%
                     </span>
                   </div>
