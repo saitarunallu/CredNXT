@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
@@ -39,8 +39,7 @@ export default function CreateOffer() {
   const {
     register,
     handleSubmit,
-    control,
-    formState: { errors, isValid, touchedFields },
+    formState: { errors },
     watch,
     setValue
   } = useForm<Omit<InsertOffer, 'fromUserId'>>({
@@ -162,22 +161,16 @@ export default function CreateOffer() {
                   <Label className="text-sm font-medium text-foreground">
                     Offer Type <span className="text-destructive">*</span>
                   </Label>
-                  <Controller
-                    name="offerType"
-                    control={control}
-                    render={() => (
-                      <Select value={offerType} onValueChange={setOfferType} required>
-                        <SelectTrigger className={`${!offerType && touchedFields.offerType ? 'border-destructive' : ''}`}>
-                          <SelectValue placeholder="Select offer type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="lend">🏦 I want to lend money</SelectItem>
-                          <SelectItem value="borrow">🤝 I want to borrow money</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {!offerType && touchedFields.offerType && (
+                  <Select value={offerType} onValueChange={setOfferType} required>
+                    <SelectTrigger className={`${!offerType ? 'border-destructive' : ''}`}>
+                      <SelectValue placeholder="Select offer type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lend">🏦 I want to lend money</SelectItem>
+                      <SelectItem value="borrow">🤝 I want to borrow money</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!offerType && (
                     <p className="text-sm text-destructive">Please select an offer type</p>
                   )}
                 </div>
@@ -187,7 +180,7 @@ export default function CreateOffer() {
                     Contact <span className="text-destructive">*</span>
                   </Label>
                   <Select value={selectedContact} onValueChange={setSelectedContact} required>
-                    <SelectTrigger className={`${!selectedContact && touchedFields.toContactId ? 'border-destructive' : ''}`}>
+                    <SelectTrigger className={`${!selectedContact ? 'border-destructive' : ''}`}>
                       <SelectValue placeholder="Select contact" />
                     </SelectTrigger>
                     <SelectContent>
@@ -202,7 +195,7 @@ export default function CreateOffer() {
                       )}
                     </SelectContent>
                   </Select>
-                  {!selectedContact && touchedFields.toContactId && (
+                  {!selectedContact && (
                     <p className="text-sm text-destructive">Please select a contact</p>
                   )}
                 </div>
@@ -260,7 +253,7 @@ export default function CreateOffer() {
                     Interest Type <span className="text-destructive">*</span>
                   </Label>
                   <Select value={interestType} onValueChange={setInterestType} required>
-                    <SelectTrigger className={`${!interestType && touchedFields.interestType ? 'border-destructive' : ''}`}>
+                    <SelectTrigger className={`${!interestType ? 'border-destructive' : ''}`}>
                       <SelectValue placeholder="Select interest type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -268,7 +261,7 @@ export default function CreateOffer() {
                       <SelectItem value="reducing">📉 Reducing Balance</SelectItem>
                     </SelectContent>
                   </Select>
-                  {!interestType && touchedFields.interestType && (
+                  {!interestType && (
                     <p className="text-sm text-destructive">Please select an interest type</p>
                   )}
                 </div>
@@ -278,7 +271,7 @@ export default function CreateOffer() {
                     Repayment Type <span className="text-destructive">*</span>
                   </Label>
                   <Select value={repaymentType} onValueChange={setRepaymentType} required>
-                    <SelectTrigger className={`${!repaymentType && touchedFields.repaymentType ? 'border-destructive' : ''}`}>
+                    <SelectTrigger className={`${!repaymentType ? 'border-destructive' : ''}`}>
                       <SelectValue placeholder="Select repayment type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -287,7 +280,7 @@ export default function CreateOffer() {
                       <SelectItem value="full_payment">🎯 Full Payment at End</SelectItem>
                     </SelectContent>
                   </Select>
-                  {!repaymentType && touchedFields.repaymentType && (
+                  {!repaymentType && (
                     <p className="text-sm text-destructive">Please select a repayment type</p>
                   )}
                 </div>
@@ -317,7 +310,7 @@ export default function CreateOffer() {
                     Tenure Unit <span className="text-destructive">*</span>
                   </Label>
                   <Select value={tenureUnit} onValueChange={setTenureUnit} required>
-                    <SelectTrigger className={`${!tenureUnit && touchedFields.tenureUnit ? 'border-destructive' : ''}`}>
+                    <SelectTrigger className={`${!tenureUnit ? 'border-destructive' : ''}`}>
                       <SelectValue placeholder="Select tenure unit" />
                     </SelectTrigger>
                     <SelectContent>
@@ -326,7 +319,7 @@ export default function CreateOffer() {
                       <SelectItem value="months">🗓️ Months</SelectItem>
                     </SelectContent>
                   </Select>
-                  {!tenureUnit && touchedFields.tenureUnit && (
+                  {!tenureUnit && (
                     <p className="text-sm text-destructive">Please select a tenure unit</p>
                   )}
                 </div>
