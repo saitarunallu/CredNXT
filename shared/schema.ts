@@ -39,6 +39,7 @@ export const offers = pgTable("offers", {
   toUserPhone: varchar("to_user_phone", { length: 15 }).notNull(),
   toUserName: text("to_user_name").notNull(),
   toUserId: uuid("to_user_id").references(() => users.id), // Will be filled if the recipient is registered
+  toContactId: uuid("to_contact_id").references(() => contacts.id), // Reference to the contact
   offerType: offerTypeEnum("offer_type").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
@@ -118,6 +119,10 @@ export const offersRelations = relations(offers, ({ one, many }) => ({
     fields: [offers.toUserId],
     references: [users.id],
     relationName: "toUser"
+  }),
+  toContact: one(contacts, {
+    fields: [offers.toContactId],
+    references: [contacts.id],
   }),
   payments: many(payments),
   notifications: many(notifications),

@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
-interface AuthenticatedRequest extends Express.Request {
+interface AuthenticatedRequest extends Request {
   userId?: string;
 }
 
@@ -20,7 +20,7 @@ const clients = new Map<string, WebSocket>();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to parse JSON and authenticate
-  const authenticate = async (req: AuthenticatedRequest, res: any, next: any) => {
+  const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) {
@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Demo request endpoint
-  app.post('/api/demo-request', async (req, res) => {
+  app.post('/api/demo-request', async (req: Request, res: Response) => {
     try {
       const data = demoRequestSchema.parse(req.body);
       
@@ -250,24 +250,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/offers', authenticate, async (req: AuthenticatedRequest, res) => {
+  app.post('/api/offers', authenticate, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const offerData = insertOfferSchema.parse({
-        ...req.body,
-        fromUserId: req.userId!
-      });
+      // First, handle the contact creation/lookup
+      const { toUserPhone, toUserName, ...offerData } = req.body;
       
-      const offer = await storage.createOffer(offerData);
+      // Check if recipient is a registered user
+      let recipientUser = null;
+      try {
+        recipientUser = await storage.getUserByPhone(toUserPhone);
+      } catch (error) {
+        // User not found, that's fine
+      }
+
+      // Create or find contact for this user
+      let contact = await storage.findContactByPhone(req.userId!, toUserPhone);
+      if (!contact) {
+        contact = await storage.createContact({
+          userId: req.userId!,
+          name: toUserName,
+          phone: toUserPhone,
+          verifiedUserId: recipientUser?.id || null
+        });
+      }
+
+      // Prepare offer data with contact reference
+      const completeOfferData = {
+        ...offerData,
+        fromUserId: req.userId!,
+        toUserPhone,
+        toUserName,
+        toUserId: recipientUser?.id || null,
+        toContactId: contact.id
+      };
+
+      const parsedOfferData = insertOfferSchema.parse(completeOfferData);
+      const offer = await storage.createOffer(parsedOfferData);
       
       // Generate PDF contract
       const pdfKey = await pdfService.generateContract(offer);
       await storage.updateOffer(offer.id, { contractPdfKey: pdfKey });
       
-      // Send notification to recipient
-      const contact = await storage.getContact(offer.toContactId);
-      if (contact?.verifiedUserId) {
+      // Send notification to recipient if they're registered
+      if (recipientUser) {
         await storage.createNotification({
-          userId: contact.verifiedUserId,
+          userId: recipientUser.id,
           offerId: offer.id,
           type: 'offer_received',
           title: 'New Offer Received',
@@ -275,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Send WebSocket notification
-        const client = clients.get(contact.verifiedUserId);
+        const client = clients.get(recipientUser.id);
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'offer_received',
@@ -288,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ offer });
     } catch (error) {
       console.error('Create offer error:', error);
-      res.status(400).json({ message: 'Invalid offer data' });
+      res.status(500).json({ message: 'Server error' });
     }
   });
 
@@ -453,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     ws.on('close', () => {
       // Remove client from map
-      for (const [userId, client] of clients) {
+      for (const [userId, client] of clients.entries()) {
         if (client === ws) {
           clients.delete(userId);
           console.log(`User ${userId} disconnected from WebSocket`);
