@@ -92,10 +92,14 @@ export default function CreateOffer() {
 
   const createOfferMutation = useMutation({
     mutationFn: async (data: Omit<InsertOffer, 'fromUserId'>) => {
+      console.log('API request starting with data:', data);
       const response = await apiRequest('POST', '/api/offers', data);
-      return response.json();
+      const result = await response.json();
+      console.log('API response received:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation success with data:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       setLocation('/dashboard');
       toast({
@@ -103,7 +107,8 @@ export default function CreateOffer() {
         description: "Your offer has been sent successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Error",
         description: "Failed to create offer. Please try again.",
