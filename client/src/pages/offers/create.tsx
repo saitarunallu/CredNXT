@@ -44,8 +44,14 @@ export default function CreateOffer() {
     formState: { errors },
     watch,
     setValue
-  } = useForm<Omit<InsertOffer, 'fromUserId'>>({
-    resolver: zodResolver(insertOfferSchema.omit({ fromUserId: true }))
+  } = useForm({
+    defaultValues: {
+      amount: "",
+      interestRate: "",
+      tenureValue: "",
+      purpose: "",
+      note: ""
+    }
   });
 
   const tenureValue = watch('tenureValue');
@@ -91,7 +97,7 @@ export default function CreateOffer() {
   };
 
   const createOfferMutation = useMutation({
-    mutationFn: async (data: Omit<InsertOffer, 'fromUserId'>) => {
+    mutationFn: async (data: any) => {
       console.log('API request starting with data:', data);
       const response = await apiRequest('POST', '/api/offers', data);
       const result = await response.json();
@@ -138,7 +144,7 @@ export default function CreateOffer() {
     }
   };
 
-  const onSubmit = async (data: Omit<InsertOffer, 'fromUserId'>) => {
+  const onSubmit = async (data: any) => {
     console.log('Form submit triggered with data:', data);
     
     // Validate required fields
@@ -200,16 +206,20 @@ export default function CreateOffer() {
     const dueDate = calculateDueDate();
     
     const formData = {
-      ...data,
       toUserPhone: contactPhone,
       toUserName: contactName,
-      offerType: offerType as any,
-      interestType: interestType as any,
-      repaymentType: repaymentType as any,
-      repaymentFrequency: (repaymentFrequency as any) || null,
-      tenureUnit: tenureUnit as any,
+      offerType: offerType as "lend" | "borrow",
+      amount: (parseFloat(data.amount) || 0).toString(),
+      interestRate: (parseFloat(data.interestRate) || 0).toString(),
+      interestType: interestType as "fixed" | "reducing",
+      tenureValue: parseInt(data.tenureValue) || 1,
+      tenureUnit: tenureUnit as "days" | "weeks" | "months" | "years",
+      repaymentType: repaymentType as "emi" | "interest_only" | "full_payment",
+      repaymentFrequency: (repaymentFrequency as "weekly" | "monthly" | "yearly") || null,
       allowPartPayment,
-      dueDate,
+      dueDate: dueDate,
+      purpose: data.purpose || null,
+      note: data.note || null
     };
     
     console.log('Submitting offer with data:', formData);
