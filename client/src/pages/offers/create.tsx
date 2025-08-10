@@ -633,17 +633,20 @@ export default function CreateOffer() {
                 
                 {/* Debug info */}
                 {(!contactName || !contactPhone || !offerType) && (
-                  <div className="text-xs text-red-500 mb-2">
-                    Button disabled because: 
-                    {!contactName && " Missing contact name"}
-                    {!contactPhone && " Missing contact phone"}
-                    {!offerType && " Missing offer type"}
+                  <div className="text-xs text-red-500 mb-2 p-2 bg-red-50 rounded">
+                    Form validation status: 
+                    <br />• Contact name: {contactName || 'Missing'}
+                    <br />• Contact phone: {contactPhone || 'Missing'}  
+                    <br />• Offer type: {offerType || 'Missing'}
+                    <br />• Interest type: {interestType || 'Missing'}
+                    <br />• Repayment type: {repaymentType || 'Missing'}
+                    <br />• Tenure unit: {tenureUnit || 'Missing'}
                   </div>
                 )}
                 
                 <Button
                   type="submit"
-                  disabled={createOfferMutation.isPending || !contactName || !contactPhone || !offerType}
+                  disabled={createOfferMutation.isPending}
                   className="h-10 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                   onClick={() => {
                     console.log('Button clicked. Current state:', {
