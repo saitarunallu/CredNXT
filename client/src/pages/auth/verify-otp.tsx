@@ -91,7 +91,7 @@ export default function VerifyOtp() {
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        <Card className="bg-glass border-0 shadow-2xl shadow-glow">
+        <Card className="bg-glass-strong border-0 shadow-card-hover shadow-glow animate-scale-in">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
@@ -114,7 +114,7 @@ export default function VerifyOtp() {
                   {...register("code")}
                   placeholder="123456"
                   maxLength={6}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:bg-white/20 focus:border-white/40 transition-all h-16 text-center text-3xl tracking-[0.5em] font-mono"
+                  className="bg-glass-strong border-white/30 text-white placeholder:text-blue-200 focus:bg-glass-strong focus:border-white/50 transition-all duration-300 h-16 text-center text-3xl tracking-[0.5em] font-mono rounded-input"
                 />
                 {errors.code && (
                   <p className="text-sm text-red-300 mt-1">{errors.code.message}</p>
@@ -123,7 +123,8 @@ export default function VerifyOtp() {
               
               <Button 
                 type="submit" 
-                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 mt-8"
+                size="lg"
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-card hover:shadow-card-hover mt-8"
                 disabled={verifyMutation.isPending}
               >
                 {verifyMutation.isPending ? (

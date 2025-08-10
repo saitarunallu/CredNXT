@@ -41,12 +41,12 @@ export default function OfferCard({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="shadow-card hover:shadow-card-hover hover:shadow-glow-sm transition-all duration-300 transform hover:-translate-y-1 border-0 bg-card-enhanced">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-navy-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-navy-600" />
+            <div className="w-10 h-10 bg-gradient-navy rounded-card flex items-center justify-center shadow-sm">
+              <User className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">{displayName}</h3>

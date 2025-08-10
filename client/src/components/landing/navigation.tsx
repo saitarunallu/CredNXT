@@ -52,7 +52,7 @@ export default function Navigation() {
               About
             </button>
             <Link href="/login">
-              <Button className="bg-navy-600 text-white px-4 py-2 rounded-lg hover:bg-navy-700 transition-colors">
+              <Button size="default" className="shadow-glow-sm">
                 Get Started
               </Button>
             </Link>

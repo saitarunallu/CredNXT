@@ -2,7 +2,7 @@ import { Link } from "wouter";
 
 export default function HeroSection() {
   return (
-    <section className="bg-gradient-hero text-white py-20 lg:py-32">
+    <section className="bg-gradient-hero text-white section-padding lg:py-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="animate-slide-up">
@@ -48,26 +48,26 @@ export default function HeroSection() {
           </div>
           
           <div className="animate-float">
-            <div className="bg-card-enhanced rounded-2xl shadow-2xl p-6 lg:p-8 border border-white/30">
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
+            <div className="bg-card-enhanced rounded-card shadow-card hover:shadow-card-hover transition-all duration-300 card-padding-lg border border-white/20 animate-scale-in">
+              <div className="bg-gradient-surface rounded-card card-padding mb-6 border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Dashboard Overview</h3>
                   <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Active</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-navy-600">₹2,45,000</div>
+                  <div className="bg-white card-padding rounded-input shadow-sm border border-gray-100">
+                    <div className="text-2xl font-bold text-gradient">₹2,45,000</div>
                     <div className="text-gray-600 text-sm">Amount Lent</div>
                   </div>
-                  <div className="bg-white p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">₹45,000</div>
+                  <div className="bg-white card-padding rounded-input shadow-sm border border-gray-100">
+                    <div className="text-2xl font-bold text-gradient-secondary">₹45,000</div>
                     <div className="text-gray-600 text-sm">Amount Borrowed</div>
                   </div>
                 </div>
               </div>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between card-padding bg-blue-50 rounded-button border border-blue-100">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-navy-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">AK</span>
@@ -83,7 +83,7 @@ export default function HeroSection() {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between card-padding bg-gradient-surface rounded-button border border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">PS</span>

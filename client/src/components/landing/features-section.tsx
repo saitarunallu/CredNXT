@@ -41,7 +41,7 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section id="features" className="py-20 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <section id="features" className="section-padding bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-5xl font-bold text-gradient mb-6">
@@ -54,12 +54,12 @@ export default function FeaturesSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="bg-card-enhanced p-8 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-2 border border-white/20">
-              <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center mb-6`}>
-                <feature.icon className="w-6 h-6" />
+            <div key={index} className="bg-card-enhanced card-padding-lg rounded-card shadow-card hover:shadow-card-hover hover:shadow-glow-sm transition-all duration-300 transform hover:-translate-y-3 border border-white/20 animate-scale-in group">
+              <div className={`w-14 h-14 ${feature.color} rounded-card flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                <feature.icon className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
+              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
