@@ -52,14 +52,18 @@ export default function Login() {
       <div className="w-full max-w-md relative z-10">
         <Card className="bg-white border-0 shadow-2xl animate-scale-in rounded-3xl overflow-hidden">
           <CardHeader className="text-center pb-6 pt-10 px-8">
-            <div className="flex justify-center mb-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl flex items-center justify-center shadow-xl animate-float relative">
-                <Shield className="w-10 h-10 text-white" />
-                <IndianRupee className="w-5 h-5 text-white absolute bottom-2 right-2" />
+            <div className="flex items-center justify-center mb-8 space-x-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
+                <Shield className="w-8 h-8 text-white" />
+                <IndianRupee className="w-4 h-4 text-white absolute" />
+              </div>
+              <div className="text-left">
+                <h1 className="text-2xl font-bold text-gray-900">CredNXT</h1>
+                <p className="text-sm text-gray-500">Secure Lending</p>
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-900 mb-3">Welcome to CredNXT</CardTitle>
-            <p className="text-gray-600 text-base leading-relaxed px-4">Enter your phone number to get started with secure lending</p>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Welcome Back</CardTitle>
+            <p className="text-gray-600 text-base leading-relaxed px-4">Enter your phone number to get started</p>
           </CardHeader>
         
           <CardContent className="px-8 pb-10">
