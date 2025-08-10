@@ -129,14 +129,15 @@ export default function CreateOffer() {
         </div>
 
         {/* Main Form Card */}
-        <Card className="bg-white border-0 shadow-xl rounded-2xl overflow-hidden">
-          <CardHeader className="bg-white border-b border-gray-100 pb-4 pt-6 px-8">
-            <CardTitle className="flex items-center text-xl font-semibold text-gray-900">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                <FileText className="w-4 h-4 text-blue-600" />
+        <Card className="bg-white border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white pb-8 pt-8 px-8">
+            <CardTitle className="flex items-center text-2xl font-bold">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4">
+                <FileText className="w-6 h-6" />
               </div>
               Offer Details
             </CardTitle>
+            <p className="text-blue-100 mt-2">Fill in all the required information to create your offer</p>
           </CardHeader>
           
           <CardContent className="p-8">
