@@ -1,34 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
-import { IndianRupee, Plus, Users, FileText, TrendingUp, AlertCircle, Clock, Receipt, X } from "lucide-react";
+import { IndianRupee, Plus, Users, FileText, TrendingUp, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
-  const [fabOpen, setFabOpen] = useState(false);
-  const fabRef = useRef<HTMLDivElement>(null);
-
-  // Close FAB menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (fabRef.current && !fabRef.current.contains(event.target as Node)) {
-        setFabOpen(false);
-      }
-    };
-
-    if (fabOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [fabOpen]);
 
   const { data: statsData } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -246,51 +226,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* FAB Button with Menu */}
-        <div ref={fabRef} className="fixed bottom-6 right-6 z-50">
-          {/* FAB Menu Options */}
-          {fabOpen && (
-            <div className="absolute bottom-16 right-0 space-y-3 mb-2 w-48">
-              <Link href="/offers/create">
-                <Button 
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
-                  onClick={() => setFabOpen(false)}
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="font-medium">New Offer</span>
-                </Button>
-              </Link>
 
-              <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
-                onClick={() => setFabOpen(false)}
-              >
-                <Clock className="w-5 h-5" />
-                <span className="font-medium">Pending Offers</span>
-              </Button>
-
-              <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
-                onClick={() => setFabOpen(false)}
-              >
-                <Receipt className="w-5 h-5" />
-                <span className="font-medium">Transactions</span>
-              </Button>
-            </div>
-          )}
-
-          {/* Main FAB Button */}
-          <Button 
-            className={`w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 p-0 ${fabOpen ? 'rotate-45' : 'rotate-0'}`}
-            onClick={() => setFabOpen(!fabOpen)}
-          >
-            {fabOpen ? (
-              <X className="w-6 h-6 text-white transition-transform duration-200" />
-            ) : (
-              <Plus className="w-6 h-6 text-white transition-transform duration-200" />
-            )}
-          </Button>
-        </div>
       </div>
       
       <BottomNav />
