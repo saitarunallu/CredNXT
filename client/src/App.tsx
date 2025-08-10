@@ -38,16 +38,6 @@ function Router() {
         </AuthGuard>
       </Route>
       
-      <Route path="/offers" nest>
-        <AuthGuard>
-          <Route path="/" component={OffersPage} />
-          <Route path="/create" component={CreateOffer} />
-          <Route path="/:id">
-            {(params) => params.id ? <ViewOffer offerId={params.id} /> : <OffersPage />}
-          </Route>
-        </AuthGuard>
-      </Route>
-      
       <Route path="/analytics">
         <AuthGuard>
           <Analytics />
@@ -57,6 +47,26 @@ function Router() {
       <Route path="/profile">
         <AuthGuard>
           <Profile />
+        </AuthGuard>
+      </Route>
+      
+      <Route path="/offers/create">
+        <AuthGuard>
+          <CreateOffer />
+        </AuthGuard>
+      </Route>
+      
+      <Route path="/offers/:id">
+        {(params: { id: string }) => (
+          <AuthGuard>
+            <ViewOffer offerId={params.id} />
+          </AuthGuard>
+        )}
+      </Route>
+      
+      <Route path="/offers">
+        <AuthGuard>
+          <OffersPage />
         </AuthGuard>
       </Route>
       
