@@ -16,14 +16,20 @@ export default function HeroSection() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/login">
-                <Button className="bg-white text-navy-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl shadow-glow">
+                <Button 
+                  className="bg-white text-navy-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl shadow-glow" 
+                  data-testid="button-start-lending"
+                  style={{ color: '#1e293b' }}
+                >
                   Start Lending Today
                 </Button>
               </Link>
               <Button 
                 variant="outline" 
-                className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-navy-600 transition-all"
+                className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-navy-700 transition-all"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                data-testid="button-request-demo"
+                style={{ color: '#ffffff', borderColor: '#ffffff' }}
               >
                 Request Demo
               </Button>

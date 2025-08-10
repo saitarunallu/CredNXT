@@ -63,15 +63,19 @@ export default function InvestorSection() {
             <h3 className="text-xl font-semibold mb-4">Investment Opportunities</h3>
             <div className="space-y-4">
               <Button 
-                className="w-full bg-white text-navy-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                className="w-full bg-white text-navy-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                data-testid="button-download-pitch"
+                style={{ color: '#1e293b' }}
               >
                 Download Pitch Deck
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+                className="w-full border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-navy-700 transition-colors"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                data-testid="button-schedule-meeting"
+                style={{ color: '#ffffff', borderColor: '#ffffff' }}
               >
                 Schedule Meeting
               </Button>
