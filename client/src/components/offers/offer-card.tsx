@@ -40,6 +40,29 @@ export default function OfferCard({
     return type === 'lend' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
   };
 
+  // Get the offer type from the perspective of the current viewer
+  const getDisplayType = () => {
+    if (isReceived) {
+      // Received offers: flip the perspective
+      if (offer.offerType === 'lend') {
+        return 'loan offer'; // They want to lend to you = loan offer for you
+      } else {
+        return 'lending request'; // They want to borrow from you = lending request for you
+      }
+    } else {
+      // Sent offers: show as created
+      return offer.offerType === 'lend' ? 'lend offer' : 'borrow request';
+    }
+  };
+
+  const getDisplayTypeColor = () => {
+    if (isReceived) {
+      return offer.offerType === 'lend' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+    } else {
+      return offer.offerType === 'lend' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+    }
+  };
+
   return (
     <Card className="shadow-card hover:shadow-card-hover hover:shadow-glow-sm transition-all duration-300 transform hover:-translate-y-1 border-0 bg-card-enhanced">
       <CardHeader className="pb-3">
@@ -59,8 +82,8 @@ export default function OfferCard({
             <Badge className={getStatusColor(offer.status)}>
               {offer.status}
             </Badge>
-            <Badge className={getOfferTypeColor(offer.offerType)}>
-              {offer.offerType}
+            <Badge className={getDisplayTypeColor()}>
+              {getDisplayType()}
             </Badge>
           </div>
         </div>

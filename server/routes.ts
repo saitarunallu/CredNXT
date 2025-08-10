@@ -417,11 +417,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getReceivedOffers(req.userId!)
       ]);
 
+      // Calculate stats based on the perspective of the current user
+      let totalLent = 0;
+      let totalBorrowed = 0;
+      
+      // For sent offers: 
+      // - If offerType is 'lend', user is lending money
+      // - If offerType is 'borrow', user is borrowing money
+      sentOffers.forEach(item => {
+        const amount = parseFloat(item.offer.amount || '0');
+        if (item.offer.status === 'accepted') {
+          if (item.offer.offerType === 'lend') {
+            totalLent += amount;
+          } else {
+            totalBorrowed += amount;
+          }
+        }
+      });
+      
+      // For received offers:
+      // - If offerType is 'lend', someone wants to lend to user (user borrows)
+      // - If offerType is 'borrow', someone wants to borrow from user (user lends)
+      receivedOffers.forEach(item => {
+        const amount = parseFloat(item.offer.amount || '0');
+        if (item.offer.status === 'accepted') {
+          if (item.offer.offerType === 'lend') {
+            totalBorrowed += amount;
+          } else {
+            totalLent += amount;
+          }
+        }
+      });
+
       const stats = {
-        totalLent: sentOffers.reduce((sum, item) => sum + parseFloat(item.totalPaid || '0'), 0),
-        totalBorrowed: receivedOffers.reduce((sum, item) => sum + parseFloat(item.totalPaid || '0'), 0),
-        activeOffers: sentOffers.filter(item => item.offer.status === 'accepted').length,
-        pendingOffers: sentOffers.filter(item => item.offer.status === 'pending').length,
+        totalLent,
+        totalBorrowed,
+        activeOffers: [...sentOffers, ...receivedOffers].filter(item => item.offer.status === 'accepted').length,
+        pendingOffers: [...sentOffers, ...receivedOffers].filter(item => item.offer.status === 'pending').length,
       };
 
       res.json({ stats });

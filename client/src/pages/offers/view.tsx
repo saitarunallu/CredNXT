@@ -198,6 +198,47 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
+  // Get the display text from current user's perspective
+  const getOfferDisplayText = () => {
+    if (isReceiver) {
+      // Received offer: flip the perspective
+      if (offer.offerType === 'lend') {
+        return {
+          type: 'Loan Offer',
+          description: 'Someone wants to lend money to you',
+          acceptText: 'Accept Loan',
+          actionContext: 'borrowing'
+        };
+      } else {
+        return {
+          type: 'Lending Request', 
+          description: 'Someone wants to borrow money from you',
+          acceptText: 'Approve Lending',
+          actionContext: 'lending'
+        };
+      }
+    } else {
+      // Sent offer: show as created
+      if (offer.offerType === 'lend') {
+        return {
+          type: 'Lend Offer',
+          description: 'You offered to lend money',
+          acceptText: 'Offer Sent',
+          actionContext: 'lending'
+        };
+      } else {
+        return {
+          type: 'Borrow Request',
+          description: 'You requested to borrow money', 
+          acceptText: 'Request Sent',
+          actionContext: 'borrowing'
+        };
+      }
+    }
+  };
+
+  const displayInfo = getOfferDisplayText();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
