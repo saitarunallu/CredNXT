@@ -172,6 +172,8 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
+}).extend({
+  amount: z.coerce.string(),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
