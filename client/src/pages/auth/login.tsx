@@ -26,7 +26,7 @@ export default function Login() {
 
   const loginMutation = useMutation({
     mutationFn: authService.login.bind(authService),
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       if (result.success) {
         const phone = document.querySelector<HTMLInputElement>('input[name="phone"]')?.value;
         localStorage.setItem('pending_phone', phone || '');
@@ -49,28 +49,28 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        <Card className="bg-glass-strong border-0 shadow-card-hover shadow-glow animate-scale-in">
-          <CardHeader className="text-center pb-8">
+        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl animate-scale-in rounded-2xl">
+          <CardHeader className="text-center pb-8 pt-8">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
-                <Shield className="w-10 h-10 text-white" />
-                <IndianRupee className="w-5 h-5 text-white absolute" />
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
+                <Shield className="w-8 h-8 text-white" />
+                <IndianRupee className="w-4 h-4 text-white absolute bottom-1 right-1" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-white mb-2">Welcome to CredNXT</CardTitle>
-            <p className="text-blue-100 text-lg">Enter your phone number to get started with secure lending</p>
+            <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Welcome to CredNXT</CardTitle>
+            <p className="text-gray-600 text-lg">Enter your phone number to get started with secure lending</p>
           </CardHeader>
         
           <CardContent className="px-8 pb-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-white font-medium">Phone Number</Label>
+                <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
                 <Input
                   id="phone"
                   type="tel"
                   {...register("phone")}
                   placeholder="+91 98765 43210"
-                  className="bg-glass-strong border-white/30 text-white placeholder:text-blue-200 focus:bg-glass-strong focus:border-white/50 transition-all duration-300 h-12 text-lg rounded-input"
+                  className="bg-white/90 border-white/50 text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-blue-400 transition-all duration-300 h-12 text-lg rounded-lg shadow-lg"
                 />
                 {errors.phone && (
                   <p className="text-sm text-red-300 mt-1">{errors.phone.message}</p>
@@ -80,11 +80,11 @@ export default function Login() {
               <Button 
                 type="submit" 
                 size="lg"
-                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-card hover:shadow-card-hover mt-8"
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-xl hover:shadow-2xl mt-8 h-14 text-lg border-0"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center space-x-2">
                     <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <span>Sending OTP...</span>
                   </div>
@@ -95,7 +95,7 @@ export default function Login() {
             </form>
 
             <div className="mt-8 text-center">
-              <p className="text-sm text-blue-100 leading-relaxed">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 📱 New to CredNXT? Create your account after phone verification
               </p>
             </div>
