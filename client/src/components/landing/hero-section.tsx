@@ -14,16 +14,16 @@ export default function HeroSection() {
               CredNXT revolutionizes peer-to-known-person lending with secure, transparent, and legally-backed financial agreements between friends, family, and trusted contacts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/login">
+              <Link href="/login" className="w-full sm:w-auto">
                 <button 
-                  className="btn-white-solid shadow-xl shadow-glow" 
+                  className="btn-white-solid shadow-xl shadow-glow w-full" 
                   data-testid="button-start-lending"
                 >
                   Start Lending Today
                 </button>
               </Link>
               <button 
-                className="btn-outline-white"
+                className="btn-outline-white w-full sm:w-auto"
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                 data-testid="button-request-demo"
               >
