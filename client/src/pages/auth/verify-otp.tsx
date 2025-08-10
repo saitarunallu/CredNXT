@@ -118,9 +118,9 @@ export default function VerifyOtp() {
                 <Input
                   id="code"
                   {...register("code")}
-                  placeholder="1 2 3 4 5 6"
+                  placeholder="Enter 6-digit code"
                   maxLength={6}
-                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-16 text-center text-2xl tracking-[0.8em] font-mono rounded-xl shadow-sm"
+                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 placeholder:text-base placeholder:font-normal placeholder:tracking-normal focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-16 text-center text-2xl tracking-[0.8em] font-mono rounded-xl shadow-sm"
                 />
                 {errors.code && (
                   <p className="text-sm text-red-500 mt-1">{errors.code.message}</p>
