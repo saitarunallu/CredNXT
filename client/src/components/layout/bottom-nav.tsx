@@ -2,7 +2,15 @@ import { Link, useLocation } from "wouter";
 import { Home, Plus, Clock, User, BarChart3 } from "lucide-react";
 
 export default function BottomNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  const handleNavigation = (href: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    // Force a clean navigation by using setLocation directly
+    setLocation(href);
+  };
 
   const navItems = [
     {
@@ -46,10 +54,10 @@ export default function BottomNav() {
           
           if (item.special) {
             return (
-              <Link 
+              <button 
                 key={item.href} 
-                href={item.href}
-                onClick={() => console.log(`Navigating to: ${item.href}`)}
+                onClick={() => handleNavigation(item.href)}
+                className="bg-transparent border-none p-0 cursor-pointer"
               >
                 <div className="flex flex-col items-center relative">
                   <div className="w-12 h-12 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 mb-1 hover:scale-110 active:scale-95">
@@ -66,15 +74,15 @@ export default function BottomNav() {
                     <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
                   )}
                 </div>
-              </Link>
+              </button>
             );
           }
 
           return (
-            <Link 
+            <button 
               key={item.href} 
-              href={item.href}
-              onClick={() => console.log(`Navigating to: ${item.href}`)}
+              onClick={() => handleNavigation(item.href)}
+              className="bg-transparent border-none p-0 cursor-pointer"
             >
               <div className="flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105 active:scale-95 relative">
                 <Icon 
@@ -97,7 +105,7 @@ export default function BottomNav() {
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
                 )}
               </div>
-            </Link>
+            </button>
           );
         })}
       </div>

@@ -43,7 +43,7 @@ function Router() {
           <Route path="/" component={OffersPage} />
           <Route path="/create" component={CreateOffer} />
           <Route path="/:id">
-            {(params) => <ViewOffer offerId={params.id} />}
+            {(params) => params.id ? <ViewOffer offerId={params.id} /> : <OffersPage />}
           </Route>
         </AuthGuard>
       </Route>

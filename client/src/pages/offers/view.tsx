@@ -157,14 +157,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   if (!offerData?.offer) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card>
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
             <CardContent className="p-8 text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Offer not found</h3>
-              <p className="text-gray-600 mb-4">The offer you're looking for doesn't exist.</p>
-              <Button onClick={() => setLocation('/dashboard')}>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Offer not found</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">The offer you're looking for doesn't exist.</p>
+              <Button onClick={() => setLocation('/dashboard')} className="bg-blue-600 hover:bg-blue-700 text-white">
                 Return to Dashboard
               </Button>
             </CardContent>
