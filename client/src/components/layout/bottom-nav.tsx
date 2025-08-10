@@ -46,7 +46,11 @@ export default function BottomNav() {
           
           if (item.special) {
             return (
-              <Link key={item.href} href={item.href}>
+              <Link 
+                key={item.href} 
+                href={item.href}
+                onClick={() => console.log(`Navigating to: ${item.href}`)}
+              >
                 <div className="flex flex-col items-center relative">
                   <div className="w-12 h-12 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 mb-1 hover:scale-110 active:scale-95">
                     <Icon className="w-6 h-6 text-white" />
@@ -59,7 +63,7 @@ export default function BottomNav() {
                     {item.label}
                   </span>
                   {item.active && (
-                    <div className="absolute -top-1 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
                   )}
                 </div>
               </Link>
@@ -67,8 +71,12 @@ export default function BottomNav() {
           }
 
           return (
-            <Link key={item.href} href={item.href}>
-              <div className="flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105 active:scale-95">
+            <Link 
+              key={item.href} 
+              href={item.href}
+              onClick={() => console.log(`Navigating to: ${item.href}`)}
+            >
+              <div className="flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105 active:scale-95 relative">
                 <Icon 
                   className={`w-6 h-6 mb-1 transition-all duration-200 ${
                     item.active 
@@ -86,7 +94,7 @@ export default function BottomNav() {
                   {item.label}
                 </span>
                 {item.active && (
-                  <div className="absolute -top-1 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
                 )}
               </div>
             </Link>
