@@ -249,7 +249,16 @@ export default function CreateOffer() {
           </CardHeader>
           
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={(e) => {
+                    console.log('Form submit event triggered', e);
+                    console.log('Form data before submit:', {
+                      contactName,
+                      contactPhone,
+                      offerType,
+                      formValues: watch()
+                    });
+                    handleSubmit(onSubmit)(e);
+                  }} className="space-y-6">
               {/* Basic Information Section */}
               <div className="bg-gray-50 rounded-xl p-5 space-y-5">
                 <div className="flex items-center mb-3">
@@ -648,8 +657,9 @@ export default function CreateOffer() {
                   type="submit"
                   disabled={createOfferMutation.isPending}
                   className="h-10 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
-                  onClick={() => {
-                    console.log('Button clicked. Current state:', {
+                  onClick={(e) => {
+                    console.log('Button clicked! Event:', e);
+                    console.log('Button current state:', {
                       contactName,
                       contactPhone,
                       offerType,
