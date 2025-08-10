@@ -10,7 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
-import { Shield, Bell, User, LogOut, Menu, X } from "lucide-react";
+import { Bell, User, LogOut, Menu, X } from "lucide-react";
+import Logo from "@/components/ui/logo";
 
 export default function Navbar() {
   const [location, setLocation] = useLocation();
@@ -64,9 +65,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           <Link href="/dashboard">
             <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="w-10 h-10 bg-gradient-navy rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
+              <Logo size="md" className="bg-gradient-navy" />
               <span className="text-xl font-bold text-navy-900">CredNXT</span>
             </div>
           </Link>
