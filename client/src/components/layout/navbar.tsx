@@ -8,7 +8,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { authService } from "@/lib/auth";
 import { Shield, Bell, User, LogOut, Menu, X, IndianRupee } from "lucide-react";
 
@@ -16,6 +17,7 @@ export default function Navbar() {
   const [location, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const user = authService.getUser();
+  const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
     queryKey: ['/api/notifications'],
@@ -23,6 +25,16 @@ export default function Navbar() {
   });
 
   const unreadCount = notifications?.notifications?.filter((n: any) => !n.isRead).length || 0;
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await apiRequest('PATCH', `/api/notifications/${notificationId}/read`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    }
+  });
 
   const handleLogout = () => {
     authService.logout();
@@ -87,11 +99,32 @@ export default function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 {notifications?.notifications?.slice(0, 5).map((notification: any) => (
-                  <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4">
-                    <div className="font-medium">{notification.title}</div>
-                    <div className="text-sm text-gray-600">{notification.message}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {new Date(notification.createdAt).toLocaleDateString()}
+                  <DropdownMenuItem 
+                    key={notification.id} 
+                    className={`flex flex-col items-start p-4 cursor-pointer hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                    onClick={() => {
+                      if (!notification.isRead) {
+                        markAsReadMutation.mutate(notification.id);
+                      }
+                      // Navigate to offer if it's an offer notification
+                      if (notification.offerId) {
+                        setLocation(`/offers/${notification.offerId}`);
+                      }
+                    }}
+                  >
+                    <div className={`font-medium ${!notification.isRead ? 'text-blue-900' : 'text-gray-900'}`}>
+                      {notification.title}
+                    </div>
+                    <div className={`text-sm ${!notification.isRead ? 'text-blue-700' : 'text-gray-600'}`}>
+                      {notification.message}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 flex justify-between w-full">
+                      <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
+                      {!notification.isRead && (
+                        <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                          New
+                        </Badge>
+                      )}
                     </div>
                   </DropdownMenuItem>
                 )) || (
