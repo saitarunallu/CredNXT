@@ -25,7 +25,7 @@ export default function OfferCard({
   const paid = parseFloat(totalPaid);
   const outstanding = amount - paid;
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'accepted': return 'bg-green-100 text-green-800';
