@@ -53,7 +53,7 @@ export default function Login() {
         <Card className="bg-white border-0 shadow-2xl animate-scale-in rounded-3xl overflow-hidden">
           <CardHeader className="text-center pb-6 pt-10 px-8">
             <div className="flex items-center justify-center mb-8 space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-xl animate-float relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-xl relative">
                 <Shield className="w-8 h-8 text-white" />
                 <IndianRupee className="w-4 h-4 text-white absolute" />
               </div>
