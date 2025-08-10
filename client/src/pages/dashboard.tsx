@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
-import { IndianRupee, Plus, Users, FileText, TrendingUp, AlertCircle, Clock, Receipt } from "lucide-react";
+import { IndianRupee, Plus, Users, FileText, TrendingUp, AlertCircle, Clock, Receipt, X } from "lucide-react";
 
 export default function Dashboard() {
   const [fabOpen, setFabOpen] = useState(false);
@@ -249,47 +249,32 @@ export default function Dashboard() {
         <div ref={fabRef} className="fixed bottom-6 right-6 z-50">
           {/* FAB Menu Options */}
           {fabOpen && (
-            <div className="absolute bottom-16 right-0 space-y-3 mb-2">
+            <div className="absolute bottom-16 right-0 space-y-3 mb-2 w-48">
               <Link href="/offers/create">
-                <div className="flex items-center space-x-3 group">
-                  <span className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    New Offer
-                  </span>
-                  <Button 
-                    size="icon" 
-                    className="w-12 h-12 rounded-full bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-200"
-                    onClick={() => setFabOpen(false)}
-                  >
-                    <Plus className="w-5 h-5 text-white" />
-                  </Button>
-                </div>
+                <Button 
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
+                  onClick={() => setFabOpen(false)}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="font-medium">New Offer</span>
+                </Button>
               </Link>
 
-              <div className="flex items-center space-x-3 group cursor-pointer">
-                <span className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  Pending Offers
-                </span>
-                <Button 
-                  size="icon" 
-                  className="w-12 h-12 rounded-full bg-orange-600 hover:bg-orange-700 shadow-lg hover:shadow-xl transition-all duration-200"
-                  onClick={() => setFabOpen(false)}
-                >
-                  <Clock className="w-5 h-5 text-white" />
-                </Button>
-              </div>
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
+                onClick={() => setFabOpen(false)}
+              >
+                <Clock className="w-5 h-5" />
+                <span className="font-medium">Pending Offers</span>
+              </Button>
 
-              <div className="flex items-center space-x-3 group cursor-pointer">
-                <span className="bg-gray-900 text-white px-3 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                  Transactions
-                </span>
-                <Button 
-                  size="icon" 
-                  className="w-12 h-12 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
-                  onClick={() => setFabOpen(false)}
-                >
-                  <Receipt className="w-5 h-5 text-white" />
-                </Button>
-              </div>
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full py-3 px-4 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-start space-x-3"
+                onClick={() => setFabOpen(false)}
+              >
+                <Receipt className="w-5 h-5" />
+                <span className="font-medium">Transactions</span>
+              </Button>
             </div>
           )}
 
@@ -298,7 +283,11 @@ export default function Dashboard() {
             className={`w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 p-0 ${fabOpen ? 'rotate-45' : 'rotate-0'}`}
             onClick={() => setFabOpen(!fabOpen)}
           >
-            <Plus className="w-6 h-6 text-white transition-transform duration-200" />
+            {fabOpen ? (
+              <X className="w-6 h-6 text-white transition-transform duration-200" />
+            ) : (
+              <Plus className="w-6 h-6 text-white transition-transform duration-200" />
+            )}
           </Button>
         </div>
       </div>
