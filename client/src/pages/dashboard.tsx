@@ -31,125 +31,135 @@ export default function Dashboard() {
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gradient mb-2">Dashboard</h1>
-            <p className="text-gray-700 text-lg">Manage your lending and borrowing activities</p>
-          </div>
-          <Link href="/offers/create">
-            <Button className="btn-primary-enhanced text-white px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all">
-              <Plus className="w-5 h-5 mr-2" />
-              Create New Offer
-            </Button>
-          </Link>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">Manage your lending and borrowing activities</p>
         </div>
 
-        {/* Enhanced Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Lent</CardTitle>
-              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
-                <IndianRupee className="h-5 w-5 text-white" />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Lent</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">₹{stats.totalLent.toLocaleString()}</p>
+                </div>
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <IndianRupee className="h-5 w-5 text-green-600" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">₹{stats.totalLent.toLocaleString()}</div>
-              <p className="text-sm text-gray-600 mt-1">
-                Money you've lent to others
-              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Total Borrowed</CardTitle>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Borrowed</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">₹{stats.totalBorrowed.toLocaleString()}</p>
+                </div>
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">₹{stats.totalBorrowed.toLocaleString()}</div>
-              <p className="text-sm text-gray-600 mt-1">
-                Money you've borrowed
-              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Active Offers</CardTitle>
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-white" />
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Active</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activeOffers}</p>
+                </div>
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">{stats.activeOffers}</div>
-              <p className="text-xs text-muted-foreground">
-                Currently active agreements
-              </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Offers</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingOffers}</div>
-              <p className="text-xs text-muted-foreground">
-                Awaiting response
-              </p>
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.pendingOffers}</p>
+                </div>
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link href="/offers/create">
-              <CardContent className="p-6 text-center">
-                <Plus className="w-12 h-12 text-navy-600 mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Create New Offer</h3>
-                <p className="text-sm text-gray-600">Start a new lending or borrowing agreement</p>
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Link href="/offers/create">
+            <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Plus className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm">Create Offer</h3>
+                    <p className="text-xs text-gray-500">New agreement</p>
+                  </div>
+                </div>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link href="/contacts">
-              <CardContent className="p-6 text-center">
-                <Users className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Manage Contacts</h3>
-                <p className="text-sm text-gray-600">Add and organize your trusted circle</p>
+          <Link href="/contacts">
+            <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <Users className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm">Contacts</h3>
+                    <p className="text-xs text-gray-500">Manage circle</p>
+                  </div>
+                </div>
               </CardContent>
-            </Link>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <FileText className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="font-semibold text-gray-900 mb-2">View Reports</h3>
-              <p className="text-sm text-gray-600">Track your lending activity and performance</p>
+          <Card className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                  <FileText className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Reports</h3>
+                  <p className="text-xs text-gray-500">View analytics</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Offers */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div>
+        {/* Main Content */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Recent Offers */}
+          <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Offers</h2>
-              <Badge variant="outline">{recentOffers.length} total</Badge>
+              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+              <Badge variant="outline" className="text-xs">{recentOffers.length} offers</Badge>
             </div>
             
             {recentOffers.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentOffers.map((item) => (
                   <OfferCard
                     key={item.offer.id}
@@ -162,7 +172,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <Card>
+              <Card className="bg-white border-0 shadow-sm">
                 <CardContent className="p-8 text-center">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="font-medium text-gray-900 mb-2">No offers yet</h3>
@@ -175,26 +185,27 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Stats</h2>
+          {/* Sidebar */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">Overview</h2>
             
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle className="text-lg">Lending Overview</CardTitle>
+            <Card className="bg-white border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900">Activity Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Offers Sent</span>
-                    <span className="font-semibold">{sentOffers.length}</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Offers Sent</span>
+                    <span className="text-sm font-semibold text-gray-900">{sentOffers.length}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Offers Received</span>
-                    <span className="font-semibold">{receivedOffers.length}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Offers Received</span>
+                    <span className="text-sm font-semibold text-gray-900">{receivedOffers.length}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Success Rate</span>
-                    <span className="font-semibold text-green-600">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Success Rate</span>
+                    <span className="text-sm font-semibold text-green-600">
                       {sentOffers.length > 0 ? 
                         Math.round((sentOffers.filter(o => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0
                       }%
@@ -204,16 +215,23 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Upcoming Dues</CardTitle>
+            <Card className="bg-white border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-gray-900">Upcoming</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">No upcoming payments in the next 7 days</p>
+                <p className="text-sm text-gray-600">No payments due in the next 7 days</p>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* FAB Button */}
+        <Link href="/offers/create">
+          <Button className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-200 z-50 p-0">
+            <Plus className="w-6 h-6 text-white" />
+          </Button>
+        </Link>
       </div>
     </div>
   );
