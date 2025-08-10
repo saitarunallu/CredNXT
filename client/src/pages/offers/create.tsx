@@ -12,10 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertOfferSchema, type InsertOffer } from "@shared/schema";
-import { ArrowLeft, FileText } from "lucide-react";
+import { insertOfferSchema, type InsertOffer, type Contact } from "@shared/schema";
+import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info } from "lucide-react";
 
 export default function CreateOffer() {
   const [, setLocation] = useLocation();
@@ -29,11 +30,11 @@ export default function CreateOffer() {
   const [tenureUnit, setTenureUnit] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
 
-  const { data: contactsData } = useQuery({
+  const { data: contactsData } = useQuery<{ contacts: Contact[] }>({
     queryKey: ['/api/contacts'],
   });
 
-  const contacts = contactsData?.contacts || [];
+  const contacts: Contact[] = contactsData?.contacts || [];
 
   const {
     register,
@@ -100,223 +101,336 @@ export default function CreateOffer() {
       repaymentType: repaymentType as any,
       tenureUnit: tenureUnit as any,
       allowPartPayment,
-      dueDate: dueDate.toISOString(),
+      dueDate,
     };
     
     createOfferMutation.mutate(formData);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20">
       <Navbar />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
         <div className="flex items-center mb-8">
           <Button 
             variant="outline" 
             onClick={() => setLocation('/dashboard')}
-            className="mr-4"
+            className="mr-6 bg-white border-gray-200 hover:bg-gray-50 shadow-sm rounded-xl h-12 px-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Offer</h1>
-            <p className="text-gray-600">Create a lending or borrowing agreement</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Offer</h1>
+            <p className="text-gray-600 text-lg">Set up a secure lending or borrowing agreement</p>
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="w-5 h-5 mr-2" />
+        {/* Main Form Card */}
+        <Card className="bg-white border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white pb-8 pt-8 px-8">
+            <CardTitle className="flex items-center text-2xl font-bold">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4">
+                <FileText className="w-6 h-6" />
+              </div>
               Offer Details
             </CardTitle>
+            <p className="text-blue-100 mt-2">Fill in all the required information to create your offer</p>
           </CardHeader>
           
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Offer Type */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Offer Type</Label>
-                  <Select value={offerType} onValueChange={setOfferType}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select offer type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lend">I want to lend money</SelectItem>
-                      <SelectItem value="borrow">I want to borrow money</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              {/* Basic Information Section */}
+              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
                 </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-semibold">Offer Type</Label>
+                    <Select value={offerType} onValueChange={setOfferType}>
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                        <SelectValue placeholder="What do you want to do?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lend">💰 I want to lend money</SelectItem>
+                        <SelectItem value="borrow">🏦 I want to borrow money</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label>Contact</Label>
-                  <Select value={selectedContact} onValueChange={setSelectedContact}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select contact" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contacts.map((contact: any) => (
-                        <SelectItem key={contact.id} value={contact.id}>
-                          {contact.name} ({contact.phone})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Amount and Interest */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="amount">Amount (₹)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    {...register("amount", { valueAsNumber: true })}
-                    placeholder="Enter amount"
-                    className="mt-1"
-                  />
-                  {errors.amount && (
-                    <p className="text-sm text-red-600 mt-1">{errors.amount.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="interestRate">Interest Rate (%)</Label>
-                  <Input
-                    id="interestRate"
-                    type="number"
-                    step="0.01"
-                    {...register("interestRate", { valueAsNumber: true })}
-                    placeholder="Enter interest rate"
-                    className="mt-1"
-                  />
-                  {errors.interestRate && (
-                    <p className="text-sm text-red-600 mt-1">{errors.interestRate.message}</p>
-                  )}
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-semibold">Select Contact</Label>
+                    <Select value={selectedContact} onValueChange={setSelectedContact}>
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                        <SelectValue placeholder="Choose a contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contacts.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <User className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium">{contact.name}</div>
+                                <div className="text-sm text-gray-500">{contact.phone}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
-              {/* Interest Type and Repayment Type */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Interest Type</Label>
-                  <Select value={interestType} onValueChange={setInterestType}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select interest type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fixed">Fixed Interest</SelectItem>
-                      <SelectItem value="reducing">Reducing Balance</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {/* Financial Details Section */}
+              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <IndianRupee className="w-4 h-4 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Financial Details</h3>
                 </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="amount" className="text-gray-700 font-semibold">Amount (₹)</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <IndianRupee className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        {...register("amount", { valueAsNumber: true })}
+                        placeholder="Enter amount"
+                        className="pl-12 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                      />
+                    </div>
+                    {errors.amount && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center">
+                        <Info className="w-4 h-4 mr-1" />
+                        {errors.amount.message}
+                      </p>
+                    )}
+                  </div>
 
-                <div>
-                  <Label>Repayment Type</Label>
-                  <Select value={repaymentType} onValueChange={setRepaymentType}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select repayment type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="emi">EMI (Equal Monthly Installments)</SelectItem>
-                      <SelectItem value="interest_only">Interest Only</SelectItem>
-                      <SelectItem value="full_payment">Full Payment at End</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Tenure */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="tenureValue">Tenure Duration</Label>
-                  <Input
-                    id="tenureValue"
-                    type="number"
-                    {...register("tenureValue", { valueAsNumber: true })}
-                    placeholder="Enter duration"
-                    className="mt-1"
-                  />
-                  {errors.tenureValue && (
-                    <p className="text-sm text-red-600 mt-1">{errors.tenureValue.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label>Tenure Unit</Label>
-                  <Select value={tenureUnit} onValueChange={setTenureUnit}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select tenure unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="days">Days</SelectItem>
-                      <SelectItem value="weeks">Weeks</SelectItem>
-                      <SelectItem value="months">Months</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-3">
+                    <Label htmlFor="interestRate" className="text-gray-700 font-semibold">Interest Rate (%)</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Percent className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="interestRate"
+                        type="number"
+                        step="0.01"
+                        {...register("interestRate", { valueAsNumber: true })}
+                        placeholder="Enter rate"
+                        className="pl-12 bg-white border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                      />
+                    </div>
+                    {errors.interestRate && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center">
+                        <Info className="w-4 h-4 mr-1" />
+                        {errors.interestRate.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Purpose and Note */}
-              <div>
-                <Label htmlFor="purpose">Purpose</Label>
-                <Input
-                  id="purpose"
-                  {...register("purpose")}
-                  placeholder="What is this money for?"
-                  className="mt-1"
-                />
+              {/* Terms & Timeline Section */}
+              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Terms & Timeline</h3>
+                </div>
+                
+                {/* Interest and Repayment Types */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-semibold">Interest Type</Label>
+                    <Select value={interestType} onValueChange={setInterestType}>
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                        <SelectValue placeholder="Choose interest calculation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">📊 Fixed Interest</SelectItem>
+                        <SelectItem value="reducing">📉 Reducing Balance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-semibold">Repayment Type</Label>
+                    <Select value={repaymentType} onValueChange={setRepaymentType}>
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                        <SelectValue placeholder="Choose repayment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="emi">📅 EMI (Equal Monthly Installments)</SelectItem>
+                        <SelectItem value="interest_only">💰 Interest Only</SelectItem>
+                        <SelectItem value="full_payment">🎯 Full Payment at End</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Tenure Section */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="tenureValue" className="text-gray-700 font-semibold">Tenure Duration</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Calendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="tenureValue"
+                        type="number"
+                        {...register("tenureValue", { valueAsNumber: true })}
+                        placeholder="Enter duration"
+                        className="pl-12 bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm text-lg font-medium"
+                      />
+                    </div>
+                    {errors.tenureValue && (
+                      <p className="text-sm text-red-500 mt-1 flex items-center">
+                        <Info className="w-4 h-4 mr-1" />
+                        {errors.tenureValue.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-semibold">Tenure Unit</Label>
+                    <Select value={tenureUnit} onValueChange={setTenureUnit}>
+                      <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-12 rounded-xl shadow-sm">
+                        <SelectValue placeholder="Select time unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="days">📅 Days</SelectItem>
+                        <SelectItem value="weeks">🗓️ Weeks</SelectItem>
+                        <SelectItem value="months">📆 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="note">Additional Notes</Label>
-                <Textarea
-                  id="note"
-                  {...register("note")}
-                  placeholder="Any additional terms or conditions..."
-                  className="mt-1"
-                />
-              </div>
+              {/* Additional Details Section */}
+              <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                    <FileText className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Additional Details</h3>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="purpose" className="text-gray-700 font-semibold">Purpose</Label>
+                    <Input
+                      id="purpose"
+                      {...register("purpose")}
+                      placeholder="What is this money for? (e.g., Business expansion, Emergency, etc.)"
+                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-12 rounded-xl shadow-sm"
+                    />
+                  </div>
 
-              {/* Part Payment Option */}
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="allowPartPayment"
-                  checked={allowPartPayment}
-                  onCheckedChange={setAllowPartPayment}
-                />
-                <Label htmlFor="allowPartPayment">Allow partial payments</Label>
+                  <div className="space-y-3">
+                    <Label htmlFor="note" className="text-gray-700 font-semibold">Additional Notes</Label>
+                    <Textarea
+                      id="note"
+                      {...register("note")}
+                      placeholder="Any additional terms, conditions, or special arrangements..."
+                      className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 rounded-xl shadow-sm min-h-[100px]"
+                    />
+                  </div>
+
+                  {/* Part Payment Option */}
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox 
+                        id="allowPartPayment"
+                        checked={allowPartPayment}
+                        onCheckedChange={(checked) => setAllowPartPayment(checked === true)}
+                        className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                      />
+                      <div>
+                        <Label htmlFor="allowPartPayment" className="text-gray-900 font-medium cursor-pointer">
+                          Allow partial payments
+                        </Label>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Allow the borrower to make partial repayments before the due date
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Due Date Preview */}
               {tenureValue && tenureUnit && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Due Date Preview</h4>
-                  <p className="text-blue-800">
-                    This offer will be due on: {calculateDueDate().toLocaleDateString()}
-                  </p>
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-blue-900">Due Date Preview</h4>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-blue-200">
+                    <p className="text-blue-800 font-medium text-lg">
+                      📅 This offer will be due on: <span className="font-bold">{calculateDueDate().toLocaleDateString('en-IN', { 
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}</span>
+                    </p>
+                    <p className="text-blue-600 text-sm mt-2">
+                      Duration: {tenureValue} {tenureUnit}
+                    </p>
+                  </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-4">
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setLocation('/dashboard')}
+                  className="h-12 px-8 rounded-xl border-gray-300 hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={createOfferMutation.isPending || !selectedContact || !offerType}
-                  className="bg-navy-600 hover:bg-navy-700"
+                  className="h-12 px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                 >
-                  {createOfferMutation.isPending ? "Creating..." : "Create Offer"}
+                  {createOfferMutation.isPending ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating Offer...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <FileText className="w-5 h-5" />
+                      <span>Create Offer</span>
+                    </div>
+                  )}
                 </Button>
               </div>
             </form>
