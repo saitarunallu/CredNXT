@@ -207,7 +207,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
           <Button 
             variant="outline" 
             onClick={() => setLocation('/dashboard')}
-            className="mr-4"
+            className="mr-4 bg-white border-gray-200 hover:bg-gray-50 shadow-sm rounded-lg h-10 px-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
