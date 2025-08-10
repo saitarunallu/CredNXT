@@ -47,50 +47,59 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-navy rounded-xl flex items-center justify-center">
-              <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <Card className="bg-glass border-0 shadow-2xl shadow-glow">
+          <CardHeader className="text-center pb-8">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float">
+                <Shield className="w-10 h-10 text-white" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome to CredNXT</CardTitle>
-          <p className="text-gray-600">Enter your phone number to get started</p>
-        </CardHeader>
+            <CardTitle className="text-3xl font-bold text-white mb-2">Welcome to CredNXT</CardTitle>
+            <p className="text-blue-100 text-lg">Enter your phone number to get started with secure lending</p>
+          </CardHeader>
         
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                {...register("phone")}
-                placeholder="+91 98765 43210"
-                className="mt-1"
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
-              )}
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-navy-600 hover:bg-navy-700"
-              disabled={loginMutation.isPending}
-            >
-              {loginMutation.isPending ? "Sending OTP..." : "Send OTP"}
-            </Button>
-          </form>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-white font-medium">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  {...register("phone")}
+                  placeholder="+91 98765 43210"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:bg-white/20 focus:border-white/40 transition-all h-12 text-lg"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-300 mt-1">{errors.phone.message}</p>
+                )}
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 mt-8"
+                disabled={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Sending OTP...</span>
+                  </div>
+                ) : (
+                  "Send OTP & Get Started"
+                )}
+              </Button>
+            </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              New to CredNXT? You'll be able to create an account after verifying your phone number.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-8 text-center">
+              <p className="text-sm text-blue-100 leading-relaxed">
+                📱 New to CredNXT? Create your account after phone verification
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -31,58 +31,64 @@ export default function Dashboard() {
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Manage your lending and borrowing activities</p>
+            <h1 className="text-4xl font-bold text-gradient mb-2">Dashboard</h1>
+            <p className="text-gray-700 text-lg">Manage your lending and borrowing activities</p>
           </div>
           <Link href="/offers/create">
-            <Button className="bg-navy-600 hover:bg-navy-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Offer
+            <Button className="btn-primary-enhanced text-white px-6 py-3 rounded-xl font-semibold hover:scale-105 transition-all">
+              <Plus className="w-5 h-5 mr-2" />
+              Create New Offer
             </Button>
           </Link>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Lent</CardTitle>
-              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Total Lent</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                <IndianRupee className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{stats.totalLent.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-green-600">₹{stats.totalLent.toLocaleString()}</div>
+              <p className="text-sm text-gray-600 mt-1">
                 Money you've lent to others
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Borrowed</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Total Borrowed</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{stats.totalBorrowed.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-3xl font-bold text-blue-600">₹{stats.totalBorrowed.toLocaleString()}</div>
+              <p className="text-sm text-gray-600 mt-1">
                 Money you've borrowed
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-card-enhanced border border-white/20 shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-700">Active Offers</CardTitle>
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.activeOffers}</div>
+              <div className="text-3xl font-bold text-purple-600">{stats.activeOffers}</div>
               <p className="text-xs text-muted-foreground">
                 Currently active agreements
               </p>

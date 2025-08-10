@@ -36,7 +36,15 @@ class AuthService {
   }
 
   async completeProfile(data: CompleteProfileRequest) {
-    const response = await apiRequest('POST', '/api/auth/complete-profile', data);
+    if (!this.token) {
+      throw new Error('No authentication token available');
+    }
+    
+    const response = await apiRequest('POST', '/api/auth/complete-profile', data, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`
+      }
+    });
     const result = await response.json();
     
     if (result.user) {
@@ -50,7 +58,11 @@ class AuthService {
     if (!this.token) return null;
     
     try {
-      const response = await apiRequest('GET', '/api/auth/me');
+      const response = await apiRequest('GET', '/api/auth/me', undefined, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      });
       const result = await response.json();
       
       if (result.user) {

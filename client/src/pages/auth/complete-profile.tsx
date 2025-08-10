@@ -25,7 +25,7 @@ export default function CompleteProfile() {
 
   const profileMutation = useMutation({
     mutationFn: authService.completeProfile.bind(authService),
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       if (result.success) {
         setLocation('/dashboard');
         toast({
@@ -48,63 +48,72 @@ export default function CompleteProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-navy rounded-xl flex items-center justify-center">
-              <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-gradient-hero flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <Card className="bg-glass border-0 shadow-2xl shadow-glow">
+          <CardHeader className="text-center pb-8">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl animate-float">
+                <Shield className="w-10 h-10 text-white" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Complete Your Profile</CardTitle>
-          <p className="text-gray-600">Tell us a bit about yourself to get started</p>
-        </CardHeader>
+            <CardTitle className="text-3xl font-bold text-white mb-2">Complete Your Profile</CardTitle>
+            <p className="text-blue-100 text-lg">Tell us a bit about yourself to get started with CredNXT</p>
+          </CardHeader>
         
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                {...register("name")}
-                placeholder="Enter your full name"
-                className="mt-1"
-              />
-              {errors.name && (
-                <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
-              )}
-            </div>
-            
-            <div>
-              <Label htmlFor="email">Email Address (Optional)</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register("email")}
-                placeholder="your@email.com"
-                className="mt-1"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
-              )}
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-navy-600 hover:bg-navy-700"
-              disabled={profileMutation.isPending}
-            >
-              {profileMutation.isPending ? "Completing..." : "Complete Profile"}
-            </Button>
-          </form>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-white font-medium">Full Name</Label>
+                <Input
+                  id="name"
+                  {...register("name")}
+                  placeholder="Enter your full name"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:bg-white/20 focus:border-white/40 transition-all h-12 text-lg"
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-300 mt-1">{errors.name.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-white font-medium">Email Address (Optional)</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="your@email.com"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:bg-white/20 focus:border-white/40 transition-all h-12 text-lg"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-300 mt-1">{errors.email.message}</p>
+                )}
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 mt-8"
+                disabled={profileMutation.isPending}
+              >
+                {profileMutation.isPending ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Completing...</span>
+                  </div>
+                ) : (
+                  "Complete Profile & Get Started"
+                )}
+              </Button>
+            </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Your information is secure and will only be used for account verification and communication.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-8 text-center">
+              <p className="text-sm text-blue-100 leading-relaxed">
+                🔒 Your information is secure and encrypted. We use bank-level security to protect your data.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

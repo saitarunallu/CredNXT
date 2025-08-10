@@ -46,7 +46,7 @@ export default function HeroSection() {
           </div>
           
           <div className="animate-float">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 lg:p-8">
+            <div className="bg-card-enhanced rounded-2xl shadow-2xl p-6 lg:p-8 border border-white/30">
               <div className="bg-gray-50 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Dashboard Overview</h3>

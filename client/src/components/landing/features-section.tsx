@@ -41,20 +41,20 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section id="features" className="py-20 bg-gray-50">
+    <section id="features" className="py-20 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl lg:text-5xl font-bold text-gradient mb-6">
             Everything You Need for Safe Lending
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
             Comprehensive tools designed to make peer-to-known-person lending secure, transparent, and effortless.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-1">
+            <div key={index} className="bg-card-enhanced p-8 rounded-2xl shadow-lg hover:shadow-xl hover:shadow-glow transition-all transform hover:-translate-y-2 border border-white/20">
               <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center mb-6`}>
                 <feature.icon className="w-6 h-6" />
               </div>
