@@ -3,9 +3,9 @@ import { CheckCircle } from "lucide-react";
 
 export default function InvestorSection() {
   const marketData = [
-    { label: "Global P2P Market Size", value: "₹5.6L Cr" },
+    { label: "Global P2P Market Size", value: "$67.9B" },
     { label: "Expected CAGR", value: "29.7%" },
-    { label: "Target by 2030", value: "₹58L Cr" }
+    { label: "Target by 2030", value: "$705B" }
   ];
 
   const advantages = [
@@ -16,10 +16,10 @@ export default function InvestorSection() {
   ];
 
   const roadmap = [
-    { quarter: "Q4 2025", features: ["MVP Launch", "Core P2KP Features"] },
-    { quarter: "Q1 2026", features: ["Mobile App", "Advanced Analytics"] },
-    { quarter: "Q2 2026", features: ["AI Risk Assessment", "Credit Scoring"] },
-    { quarter: "Q3 2026", features: ["International Expansion", "Enterprise Solutions"] }
+    { quarter: "Q1 2025", features: ["MVP Launch", "Core P2KP Features"] },
+    { quarter: "Q2 2025", features: ["Mobile App", "Advanced Analytics"] },
+    { quarter: "Q3 2025", features: ["AI Risk Assessment", "Credit Scoring"] },
+    { quarter: "Q4 2025", features: ["International Expansion", "Enterprise Solutions"] }
   ];
 
   return (
@@ -30,7 +30,7 @@ export default function InvestorSection() {
             Partner with CredNXT
           </h2>
           <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Join us in revolutionizing the ₹4L Cr+ peer-to-peer lending market with technology that puts relationships first.
+            Join us in revolutionizing the $50B+ peer-to-peer lending market with technology that puts relationships first.
           </p>
         </div>
 
