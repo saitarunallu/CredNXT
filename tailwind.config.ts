@@ -63,6 +63,10 @@ export default {
         },
         navy: {
           50: "var(--navy-50)",
+          100: "var(--navy-100)",
+          200: "var(--navy-200)",
+          300: "var(--navy-300)",
+          400: "var(--navy-400)",
           500: "var(--navy-500)",
           600: "var(--navy-600)",
           700: "var(--navy-700)",

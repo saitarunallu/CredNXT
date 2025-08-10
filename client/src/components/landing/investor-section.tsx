@@ -23,7 +23,7 @@ export default function InvestorSection() {
   ];
 
   return (
-    <section className="py-20 bg-gradient-navy text-white">
+    <section className="py-20 bg-gradient-hero text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-5xl font-bold mb-6">
@@ -35,7 +35,7 @@ export default function InvestorSection() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
+          <div className="bg-glass rounded-xl p-8 shadow-glow">
             <h3 className="text-xl font-semibold mb-4">Market Opportunity</h3>
             <div className="space-y-3">
               {marketData.map((item, index) => (
@@ -47,7 +47,7 @@ export default function InvestorSection() {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
+          <div className="bg-glass rounded-xl p-8 shadow-glow">
             <h3 className="text-xl font-semibold mb-4">Our Advantage</h3>
             <ul className="space-y-3 text-blue-100">
               {advantages.map((advantage, index) => (
@@ -59,7 +59,7 @@ export default function InvestorSection() {
             </ul>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
+          <div className="bg-glass rounded-xl p-8 shadow-glow">
             <h3 className="text-xl font-semibold mb-4">Investment Opportunities</h3>
             <div className="space-y-4">
               <Button 
