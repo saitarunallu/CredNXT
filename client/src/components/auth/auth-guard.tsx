@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { wsService } from "@/lib/websocket";
 
 interface AuthGuardProps {
@@ -43,11 +44,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingScreen message="Verifying authentication..." />;
   }
 
   if (authService.requiresProfile()) {

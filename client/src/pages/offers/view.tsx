@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Navbar from "@/components/layout/navbar";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,17 +143,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-300 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading offer details..." />;
   }
 
   if (!offerData?.offer) {
