@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/contacts/check-phone', authenticate, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/users/check-phone', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { phone } = req.query;
       
@@ -158,10 +158,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Phone number is required' });
       }
       
-      const contact = await storage.findContactByPhone(req.userId!, phone);
+      const user = await storage.getUserByPhone(phone);
       
-      if (contact) {
-        res.json({ exists: true, contact });
+      if (user) {
+        res.json({ exists: true, user: { id: user.id, name: user.name, phone: user.phone } });
       } else {
         res.json({ exists: false });
       }

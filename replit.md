@@ -8,6 +8,15 @@ CredNXT is a peer-to-known-person (P2KP) lending platform that revolutionizes fi
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### Contact System Removal (August 2025)
+- **Removed contact list functionality entirely** - The app no longer maintains separate contact lists
+- **Direct user-to-user offers** - Mobile numbers are now used to send offers directly to registered users or unregistered recipients
+- **Automatic user detection** - When entering a mobile number, the app checks if the user is registered and auto-fills their name
+- **Updated database schema** - Offers table now stores recipient phone/name directly instead of referencing contacts table
+- **Simplified UX** - Phone number entry comes first, followed by name field that auto-fills or allows manual entry
+
 ## System Architecture
 
 ### Frontend Architecture

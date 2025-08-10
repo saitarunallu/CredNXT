@@ -35,7 +35,9 @@ export const contacts = pgTable("contacts", {
 export const offers = pgTable("offers", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   fromUserId: uuid("from_user_id").notNull().references(() => users.id),
-  toContactId: uuid("to_contact_id").notNull().references(() => contacts.id),
+  toUserPhone: varchar("to_user_phone", { length: 15 }).notNull(),
+  toUserName: text("to_user_name").notNull(),
+  toUserId: uuid("to_user_id").references(() => users.id), // Will be filled if the recipient is registered
   offerType: offerTypeEnum("offer_type").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
@@ -88,10 +90,13 @@ export const otpCodes = pgTable("otp_codes", {
 export const usersRelations = relations(users, ({ many }) => ({
   contacts: many(contacts),
   sentOffers: many(offers),
+  receivedOffers: many(offers, {
+    relationName: "toUser"
+  }),
   notifications: many(notifications),
 }));
 
-export const contactsRelations = relations(contacts, ({ one, many }) => ({
+export const contactsRelations = relations(contacts, ({ one }) => ({
   user: one(users, {
     fields: [contacts.userId],
     references: [users.id],
@@ -100,7 +105,6 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
     fields: [contacts.verifiedUserId],
     references: [users.id],
   }),
-  offers: many(offers),
 }));
 
 export const offersRelations = relations(offers, ({ one, many }) => ({
@@ -108,9 +112,10 @@ export const offersRelations = relations(offers, ({ one, many }) => ({
     fields: [offers.fromUserId],
     references: [users.id],
   }),
-  toContact: one(contacts, {
-    fields: [offers.toContactId],
-    references: [contacts.id],
+  toUser: one(users, {
+    fields: [offers.toUserId],
+    references: [users.id],
+    relationName: "toUser"
   }),
   payments: many(payments),
   notifications: many(notifications),

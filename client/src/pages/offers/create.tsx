@@ -60,17 +60,17 @@ export default function CreateOffer() {
       setIsCheckingContact(true);
       
       try {
-        // Check if contact exists
-        const response = await apiRequest('GET', `/api/contacts/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
+        // Check if user is registered with this phone number
+        const response = await apiRequest('GET', `/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
         const data = await response.json();
         
-        if (data.exists && data.contact) {
-          setContactName(data.contact.name);
+        if (data.exists && data.user) {
+          setContactName(data.user.name);
           setIsContactFound(true);
         }
       } catch (error) {
-        // Contact doesn't exist or error occurred - user can enter manually
-        console.log('Contact not found or error checking:', error);
+        // User not registered - allow manual name entry
+        console.log('User not found or error checking:', error);
       } finally {
         setIsCheckingContact(false);
       }
@@ -126,49 +126,25 @@ export default function CreateOffer() {
     if (!contactName || !contactPhone) {
       toast({
         title: "Missing Information",
-        description: "Please provide both contact name and phone number.",
+        description: "Please provide both name and phone number.",
         variant: "destructive",
       });
       return;
     }
     
-    try {
-      let contactId;
-      
-      if (isContactFound) {
-        // Contact already exists, find the ID
-        const checkResponse = await apiRequest('GET', `/api/contacts/check-phone?phone=${encodeURIComponent(contactPhone)}`);
-        const checkData = await checkResponse.json();
-        contactId = checkData.contact.id;
-      } else {
-        // Create new contact
-        const contactResponse = await apiRequest('POST', '/api/contacts', {
-          name: contactName,
-          phone: contactPhone
-        });
-        const contactData = await contactResponse.json();
-        contactId = contactData.contact.id;
-      }
-      
-      const formData = {
-        ...data,
-        toContactId: contactId,
-        offerType: offerType as any,
-        interestType: interestType as any,
-        repaymentType: repaymentType as any,
-        tenureUnit: tenureUnit as any,
-        allowPartPayment,
-        dueDate,
-      };
-      
-      createOfferMutation.mutate(formData);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create contact. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const formData = {
+      ...data,
+      toUserPhone: contactPhone,
+      toUserName: contactName,
+      offerType: offerType as any,
+      interestType: interestType as any,
+      repaymentType: repaymentType as any,
+      tenureUnit: tenureUnit as any,
+      allowPartPayment,
+      dueDate,
+    };
+    
+    createOfferMutation.mutate(formData);
   };
 
   return (
@@ -258,7 +234,7 @@ export default function CreateOffer() {
                           type="text"
                           value={contactName}
                           onChange={(e) => setContactName(e.target.value)}
-                          placeholder={isContactFound ? "Name found from contacts" : "Enter contact name"}
+                          placeholder={isContactFound ? "Name found from registered users" : "Enter recipient name"}
                           disabled={isContactFound}
                           className={`pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base ${isContactFound ? 'bg-green-50 border-green-200' : ''}`}
                         />
@@ -276,15 +252,15 @@ export default function CreateOffer() {
                           <div className={`flex items-center ${isContactFound ? 'text-green-800' : 'text-blue-800'}`}>
                             <ContactIcon className="w-4 h-4 mr-2" />
                             <span className="text-sm font-medium">
-                              {isContactFound ? 'Existing Contact' : 'New Contact'}
+                              {isContactFound ? 'Registered User' : 'Recipient Details'}
                             </span>
                           </div>
                           <div className={`text-sm mt-1 ${isContactFound ? 'text-green-700' : 'text-blue-700'}`}>
                             {contactName} - {contactPhone}
                           </div>
-                          {!isContactFound && (
-                            <div className="text-xs text-blue-600 mt-1">
-                              This contact will be added to your contact list
+                          {isContactFound && (
+                            <div className="text-xs text-green-600 mt-1">
+                              This user is already registered with CredNXT
                             </div>
                           )}
                         </div>

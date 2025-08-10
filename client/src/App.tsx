@@ -9,7 +9,7 @@ import Login from "@/pages/auth/login";
 import VerifyOtp from "@/pages/auth/verify-otp";
 import CompleteProfile from "@/pages/auth/complete-profile";
 import Dashboard from "@/pages/dashboard";
-import Contacts from "@/pages/contacts";
+
 import OffersPage from "@/pages/offers";
 import CreateOffer from "@/pages/offers/create";
 import ViewOffer from "@/pages/offers/view";
@@ -29,12 +29,6 @@ function Router() {
       <Route path="/dashboard">
         <AuthGuard>
           <Dashboard />
-        </AuthGuard>
-      </Route>
-      
-      <Route path="/contacts">
-        <AuthGuard>
-          <Contacts />
         </AuthGuard>
       </Route>
       
