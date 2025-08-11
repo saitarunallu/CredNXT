@@ -471,23 +471,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF download
+  // PDF download - generates contract if it doesn't exist
   app.get('/api/offers/:id/contract', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
       const offer = await storage.getOffer(id);
       
-      if (!offer || !offer.contractPdfKey) {
-        return res.status(404).json({ message: 'Contract not found' });
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
       }
 
-      const pdfBuffer = await pdfService.downloadContract(offer.contractPdfKey);
+      let contractKey = offer.contractPdfKey;
+
+      // If no contract exists or file is missing, generate it
+      if (!contractKey || !await pdfService.contractExists(contractKey)) {
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        contractKey = await pdfService.generateContract(offer, fromUser);
+        await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
+      }
+
+      const pdfBuffer = await pdfService.downloadContract(contractKey);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="contract-${offer.id}.pdf"`);
       res.send(pdfBuffer);
     } catch (error) {
-      res.status(500).json({ message: 'Server error' });
+      console.error('Contract download error:', error);
+      res.status(500).json({ message: 'Failed to generate or download contract' });
     }
   });
 

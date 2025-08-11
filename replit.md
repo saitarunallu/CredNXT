@@ -24,6 +24,13 @@ Preferred communication style: Simple, everyday language.
 - **Smart conditional UI** - Repayment frequency selector only appears when EMI or interest-only repayment types are selected
 - **Improved form validation** - Fixed type coercion for amount, interest rate, and tenure value fields
 
+### Functional PDF Contract System (August 2025)
+- **Professional PDF generation** - Implemented PDFKit library for creating legally-formatted lending agreements
+- **Automatic contract creation** - PDF contracts are generated automatically when offers are created
+- **On-demand generation** - System generates contracts for existing offers when downloading if missing
+- **Comprehensive contract content** - Includes party details, loan terms, legal conditions, and signature sections
+- **Secure file storage** - Contracts stored locally with proper file management and access controls
+
 ## System Architecture
 
 ### Frontend Architecture

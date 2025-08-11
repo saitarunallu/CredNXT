@@ -146,6 +146,15 @@ export class PdfService {
     });
   }
 
+  async contractExists(contractKey: string): Promise<boolean> {
+    try {
+      const filePath = path.join(process.cwd(), contractKey);
+      return fs.existsSync(filePath);
+    } catch (error) {
+      return false;
+    }
+  }
+
   async downloadContract(contractKey: string): Promise<Buffer> {
     try {
       const filePath = path.join(process.cwd(), contractKey);
