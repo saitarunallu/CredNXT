@@ -258,20 +258,53 @@ export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newP
   expectedAmount?: number;
   message?: string;
 } {
+  const schedule = calculateRepaymentSchedule(terms);
+  
+  if (terms.repaymentType === 'emi') {
+    // For EMI payments, calculate which EMI installment is next
+    const emiAmount = schedule.emiAmount!;
+    const completedEMIs = Math.floor(paidAmount / emiAmount);
+    const remainingForCurrentEMI = paidAmount % emiAmount;
+    
+    // Check if all EMIs are completed
+    if (completedEMIs >= schedule.numberOfPayments) {
+      return {
+        isValid: false,
+        message: "All EMI payments have been completed"
+      };
+    }
+    
+    // If there's a partial payment for current EMI, require the remaining amount
+    if (remainingForCurrentEMI > 0) {
+      const requiredAmount = emiAmount - remainingForCurrentEMI;
+      if (Math.abs(newPaymentAmount - requiredAmount) > 0.01) {
+        return {
+          isValid: false,
+          expectedAmount: requiredAmount,
+          message: `Need ₹${requiredAmount.toLocaleString()} to complete EMI #${completedEMIs + 1}`
+        };
+      }
+    } else {
+      // Require exact EMI amount for next installment
+      if (Math.abs(newPaymentAmount - emiAmount) > 0.01) {
+        return {
+          isValid: false,
+          expectedAmount: emiAmount,
+          message: `EMI #${completedEMIs + 1} should be exactly ₹${emiAmount.toLocaleString()}`
+        };
+      }
+    }
+    
+    return { isValid: true };
+  }
+  
+  // For non-EMI payments, use the original logic
   const nextPayment = getNextPaymentInfo(terms, paidAmount);
   
   if (!nextPayment) {
     return {
       isValid: false,
       message: "All payments have been completed"
-    };
-  }
-  
-  if (terms.repaymentType === 'emi' && newPaymentAmount !== nextPayment.remainingAmount) {
-    return {
-      isValid: false,
-      expectedAmount: nextPayment.remainingAmount,
-      message: `EMI payment should be exactly ₹${nextPayment.remainingAmount.toLocaleString()}`
     };
   }
   

@@ -189,13 +189,40 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     if (offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount) {
       const emiAmount = scheduleData.schedule.emiAmount;
       const paymentAmount = parseFloat(data.amount);
-      if (Math.abs(paymentAmount - emiAmount) > 0.01) { // Allow for small floating point differences
+      const completedEMIs = Math.floor(totalPaid / emiAmount);
+      const remainingForCurrentEMI = totalPaid % emiAmount;
+      
+      // Check if all EMIs are completed
+      if (completedEMIs >= scheduleData.schedule.numberOfPayments) {
         toast({
-          title: "Invalid EMI Amount",
-          description: `EMI payment must be exactly ₹${emiAmount.toLocaleString()}`,
+          title: "All EMIs Completed",
+          description: "All EMI payments have been completed for this loan",
           variant: "destructive"
         });
         return;
+      }
+      
+      // If there's a partial payment for current EMI, require the remaining amount
+      if (remainingForCurrentEMI > 0) {
+        const requiredAmount = emiAmount - remainingForCurrentEMI;
+        if (Math.abs(paymentAmount - requiredAmount) > 0.01) {
+          toast({
+            title: "Invalid EMI Amount",
+            description: `Need ₹${requiredAmount.toLocaleString()} to complete EMI #${completedEMIs + 1}`,
+            variant: "destructive"
+          });
+          return;
+        }
+      } else {
+        // Require exact EMI amount for next installment
+        if (Math.abs(paymentAmount - emiAmount) > 0.01) {
+          toast({
+            title: "Invalid EMI Amount",
+            description: `EMI #${completedEMIs + 1} should be exactly ₹${emiAmount.toLocaleString()}`,
+            variant: "destructive"
+          });
+          return;
+        }
       }
     }
 
@@ -702,9 +729,30 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 {/* Next payment info for EMI */}
                 {offer.status === 'accepted' && offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount && outstanding > 0 && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <div className="text-sm font-medium text-blue-800">Next EMI Due</div>
-                    <div className="text-lg font-bold text-blue-900">₹{scheduleData.schedule.emiAmount.toLocaleString()}</div>
-                    <div className="text-xs text-blue-600">EMI payments must be exact amount</div>
+                    {(() => {
+                      const emiAmount = scheduleData.schedule.emiAmount;
+                      const completedEMIs = Math.floor(totalPaid / emiAmount);
+                      const remainingForCurrentEMI = totalPaid % emiAmount;
+                      
+                      if (remainingForCurrentEMI > 0) {
+                        const requiredAmount = emiAmount - remainingForCurrentEMI;
+                        return (
+                          <>
+                            <div className="text-sm font-medium text-blue-800">Complete EMI #{completedEMIs + 1}</div>
+                            <div className="text-lg font-bold text-blue-900">₹{requiredAmount.toLocaleString()}</div>
+                            <div className="text-xs text-blue-600">Remaining amount to complete this EMI</div>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <div className="text-sm font-medium text-blue-800">Next EMI #{completedEMIs + 1} Due</div>
+                            <div className="text-lg font-bold text-blue-900">₹{emiAmount.toLocaleString()}</div>
+                            <div className="text-xs text-blue-600">EMI payments must be exact amount</div>
+                          </>
+                        );
+                      }
+                    })()}
                   </div>
                 )}
               </CardContent>
