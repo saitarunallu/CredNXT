@@ -71,8 +71,23 @@ class AuthService {
       
       return result.user;
     } catch (error) {
-      this.logout();
+      // Only logout if it's a 401 error, not network issues
+      if (error instanceof Error && error.message.includes('401')) {
+        this.logout();
+      }
       return null;
+    }
+  }
+
+  // Method to validate current authentication state
+  async validateAuth(): Promise<boolean> {
+    if (!this.token) return false;
+    
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch (error) {
+      return false;
     }
   }
 

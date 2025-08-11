@@ -47,8 +47,14 @@ export const getQueryFn: <T>(options: {
       credentials: "include",
     });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    if (res.status === 401) {
+      // Clear auth data on 401 and handle appropriately
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
     }
 
     await throwIfResNotOk(res);
@@ -59,10 +65,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 3 * 1000, // Aggressive refresh every 3 seconds for real-time feel
+      refetchInterval: 30 * 1000, // Refresh every 30 seconds instead of 3 seconds
       refetchOnWindowFocus: true,
-      staleTime: 0, // Always consider data stale for immediate updates
-      retry: false,
+      staleTime: 10 * 1000, // Consider data fresh for 10 seconds
+      retry: 1, // Allow one retry on failure
     },
     mutations: {
       retry: false,
