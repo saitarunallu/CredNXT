@@ -575,7 +575,7 @@ export default function CreateOffer() {
                 <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
                   <div className="flex items-center mb-3">
                     <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center mr-3">
-                      <DollarSign className="w-4 h-4 text-white" />
+                      <IndianRupee className="w-4 h-4 text-white" />
                     </div>
                     <h4 className="text-sm font-semibold text-green-900">Loan Summary</h4>
                   </div>
