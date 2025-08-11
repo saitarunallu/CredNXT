@@ -47,6 +47,15 @@ Preferred communication style: Simple, everyday language.
 - **Client and server validation** - Dual-layer validation prevents invalid payments on both frontend and backend
 - **Partial payment handling** - If partial EMI payment exists, system requires completion before next EMI
 
+### Repayment Schedule-Based Payment System (August 2025)
+- **Payment status tracking** - Visual status indicators for each installment (paid, partial, pending, overdue)
+- **Next payment guidance** - Clear display of which payment is due next with exact amount and breakdown
+- **Schedule visualization** - Complete payment schedule showing status of all installments with due dates
+- **Intelligent payment forms** - Payment input pre-filled with correct amount based on schedule
+- **Payment progress summary** - Real-time display of total paid, remaining balance, and completion status
+- **API endpoint for payment status** - Server-side calculation of payment statuses and next payment due
+- **Enhanced user experience** - Borrowers see exactly what payment to make and when it's due
+
 ## System Architecture
 
 ### Frontend Architecture

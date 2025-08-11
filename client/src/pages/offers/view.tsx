@@ -54,6 +54,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     enabled: !!offerData?.offer,
   });
 
+  // Get payment status with repayment schedule
+  const { data: paymentStatusData } = useQuery({
+    queryKey: ['/api/offers', offerId, 'payment-status'],
+    enabled: !!offerData?.offer && offerData?.offer.status === 'accepted',
+  });
+
   const {
     register,
     handleSubmit,
@@ -94,6 +100,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-status'] });
       setIsPaymentDialogOpen(false);
       reset();
       setPaymentMode("");
@@ -118,6 +125,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-status'] });
       toast({
         title: "Payment Approved",
         description: "Payment has been approved successfully.",
@@ -139,6 +147,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-status'] });
       toast({
         title: "Payment Rejected",
         description: "Payment has been rejected.",
@@ -576,6 +585,97 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
+            {/* Payment Schedule Status */}
+            {offer.status === 'accepted' && paymentStatusData?.paymentStatus && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Payment Schedule Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {paymentStatusData.paymentStatus.map((payment: any, index: number) => (
+                      <div 
+                        key={index}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                          payment.status === 'paid' ? 'bg-green-50 border-green-200' :
+                          payment.status === 'partial' ? 'bg-yellow-50 border-yellow-200' :
+                          payment.status === 'overdue' ? 'bg-red-50 border-red-200' :
+                          'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                            payment.status === 'paid' ? 'bg-green-100 text-green-700' :
+                            payment.status === 'partial' ? 'bg-yellow-100 text-yellow-700' :
+                            payment.status === 'overdue' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {payment.installmentNumber}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm">
+                              {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} #{payment.installmentNumber}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              Due: {new Date(payment.dueDate).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">
+                            ₹{payment.totalAmount.toLocaleString()}
+                          </div>
+                          {payment.status === 'partial' && (
+                            <div className="text-xs text-yellow-700">
+                              Paid: ₹{payment.paidAmount.toLocaleString()}
+                            </div>
+                          )}
+                          <div className={`text-xs font-medium ${
+                            payment.status === 'paid' ? 'text-green-600' :
+                            payment.status === 'partial' ? 'text-yellow-600' :
+                            payment.status === 'overdue' ? 'text-red-600' :
+                            'text-gray-600'
+                          }`}>
+                            {payment.status === 'paid' ? 'Paid' :
+                             payment.status === 'partial' ? 'Partial' :
+                             payment.status === 'overdue' ? 'Overdue' :
+                             'Pending'}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Payment Summary */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-sm text-gray-600">Total Paid</div>
+                        <div className="font-semibold text-green-600">
+                          ₹{paymentStatusData.totalPaid.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Remaining</div>
+                        <div className="font-semibold text-orange-600">
+                          ₹{paymentStatusData.remainingAmount.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Total Amount</div>
+                        <div className="font-semibold text-gray-900">
+                          ₹{paymentStatusData.totalAmount.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Payment History */}
             <Card>
               <CardHeader>
@@ -594,22 +694,58 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           <DialogTitle>Submit Payment</DialogTitle>
                           <p className="text-sm text-gray-600">Submit payment details for lender approval. The payment will be marked as pending until approved.</p>
                         </DialogHeader>
+                        {/* Next Payment Information */}
+                        {paymentStatusData?.nextPayment && (
+                          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-semibold text-blue-900">
+                                  {paymentStatusData.nextPayment.isPartialPaid ? 'Complete Payment' : 'Next Payment Due'}
+                                </h3>
+                                <p className="text-sm text-blue-700">
+                                  {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} #{paymentStatusData.nextPayment.installmentNumber}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-blue-900">
+                                  ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
+                                </div>
+                                <div className="text-xs text-blue-600">
+                                  Due: {new Date(paymentStatusData.nextPayment.nextDueDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                            {paymentStatusData.nextPayment.isPartialPaid && (
+                              <div className="text-xs text-blue-600">
+                                ₹{(paymentStatusData.nextPayment.nextAmount - paymentStatusData.nextPayment.remainingAmount).toLocaleString()} already paid
+                              </div>
+                            )}
+                            <div className="text-xs text-blue-600 mt-1">
+                              Principal: ₹{paymentStatusData.nextPayment.principalAmount.toLocaleString()} | 
+                              Interest: ₹{paymentStatusData.nextPayment.interestAmount.toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+
                         <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-4">
                           <div>
-                            <Label htmlFor="amount">Amount</Label>
-                            {offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount && (
-                              <div className="text-sm text-blue-600 mb-1">
-                                EMI Amount: ₹{scheduleData.schedule.emiAmount.toLocaleString()}
+                            <Label htmlFor="amount">Payment Amount</Label>
+                            {paymentStatusData?.nextPayment && (
+                              <div className="text-sm text-green-600 mb-1">
+                                Required: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
                               </div>
                             )}
                             <Input
                               id="amount"
                               type="number"
                               step="0.01"
-                              {...register("amount", { valueAsNumber: true })}
+                              {...register("amount", { 
+                                valueAsNumber: true,
+                                value: paymentStatusData?.nextPayment?.remainingAmount || undefined
+                              })}
                               placeholder={
-                                offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount
-                                  ? scheduleData.schedule.emiAmount.toString()
+                                paymentStatusData?.nextPayment
+                                  ? paymentStatusData.nextPayment.remainingAmount.toString()
                                   : "Enter payment amount"
                               }
                             />

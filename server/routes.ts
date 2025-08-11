@@ -321,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import calculation functions (dynamic import for server compatibility)
-      const { validatePaymentAmount, calculateRepaymentSchedule } = await import('@shared/calculations');
+      const { validatePaymentAmount, calculateRepaymentSchedule, getNextPaymentInfo } = await import('@shared/calculations');
       
       // Get existing payments to calculate total paid
       const existingPayments = await storage.getOfferPayments(paymentData.offerId);
@@ -729,6 +729,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('KFS download error:', error);
       res.status(500).json({ message: 'Failed to generate or download KFS document' });
+    }
+  });
+
+  // Get payment schedule status
+  app.get('/api/offers/:id/payment-status', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Import calculation functions
+      const { calculateRepaymentSchedule, getPaymentStatus, getNextPaymentInfo } = await import('@shared/calculations');
+      
+      // Get all payments for this offer
+      const payments = await storage.getOfferPayments(id);
+      const totalPaid = payments
+        .filter(p => p.status === 'paid')
+        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+      const loanTerms = {
+        principal: parseFloat(offer.amount),
+        interestRate: parseFloat(offer.interestRate),
+        interestType: offer.interestType,
+        tenureValue: offer.tenureValue,
+        tenureUnit: offer.tenureUnit,
+        repaymentType: offer.repaymentType,
+        repaymentFrequency: offer.repaymentFrequency || undefined,
+        startDate: new Date(offer.createdAt)
+      };
+
+      const paymentStatus = getPaymentStatus(loanTerms, totalPaid);
+      const nextPayment = getNextPaymentInfo(loanTerms, totalPaid);
+      const schedule = calculateRepaymentSchedule(loanTerms);
+
+      res.json({
+        paymentStatus,
+        nextPayment,
+        totalPaid,
+        totalAmount: schedule.totalAmount,
+        remainingAmount: schedule.totalAmount - totalPaid
+      });
+    } catch (error) {
+      console.error('Payment status error:', error);
+      res.status(500).json({ message: 'Failed to get payment status' });
     }
   });
 

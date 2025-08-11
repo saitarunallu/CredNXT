@@ -248,12 +248,55 @@ export function getNextPaymentInfo(terms: LoanTerms, paidAmount: number) {
         nextDueDate: payment.dueDate,
         nextAmount: payment.totalAmount,
         remainingAmount: payment.totalAmount - totalPaid,
-        installmentNumber: payment.installmentNumber
+        installmentNumber: payment.installmentNumber,
+        principalAmount: payment.principalAmount,
+        interestAmount: payment.interestAmount,
+        isPartialPaid: totalPaid > 0
       };
     }
   }
   
   return null; // All payments completed
+}
+
+// Get payment status for each installment
+export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
+  const schedule = calculateRepaymentSchedule(terms);
+  let totalPaid = paidAmount;
+  const paymentStatus = [];
+  
+  for (const payment of schedule.schedule) {
+    let status: 'paid' | 'partial' | 'pending' | 'overdue';
+    let paidAmount = 0;
+    let remainingAmount = payment.totalAmount;
+    
+    if (totalPaid >= payment.totalAmount) {
+      status = 'paid';
+      paidAmount = payment.totalAmount;
+      remainingAmount = 0;
+      totalPaid -= payment.totalAmount;
+    } else if (totalPaid > 0) {
+      status = 'partial';
+      paidAmount = totalPaid;
+      remainingAmount = payment.totalAmount - totalPaid;
+      totalPaid = 0;
+    } else {
+      // Check if payment is overdue
+      const now = new Date();
+      status = payment.dueDate < now ? 'overdue' : 'pending';
+      paidAmount = 0;
+      remainingAmount = payment.totalAmount;
+    }
+    
+    paymentStatus.push({
+      ...payment,
+      status,
+      paidAmount,
+      remainingAmount
+    });
+  }
+  
+  return paymentStatus;
 }
 
 // Validate if a payment amount is valid for the current schedule
