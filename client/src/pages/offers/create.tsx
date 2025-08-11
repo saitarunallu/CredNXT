@@ -35,6 +35,10 @@ export default function CreateOffer() {
   const [tenureUnit, setTenureUnit] = useState("");
   const [repaymentFrequency, setRepaymentFrequency] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  });
 
 
 
@@ -123,28 +127,28 @@ export default function CreateOffer() {
     }
   });
 
-  // Calculate due date based on tenure
+  // Calculate due date based on start date and tenure
   const calculateDueDate = () => {
     if (!tenureValue || !tenureUnit) return new Date();
     
-    const now = new Date();
+    const start = new Date(startDate);
     const value = parseInt(tenureValue.toString());
     
     switch (tenureUnit) {
       case 'days':
-        return new Date(now.getTime() + (value * 24 * 60 * 60 * 1000));
+        return new Date(start.getTime() + (value * 24 * 60 * 60 * 1000));
       case 'weeks':
-        return new Date(now.getTime() + (value * 7 * 24 * 60 * 60 * 1000));
+        return new Date(start.getTime() + (value * 7 * 24 * 60 * 60 * 1000));
       case 'months':
-        const monthDate = new Date(now);
+        const monthDate = new Date(start);
         monthDate.setMonth(monthDate.getMonth() + value);
         return monthDate;
       case 'years':
-        const yearDate = new Date(now);
+        const yearDate = new Date(start);
         yearDate.setFullYear(yearDate.getFullYear() + value);
         return yearDate;
       default:
-        return now;
+        return start;
     }
   };
 
@@ -221,6 +225,7 @@ export default function CreateOffer() {
       repaymentType: repaymentType as "emi" | "interest_only" | "full_payment",
       repaymentFrequency: (repaymentFrequency as "weekly" | "monthly" | "yearly") || null,
       allowPartPayment,
+      startDate: new Date(startDate),
       dueDate: dueDate,
       purpose: data.purpose || null,
       note: data.note || null
@@ -455,6 +460,26 @@ export default function CreateOffer() {
                         <SelectItem value="full_payment">🎯 Full Payment at End</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate" className="text-gray-700 font-medium text-sm">Start Date</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="pl-10 bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm text-base"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      When should the loan officially begin?
+                    </p>
                   </div>
 
                   <div className="space-y-2">

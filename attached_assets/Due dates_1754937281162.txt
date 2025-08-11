@@ -1,0 +1,17 @@
+Due dates should be
+
+•	Start date → The day the loan officially begins (example: 11 Aug 2025).
+	•	Repayment frequency → How often the borrower must make payments (weekly, monthly, yearly).
+	•	Due date calculation →
+	•	If weekly → Add 7 days each time from the start date.
+Example: Aug 11 → Aug 18 → Aug 25 → Sep 1, etc.
+	•	If monthly → Add 1 month each time from the start date.
+Example: Aug 11 → Sep 11 → Oct 11 → Nov 11, etc.
+(If the month doesn’t have the same day — like starting Jan 31 — it adjusts to the last valid date, e.g., Feb 28.)
+	•	If yearly → Add 1 year each time from the start date.
+Example: Aug 11, 2025 → Aug 11, 2026 → Aug 11, 2027, etc.
+	•	Tenure → Decides how far this chain of due dates will go (e.g., 6 months, 2 years).
+
+In short:
+We just keep adding weeks, months, or years to the starting date until we reach the loan’s end period, and each of those 
+dates is a due date

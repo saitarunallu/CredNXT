@@ -6,6 +6,7 @@ export interface LoanTerms {
   tenureUnit: 'days' | 'weeks' | 'months' | 'years';
   repaymentType: 'emi' | 'interest_only' | 'full_payment';
   repaymentFrequency?: 'weekly' | 'monthly' | 'yearly';
+  startDate: Date;
 }
 
 export interface RepaymentSchedule {
@@ -55,6 +56,39 @@ function getPaymentFrequencyInMonths(frequency: string): number {
   }
 }
 
+// Calculate due dates based on start date and frequency
+function calculateDueDates(startDate: Date, frequency: 'weekly' | 'monthly' | 'yearly', numberOfPayments: number): Date[] {
+  const dueDates: Date[] = [];
+  
+  for (let i = 1; i <= numberOfPayments; i++) {
+    const dueDate = new Date(startDate);
+    
+    switch (frequency) {
+      case 'weekly':
+        dueDate.setDate(startDate.getDate() + (i * 7));
+        break;
+      case 'monthly':
+        dueDate.setMonth(startDate.getMonth() + i);
+        // Handle month overflow (e.g., Jan 31 + 1 month = Feb 28/29)
+        if (dueDate.getDate() !== startDate.getDate()) {
+          dueDate.setDate(0); // Set to last day of previous month
+        }
+        break;
+      case 'yearly':
+        dueDate.setFullYear(startDate.getFullYear() + i);
+        // Handle leap year edge case
+        if (dueDate.getDate() !== startDate.getDate()) {
+          dueDate.setDate(0); // Set to last day of previous month
+        }
+        break;
+    }
+    
+    dueDates.push(dueDate);
+  }
+  
+  return dueDates;
+}
+
 // Calculate EMI using standard formula
 function calculateEMI(principal: number, monthlyRate: number, numberOfPayments: number): number {
   if (monthlyRate === 0) {
@@ -68,7 +102,7 @@ function calculateEMI(principal: number, monthlyRate: number, numberOfPayments: 
 
 // Generate repayment schedule
 export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule {
-  const { principal, interestRate, interestType, tenureValue, tenureUnit, repaymentType, repaymentFrequency } = terms;
+  const { principal, interestRate, interestType, tenureValue, tenureUnit, repaymentType, repaymentFrequency, startDate } = terms;
   
   const tenureInMonths = convertTenureToMonths(tenureValue, tenureUnit);
   const annualRate = interestRate / 100;
@@ -79,19 +113,19 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       ? (principal * annualRate * tenureInMonths) / 12
       : (principal * annualRate * tenureInMonths) / 12; // Simplified reducing for full payment
     
-    const finalDate = new Date();
+    const finalDate = new Date(startDate);
     switch (tenureUnit) {
       case 'days':
-        finalDate.setDate(finalDate.getDate() + tenureValue);
+        finalDate.setDate(startDate.getDate() + tenureValue);
         break;
       case 'weeks':
-        finalDate.setDate(finalDate.getDate() + (tenureValue * 7));
+        finalDate.setDate(startDate.getDate() + (tenureValue * 7));
         break;
       case 'months':
-        finalDate.setMonth(finalDate.getMonth() + tenureValue);
+        finalDate.setMonth(startDate.getMonth() + tenureValue);
         break;
       case 'years':
-        finalDate.setFullYear(finalDate.getFullYear() + tenureValue);
+        finalDate.setFullYear(startDate.getFullYear() + tenureValue);
         break;
     }
     
@@ -115,6 +149,9 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   const paymentFrequencyInMonths = getPaymentFrequencyInMonths(frequency);
   const numberOfPayments = Math.ceil(tenureInMonths / paymentFrequencyInMonths);
   
+  // Calculate all due dates from start date
+  const dueDates = calculateDueDates(startDate, frequency, numberOfPayments);
+  
   const schedule: PaymentScheduleItem[] = [];
   let remainingBalance = principal;
   let totalInterest = 0;
@@ -124,18 +161,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     const interestPerPayment = (principal * annualRate * paymentFrequencyInMonths) / 12;
     
     for (let i = 1; i <= numberOfPayments; i++) {
-      const dueDate = new Date();
-      switch (frequency) {
-        case 'weekly':
-          dueDate.setDate(dueDate.getDate() + (i * 7));
-          break;
-        case 'monthly':
-          dueDate.setMonth(dueDate.getMonth() + i);
-          break;
-        case 'yearly':
-          dueDate.setFullYear(dueDate.getFullYear() + i);
-          break;
-      }
+      const dueDate = dueDates[i - 1];
       
       const isLastPayment = i === numberOfPayments;
       const principalAmount = isLastPayment ? principal : 0;
@@ -160,18 +186,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       const emiAmount = (principal + totalInterest) / numberOfPayments;
       
       for (let i = 1; i <= numberOfPayments; i++) {
-        const dueDate = new Date();
-        switch (frequency) {
-          case 'weekly':
-            dueDate.setDate(dueDate.getDate() + (i * 7));
-            break;
-          case 'monthly':
-            dueDate.setMonth(dueDate.getMonth() + i);
-            break;
-          case 'yearly':
-            dueDate.setFullYear(dueDate.getFullYear() + i);
-            break;
-        }
+        const dueDate = dueDates[i - 1];
         
         const principalAmount = principal / numberOfPayments;
         const interestAmount = totalInterest / numberOfPayments;
@@ -192,18 +207,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       const emiAmount = calculateEMI(principal, monthlyRate, numberOfPayments);
       
       for (let i = 1; i <= numberOfPayments; i++) {
-        const dueDate = new Date();
-        switch (frequency) {
-          case 'weekly':
-            dueDate.setDate(dueDate.getDate() + (i * 7));
-            break;
-          case 'monthly':
-            dueDate.setMonth(dueDate.getMonth() + i);
-            break;
-          case 'yearly':
-            dueDate.setFullYear(dueDate.getFullYear() + i);
-            break;
-        }
+        const dueDate = dueDates[i - 1];
         
         const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
         const principalAmount = Math.round((emiAmount - interestAmount) * 100) / 100;

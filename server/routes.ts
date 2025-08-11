@@ -555,7 +555,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency || undefined
+        repaymentFrequency: offer.repaymentFrequency || undefined,
+        startDate: offer.startDate || new Date()
       };
 
       const schedule = calculateRepaymentSchedule(loanTerms);

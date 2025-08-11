@@ -38,6 +38,7 @@ export const offers = pgTable("offers", {
   repaymentFrequency: repaymentFrequencyEnum("repayment_frequency"),
   allowPartPayment: boolean("allow_part_payment").default(false),
   purpose: text("purpose"),
+  startDate: timestamp("start_date").defaultNow().notNull(),
   dueDate: timestamp("due_date").notNull(),
   note: text("note"),
   status: offerStatusEnum("status").default('pending'),
