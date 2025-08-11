@@ -166,30 +166,30 @@ export default function OfferCard({
 
       <CardFooter>
         {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id ? (
-          <div className="w-full space-y-2">
-            <div className="flex space-x-2">
+          <div className="w-full space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button 
                 onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
                 disabled={updateOfferMutation.isPending}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1.5 h-8"
                 size="sm"
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <CheckCircle className="w-3 h-3 mr-1" />
                 Accept
               </Button>
               <Button 
                 variant="destructive"
                 onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
                 disabled={updateOfferMutation.isPending}
-                className="flex-1"
+                className="text-xs px-2 py-1.5 h-8"
                 size="sm"
               >
-                <XCircle className="w-4 h-4 mr-1" />
+                <XCircle className="w-3 h-3 mr-1" />
                 Decline
               </Button>
             </div>
             <Link href={`/offers/${offer.id}`} className="w-full">
-              <Button variant="outline" className="w-full" size="sm">
+              <Button variant="outline" className="w-full text-xs h-8" size="sm">
                 View Details
               </Button>
             </Link>
