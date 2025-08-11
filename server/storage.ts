@@ -1,6 +1,6 @@
 import { 
-  users, contacts, offers, payments, notifications, otpCodes,
-  type User, type InsertUser, type Contact, type InsertContact,
+  users, offers, payments, notifications, otpCodes,
+  type User, type InsertUser, 
   type Offer, type InsertOffer, type Payment, type InsertPayment,
   type Notification, type InsertNotification 
 } from "@shared/schema";
@@ -14,15 +14,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User>;
 
-  // Contacts
-  getUserContacts(userId: string): Promise<Contact[]>;
-  getContact(id: string): Promise<Contact | undefined>;
-  findContactByPhone(userId: string, phone: string): Promise<Contact | undefined>;
-  createContact(contact: InsertContact): Promise<Contact>;
-  createContacts(contacts: InsertContact[]): Promise<Contact[]>;
-  updateContact(id: string, updates: Partial<InsertContact>): Promise<Contact>;
-  deleteContact(id: string): Promise<void>;
-  markContactAsVerified(phone: string, verifiedUserId: string): Promise<void>;
+  // No longer using contacts table
 
   // Offers
   getOffer(id: string): Promise<Offer | undefined>;
@@ -75,56 +67,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Contacts
-  async getUserContacts(userId: string): Promise<Contact[]> {
-    return await db
-      .select()
-      .from(contacts)
-      .where(eq(contacts.userId, userId))
-      .orderBy(asc(contacts.name));
-  }
-
-  async getContact(id: string): Promise<Contact | undefined> {
-    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
-    return contact || undefined;
-  }
-
-  async findContactByPhone(userId: string, phone: string): Promise<Contact | undefined> {
-    const [contact] = await db
-      .select()
-      .from(contacts)
-      .where(and(eq(contacts.userId, userId), eq(contacts.phone, phone)));
-    return contact || undefined;
-  }
-
-  async createContact(contact: InsertContact): Promise<Contact> {
-    const [newContact] = await db.insert(contacts).values(contact).returning();
-    return newContact;
-  }
-
-  async createContacts(contactList: InsertContact[]): Promise<Contact[]> {
-    return await db.insert(contacts).values(contactList).returning();
-  }
-
-  async updateContact(id: string, updates: Partial<InsertContact>): Promise<Contact> {
-    const [contact] = await db
-      .update(contacts)
-      .set(updates)
-      .where(eq(contacts.id, id))
-      .returning();
-    return contact;
-  }
-
-  async deleteContact(id: string): Promise<void> {
-    await db.delete(contacts).where(eq(contacts.id, id));
-  }
-
-  async markContactAsVerified(phone: string, verifiedUserId: string): Promise<void> {
-    await db
-      .update(contacts)
-      .set({ isVerified: true, verifiedUserId })
-      .where(eq(contacts.phone, phone));
-  }
+  // Contacts functionality removed - using direct user lookups
 
   // Offers
   async getOffer(id: string): Promise<Offer | undefined> {
@@ -137,11 +80,14 @@ export class DatabaseStorage implements IStorage {
       .select({
         offer: offers,
         fromUser: users,
-        contact: contacts,
+        toUser: {
+          id: users.id,
+          name: users.name,
+          phone: users.phone,
+        },
       })
       .from(offers)
       .leftJoin(users, eq(offers.fromUserId, users.id))
-      .leftJoin(contacts, eq(offers.toContactId, contacts.id))
       .where(eq(offers.id, id));
 
     return result;
@@ -151,14 +97,12 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select({
         offer: offers,
-        contact: contacts,
         totalPaid: sql<string>`COALESCE(SUM(${payments.amount}), 0)`,
       })
       .from(offers)
-      .leftJoin(contacts, eq(offers.toContactId, contacts.id))
       .leftJoin(payments, and(eq(payments.offerId, offers.id), eq(payments.status, 'paid')))
       .where(eq(offers.fromUserId, userId))
-      .groupBy(offers.id, contacts.id)
+      .groupBy(offers.id)
       .orderBy(desc(offers.createdAt));
   }
 
@@ -171,9 +115,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(offers)
       .leftJoin(users, eq(offers.fromUserId, users.id))
-      .leftJoin(contacts, eq(offers.toContactId, contacts.id))
       .leftJoin(payments, and(eq(payments.offerId, offers.id), eq(payments.status, 'paid')))
-      .where(eq(contacts.verifiedUserId, userId))
+      .where(eq(offers.toUserId, userId))
       .groupBy(offers.id, users.id)
       .orderBy(desc(offers.createdAt));
   }
@@ -200,11 +143,9 @@ export class DatabaseStorage implements IStorage {
       .select({
         offer: offers,
         fromUser: users,
-        contact: contacts,
       })
       .from(offers)
       .leftJoin(users, eq(offers.fromUserId, users.id))
-      .leftJoin(contacts, eq(offers.toContactId, contacts.id))
       .where(
         and(
           eq(offers.status, 'accepted'),

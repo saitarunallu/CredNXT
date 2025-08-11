@@ -8,7 +8,7 @@ import { pdfService } from "./services/pdf";
 import { reminderService } from "./services/reminder";
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
-  insertContactSchema, insertOfferSchema, insertPaymentSchema
+  insertOfferSchema, insertPaymentSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -119,10 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVerified: true 
       });
 
-      // Mark any contacts with this phone as verified
-      if (user.phone) {
-        await storage.markContactAsVerified(user.phone, user.id);
-      }
+      // User profile completed
 
       res.json({ success: true, user });
     } catch (error) {
@@ -140,16 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Contacts routes
-  app.get('/api/contacts', authenticate, async (req: AuthenticatedRequest, res) => {
-    try {
-      const contacts = await storage.getUserContacts(req.userId!);
-      res.json({ contacts });
-    } catch (error) {
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-
+  // User lookup route
   app.get('/api/users/check-phone', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { phone } = req.query;
@@ -167,54 +155,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error('Check phone error:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-
-  app.post('/api/contacts', authenticate, async (req: AuthenticatedRequest, res) => {
-    try {
-      const contactData = insertContactSchema.parse({
-        ...req.body,
-        userId: req.userId!
-      });
-      
-      const contact = await storage.createContact(contactData);
-      res.json({ contact });
-    } catch (error) {
-      console.error('Create contact error:', error);
-      res.status(400).json({ message: 'Invalid contact data' });
-    }
-  });
-
-  app.post('/api/contacts/bulk', authenticate, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { contacts: contactsData } = req.body;
-      
-      if (!Array.isArray(contactsData)) {
-        return res.status(400).json({ message: 'Contacts must be an array' });
-      }
-
-      const parsedContacts = contactsData.map(contact => 
-        insertContactSchema.parse({
-          ...contact,
-          userId: req.userId!
-        })
-      );
-      
-      const contacts = await storage.createContacts(parsedContacts);
-      res.json({ contacts });
-    } catch (error) {
-      console.error('Bulk create contacts error:', error);
-      res.status(400).json({ message: 'Invalid contacts data' });
-    }
-  });
-
-  app.delete('/api/contacts/:id', authenticate, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteContact(id);
-      res.json({ success: true });
-    } catch (error) {
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -263,25 +203,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // User not found, that's fine
       }
 
-      // Create or find contact for this user
-      let contact = await storage.findContactByPhone(req.userId!, toUserPhone);
-      if (!contact) {
-        contact = await storage.createContact({
-          userId: req.userId!,
-          name: toUserName,
-          phone: toUserPhone,
-          verifiedUserId: recipientUser?.id || null
-        });
-      }
-
-      // Prepare offer data with contact reference
+      // Prepare offer data with direct user references
       const completeOfferData = {
         ...offerData,
         fromUserId: req.userId!,
         toUserPhone,
         toUserName,
-        toUserId: recipientUser?.id || null,
-        toContactId: contact.id
+        toUserId: recipientUser?.id || null
       };
 
       const parsedOfferData = insertOfferSchema.parse(completeOfferData);
@@ -409,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency
+        repaymentFrequency: offer.repaymentFrequency || undefined
       };
 
       const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount));
@@ -508,7 +436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update payment status to paid
       const updatedPayment = await storage.updatePayment(id, {
         status: 'paid',
-        paidAt: new Date()
+        // Payment approved at this time
       });
 
       // Notify both users
@@ -627,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency
+        repaymentFrequency: offer.repaymentFrequency || undefined
       };
 
       const schedule = calculateRepaymentSchedule(loanTerms);
@@ -787,7 +715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     ws.on('close', () => {
       // Remove client from map
-      for (const [userId, client] of clients.entries()) {
+      for (const [userId, client] of Array.from(clients.entries())) {
         if (client === ws) {
           clients.delete(userId);
           console.log(`User ${userId} disconnected from WebSocket`);

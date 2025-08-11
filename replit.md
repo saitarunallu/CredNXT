@@ -11,11 +11,12 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Contact System Removal (August 2025)
-- **Removed contact list functionality entirely** - The app no longer maintains separate contact lists
-- **Direct user-to-user offers** - Mobile numbers are now used to send offers directly to registered users or unregistered recipients
+- **Completely removed contacts table** - Dropped the contacts table entirely from the database schema
+- **Direct user-to-user offers** - Mobile numbers are now used to send offers directly to registered users or unregistered recipients  
 - **Automatic user detection** - When entering a mobile number, the app checks if the user is registered and auto-fills their name
-- **Updated database schema** - Offers table now stores recipient phone/name directly instead of referencing contacts table
-- **Simplified UX** - Phone number entry comes first, followed by name field that auto-fills or allows manual entry
+- **Updated database schema** - Offers table now stores recipient phone/name directly with optional user ID reference
+- **Simplified storage layer** - Removed all contact-related methods from storage interface and implementation
+- **Cleaner data flow** - All queries now join directly with users table when user information is needed
 - **Fixed authentication** - JWT tokens now properly included in all API requests for seamless user lookup
 
 ### Enhanced Tenure and Repayment Options (August 2025)

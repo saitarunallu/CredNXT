@@ -22,24 +22,12 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const contacts = pgTable("contacts", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  name: text("name").notNull(),
-  phone: varchar("phone", { length: 15 }).notNull(),
-  email: text("email"),
-  isVerified: boolean("is_verified").default(false),
-  verifiedUserId: uuid("verified_user_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const offers = pgTable("offers", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   fromUserId: uuid("from_user_id").notNull().references(() => users.id),
   toUserPhone: varchar("to_user_phone", { length: 15 }).notNull(),
   toUserName: text("to_user_name").notNull(),
   toUserId: uuid("to_user_id").references(() => users.id), // Will be filled if the recipient is registered
-  toContactId: uuid("to_contact_id").references(() => contacts.id), // Reference to the contact
   offerType: offerTypeEnum("offer_type").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
@@ -91,23 +79,11 @@ export const otpCodes = pgTable("otp_codes", {
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  contacts: many(contacts),
   sentOffers: many(offers),
   receivedOffers: many(offers, {
     relationName: "toUser"
   }),
   notifications: many(notifications),
-}));
-
-export const contactsRelations = relations(contacts, ({ one }) => ({
-  user: one(users, {
-    fields: [contacts.userId],
-    references: [users.id],
-  }),
-  verifiedUser: one(users, {
-    fields: [contacts.verifiedUserId],
-    references: [users.id],
-  }),
 }));
 
 export const offersRelations = relations(offers, ({ one, many }) => ({
@@ -119,10 +95,6 @@ export const offersRelations = relations(offers, ({ one, many }) => ({
     fields: [offers.toUserId],
     references: [users.id],
     relationName: "toUser"
-  }),
-  toContact: one(contacts, {
-    fields: [offers.toContactId],
-    references: [contacts.id],
   }),
   payments: many(payments),
   notifications: many(notifications),
@@ -151,11 +123,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
-
-export const insertContactSchema = createInsertSchema(contacts).omit({
-  id: true,
-  createdAt: true,
 });
 
 export const insertOfferSchema = createInsertSchema(offers).omit({
@@ -207,8 +174,6 @@ export const demoRequestSchema = z.object({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Contact = typeof contacts.$inferSelect;
-export type InsertContact = z.infer<typeof insertContactSchema>;
 export type Offer = typeof offers.$inferSelect;
 export type InsertOffer = z.infer<typeof insertOfferSchema>;
 export type Payment = typeof payments.$inferSelect;
