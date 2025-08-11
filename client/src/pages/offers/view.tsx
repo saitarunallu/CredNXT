@@ -269,17 +269,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   
   const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
-  
-  // Debug logging
-  console.log('Debug offer data:', {
-    offerStatus: offer.status,
-    currentUserId: currentUser?.id,
-    toUserId: offer.toUserId,
-    fromUserId: offer.fromUserId,
-    isReceiver,
-    isSender,
-    shouldShowButtons: offer.status === 'pending' && isReceiver
-  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -442,29 +431,38 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
             {/* Actions */}
             {offer.status === 'pending' && isReceiver && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Actions</CardTitle>
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold">Respond to Offer</CardTitle>
+                  <p className="text-sm text-gray-600">Choose your action for this offer</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex space-x-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Button 
                       onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
                       disabled={updateOfferMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium"
+                      size="lg"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      <CheckCircle className="w-5 h-5 mr-2" />
                       Accept Offer
                     </Button>
                     <Button 
                       variant="destructive"
                       onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
                       disabled={updateOfferMutation.isPending}
+                      className="h-12 text-base font-medium"
+                      size="lg"
                     >
-                      <XCircle className="w-4 h-4 mr-2" />
+                      <XCircle className="w-5 h-5 mr-2" />
                       Decline Offer
                     </Button>
                   </div>
+                  {updateOfferMutation.isPending && (
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-600">Processing your response...</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
