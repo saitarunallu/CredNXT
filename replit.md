@@ -38,6 +38,14 @@ Preferred communication style: Simple, everyday language.
 - **Multi-user support** - Notifications sent to both offer creators and recipients when connected
 - **Comprehensive event handling** - Covers offer creation, acceptance, payment recording, and status changes
 
+### EMI Payment Validation System (August 2025)
+- **Strict EMI installment tracking** - System tracks individual EMI payments and prevents multiple submissions
+- **Exact amount validation** - EMI payments must be exactly the calculated EMI amount (no overpayments or underpayments)
+- **Installment progression** - Users can only pay one EMI at a time in sequential order (EMI #1, then #2, etc.)
+- **Enhanced error messaging** - Clear feedback showing which EMI installment is due and expected amount
+- **Client and server validation** - Dual-layer validation prevents invalid payments on both frontend and backend
+- **Partial payment handling** - If partial EMI payment exists, system requires completion before next EMI
+
 ## System Architecture
 
 ### Frontend Architecture
