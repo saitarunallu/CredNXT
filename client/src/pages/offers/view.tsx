@@ -285,50 +285,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   }, [isPaymentDialogOpen, paymentStatusData?.nextPayment, setValue]);
 
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
-    // Client-side validation for EMI payments
-    if (offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount) {
-      const emiAmount = scheduleData.schedule.emiAmount;
-      const paymentAmount = parseFloat(data.amount);
-      const completedEMIs = Math.floor(totalPaid / emiAmount);
-      const remainingForCurrentEMI = totalPaid % emiAmount;
-      
-      // Check if all EMIs are completed
-      if (completedEMIs >= scheduleData.schedule.numberOfPayments) {
-        toast({
-          title: "All EMIs Completed",
-          description: "All EMI payments have been completed for this loan",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // If there's a partial payment for current EMI, require the remaining amount
-      if (remainingForCurrentEMI > 0) {
-        const requiredAmount = emiAmount - remainingForCurrentEMI;
-        if (Math.abs(paymentAmount - requiredAmount) > 0.01) {
-          toast({
-            title: "Invalid EMI Amount",
-            description: `Need ₹${requiredAmount.toLocaleString()} to complete EMI #${completedEMIs + 1}`,
-            variant: "destructive"
-          });
-          return;
-        }
-      } else {
-        // Require exact EMI amount for next installment
-        if (Math.abs(paymentAmount - emiAmount) > 0.01) {
-          toast({
-            title: "Invalid EMI Amount",
-            description: `EMI #${completedEMIs + 1} should be exactly ₹${emiAmount.toLocaleString()}`,
-            variant: "destructive"
-          });
-          return;
-        }
-      }
+    if (!paymentMode) {
+      toast({
+        title: "Payment Mode Required",
+        description: "Please select a payment mode.",
+        variant: "destructive",
+      });
+      return;
     }
 
     addPaymentMutation.mutate({
       ...data,
-      paymentMode
+      mode: paymentMode as "cash" | "bank_transfer" | "upi" | "cheque" | "other"
     });
   };
 
