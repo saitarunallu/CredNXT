@@ -185,6 +185,20 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   };
 
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
+    // Client-side validation for EMI payments
+    if (offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount) {
+      const emiAmount = scheduleData.schedule.emiAmount;
+      const paymentAmount = parseFloat(data.amount);
+      if (Math.abs(paymentAmount - emiAmount) > 0.01) { // Allow for small floating point differences
+        toast({
+          title: "Invalid EMI Amount",
+          description: `EMI payment must be exactly ₹${emiAmount.toLocaleString()}`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     addPaymentMutation.mutate({
       ...data,
       paymentMode

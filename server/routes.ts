@@ -414,7 +414,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount));
       
-      if (!validation.isValid && offer.repaymentType === 'emi' && !offer.allowPartPayment) {
+      // For EMI loans, always validate payment amount (regardless of allowPartPayment setting)
+      if (!validation.isValid && offer.repaymentType === 'emi') {
+        return res.status(400).json({ 
+          message: validation.message,
+          expectedAmount: validation.expectedAmount
+        });
+      }
+      
+      // For non-EMI loans, only validate if part payments are not allowed
+      if (!validation.isValid && offer.repaymentType !== 'emi' && !offer.allowPartPayment) {
         return res.status(400).json({ 
           message: validation.message,
           expectedAmount: validation.expectedAmount
