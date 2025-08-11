@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Calendar, IndianRupee, User, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, IndianRupee, User, CheckCircle, XCircle, ArrowDownLeft, ArrowUpRight, HandCoins, Wallet } from "lucide-react";
 import { Offer, User as UserType } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -72,21 +72,33 @@ export default function OfferCard({
     if (isReceived) {
       // Received offers: flip the perspective
       if (offer.offerType === 'lend') {
-        return 'loan offer'; // They want to lend to you = loan offer for you
+        return { label: 'LOAN OFFER', subtitle: 'You can borrow money' }; // They want to lend to you = loan offer for you
       } else {
-        return 'lending request'; // They want to borrow from you = lending request for you
+        return { label: 'LENDING REQUEST', subtitle: 'They want to borrow from you' }; // They want to borrow from you = lending request for you
       }
     } else {
       // Sent offers: show as created
-      return offer.offerType === 'lend' ? 'lend offer' : 'borrow request';
+      if (offer.offerType === 'lend') {
+        return { label: 'LENT OFFER', subtitle: 'You offered to lend money' };
+      } else {
+        return { label: 'LOAN REQUEST', subtitle: 'You requested to borrow money' };
+      }
     }
   };
 
   const getDisplayTypeColor = () => {
     if (isReceived) {
-      return offer.offerType === 'lend' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+      return offer.offerType === 'lend' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-orange-100 text-orange-800 border-orange-300';
     } else {
-      return offer.offerType === 'lend' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+      return offer.offerType === 'lend' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-purple-100 text-purple-800 border-purple-300';
+    }
+  };
+
+  const getTypeIcon = () => {
+    if (isReceived) {
+      return offer.offerType === 'lend' ? ArrowDownLeft : ArrowUpRight;
+    } else {
+      return offer.offerType === 'lend' ? HandCoins : Wallet;
     }
   };
 
@@ -105,13 +117,22 @@ export default function OfferCard({
               </p>
             </div>
           </div>
-          <div className="flex flex-col items-end space-y-1">
+          <div className="flex flex-col items-end space-y-2">
             <Badge className={getStatusColor(offer.status)}>
               {offer.status}
             </Badge>
-            <Badge className={getDisplayTypeColor()}>
-              {getDisplayType()}
-            </Badge>
+            <div className={`px-3 py-1.5 rounded-lg border font-medium text-xs ${getDisplayTypeColor()}`}>
+              <div className="flex items-center space-x-1">
+                {(() => {
+                  const IconComponent = getTypeIcon();
+                  return <IconComponent className="w-3 h-3" />;
+                })()}
+                <span>{getDisplayType().label}</span>
+              </div>
+              <div className="text-xs opacity-80 mt-0.5">
+                {getDisplayType().subtitle}
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>

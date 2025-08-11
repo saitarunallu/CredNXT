@@ -154,7 +154,10 @@ export default function Dashboard() {
           {/* Recent Offers */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                <p className="text-sm text-gray-600">Your latest loans and lending offers</p>
+              </div>
               <Badge variant="outline" className="text-xs">{recentOffers.length} offers</Badge>
             </div>
             

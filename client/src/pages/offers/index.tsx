@@ -66,7 +66,11 @@ export default function OffersPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Sent Offers */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Sent Offers</h2>
+            <div className="flex items-center space-x-2 mb-4">
+              <Send className="w-5 h-5 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">My Sent Offers</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Offers you created (loans you requested or money you offered to lend)</p>
             <div className="space-y-4">
               {sentOffers.length > 0 ? (
                 sentOffers.map((item: any) => (
@@ -88,7 +92,11 @@ export default function OffersPage() {
 
           {/* Received Offers */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Received Offers</h2>
+            <div className="flex items-center space-x-2 mb-4">
+              <Inbox className="w-5 h-5 text-green-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Received Offers</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Offers sent to you (people wanting to lend you money or asking to borrow from you)</p>
             <div className="space-y-4">
               {receivedOffers.length > 0 ? (
                 receivedOffers.map((item: any) => (
