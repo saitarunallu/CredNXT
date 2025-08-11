@@ -75,7 +75,7 @@ export default function CompleteProfile() {
                   id="name"
                   {...register("name")}
                   placeholder="Enter your full name"
-                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
+                  className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
                 />
                 {errors.name && (
                   <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
@@ -89,7 +89,7 @@ export default function CompleteProfile() {
                   type="email"
                   {...register("email")}
                   placeholder="your@email.com"
-                  className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
+                  className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
