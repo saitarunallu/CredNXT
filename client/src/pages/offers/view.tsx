@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -66,7 +66,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    setValue
   } = useForm<Omit<InsertPayment, 'offerId'>>({
     resolver: zodResolver(insertPaymentSchema.omit({ offerId: true }))
   });
@@ -275,6 +276,13 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       });
     }
   };
+
+  // Auto-fill payment amount when dialog opens
+  useEffect(() => {
+    if (isPaymentDialogOpen && paymentStatusData?.nextPayment) {
+      setValue('amount', paymentStatusData.nextPayment.remainingAmount);
+    }
+  }, [isPaymentDialogOpen, paymentStatusData?.nextPayment, setValue]);
 
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
     // Client-side validation for EMI payments
@@ -901,8 +909,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           <div>
                             <Label htmlFor="amount">Payment Amount</Label>
                             {paymentStatusData?.nextPayment && (
-                              <div className="text-sm text-green-600 mb-1">
-                                {offer.allowPartPayment ? 'Maximum' : 'Required'}: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
+                              <div className="text-sm font-medium text-blue-600 mb-2">
+                                {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} #{paymentStatusData.nextPayment.installmentNumber}: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
                               </div>
                             )}
                             <Input
@@ -910,20 +918,20 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                               type="number"
                               step="0.01"
                               {...register("amount", { 
-                                valueAsNumber: true,
-                                value: paymentStatusData?.nextPayment?.remainingAmount || undefined
+                                valueAsNumber: true
                               })}
-                              placeholder={
-                                paymentStatusData?.nextPayment
-                                  ? paymentStatusData.nextPayment.remainingAmount.toString()
-                                  : "Enter payment amount"
-                              }
+                              value={paymentStatusData?.nextPayment?.remainingAmount || ''}
                               readOnly={!offer.allowPartPayment}
-                              className={!offer.allowPartPayment ? "bg-gray-100 cursor-not-allowed" : ""}
+                              className={!offer.allowPartPayment ? "bg-gray-100 cursor-not-allowed font-semibold text-lg" : "font-semibold text-lg"}
                             />
                             {!offer.allowPartPayment && (
                               <p className="text-xs text-gray-500 mt-1">
-                                {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} amount is fixed for this loan
+                                Payment amount is fixed as per loan agreement
+                              </p>
+                            )}
+                            {offer.allowPartPayment && paymentStatusData?.nextPayment && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                You can pay any amount up to ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
                               </p>
                             )}
                             {errors.amount && (
