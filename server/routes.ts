@@ -337,21 +337,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency || undefined
+        repaymentFrequency: offer.repaymentFrequency || undefined,
+        startDate: new Date(offer.createdAt)
       };
 
-      const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount));
+      const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount), offer.allowPartPayment);
       
-      // For EMI loans, always validate payment amount (regardless of allowPartPayment setting)
-      if (!validation.isValid && offer.repaymentType === 'emi') {
-        return res.status(400).json({ 
-          message: validation.message,
-          expectedAmount: validation.expectedAmount
-        });
-      }
-      
-      // For non-EMI loans, only validate if part payments are not allowed
-      if (!validation.isValid && offer.repaymentType !== 'emi' && !offer.allowPartPayment) {
+      if (!validation.isValid) {
         return res.status(400).json({ 
           message: validation.message,
           expectedAmount: validation.expectedAmount
@@ -729,6 +721,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('KFS download error:', error);
       res.status(500).json({ message: 'Failed to generate or download KFS document' });
+    }
+  });
+
+  // Lender can allow/disallow partial payments
+  app.patch('/api/offers/:id/allow-partial-payment', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { allowPartPayment } = req.body;
+      
+      const offer = await storage.getOffer(id);
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Only the lender (offer creator) can modify this setting
+      if (offer.fromUserId !== req.userId) {
+        return res.status(403).json({ message: 'Only the lender can modify payment settings' });
+      }
+
+      const updatedOffer = await storage.updateOffer(id, { allowPartPayment });
+      res.json({ offer: updatedOffer });
+    } catch (error) {
+      console.error('Update partial payment error:', error);
+      res.status(500).json({ message: 'Failed to update payment settings' });
+    }
+  });
+
+  // Lender can close the loan early
+  app.patch('/api/offers/:id/close-loan', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const offer = await storage.getOffer(id);
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Only the lender (offer creator) can close the loan
+      if (offer.fromUserId !== req.userId) {
+        return res.status(403).json({ message: 'Only the lender can close the loan' });
+      }
+
+      if (offer.status !== 'accepted') {
+        return res.status(400).json({ message: 'Only accepted loans can be closed' });
+      }
+
+      const updatedOffer = await storage.updateOffer(id, { status: 'completed' });
+
+      // Create notifications for both parties
+      await storage.createNotification({
+        userId: offer.fromUserId,
+        offerId: offer.id,
+        type: 'loan_closed',
+        title: 'Loan Closed',
+        message: `You closed the loan early${reason ? `: ${reason}` : ''}`
+      });
+
+      if (offer.toUserId) {
+        await storage.createNotification({
+          userId: offer.toUserId,
+          offerId: offer.id,
+          type: 'loan_closed',
+          title: 'Loan Closed',
+          message: `The loan has been closed by the lender${reason ? `: ${reason}` : ''}`
+        });
+
+        const borrowerClient = clients.get(offer.toUserId);
+        if (borrowerClient && borrowerClient.readyState === WebSocket.OPEN) {
+          borrowerClient.send(JSON.stringify({
+            type: 'loan_closed',
+            offerId: offer.id,
+            message: `The loan has been closed by the lender${reason ? `: ${reason}` : ''}`
+          }));
+        }
+      }
+
+      res.json({ offer: updatedOffer });
+    } catch (error) {
+      console.error('Close loan error:', error);
+      res.status(500).json({ message: 'Failed to close loan' });
     }
   });
 

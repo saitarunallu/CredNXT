@@ -300,7 +300,7 @@ export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
 }
 
 // Validate if a payment amount is valid for the current schedule
-export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newPaymentAmount: number): {
+export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newPaymentAmount: number, allowPartPayment: boolean = false): {
   isValid: boolean;
   expectedAmount?: number;
   message?: string;
@@ -332,12 +332,21 @@ export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newP
         };
       }
     } else {
-      // Require exact EMI amount for next installment
-      if (Math.abs(newPaymentAmount - emiAmount) > 0.01) {
+      // For strict EMI validation, require exact amount unless partial payments are allowed
+      if (!allowPartPayment && Math.abs(newPaymentAmount - emiAmount) > 0.01) {
         return {
           isValid: false,
           expectedAmount: emiAmount,
           message: `EMI #${completedEMIs + 1} should be exactly ₹${emiAmount.toLocaleString()}`
+        };
+      }
+      
+      // If partial payments allowed, validate the amount is reasonable
+      if (allowPartPayment && newPaymentAmount > emiAmount) {
+        return {
+          isValid: false,
+          expectedAmount: emiAmount,
+          message: `Payment cannot exceed EMI amount of ₹${emiAmount.toLocaleString()}`
         };
       }
     }
@@ -355,7 +364,7 @@ export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newP
     };
   }
   
-  if (newPaymentAmount > nextPayment.remainingAmount) {
+  if (!allowPartPayment && newPaymentAmount > nextPayment.remainingAmount) {
     return {
       isValid: false,
       expectedAmount: nextPayment.remainingAmount,

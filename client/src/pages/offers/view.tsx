@@ -42,6 +42,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const queryClient = useQueryClient();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState("");
+  const [isCloseLoanDialogOpen, setIsCloseLoanDialogOpen] = useState(false);
+  const [closeLoanReason, setCloseLoanReason] = useState("");
 
   const currentUser = authService.getUser();
 
@@ -157,6 +159,52 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       toast({
         title: "Error",
         description: "Failed to reject payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Lender can toggle partial payment allowance
+  const togglePartialPaymentMutation = useMutation({
+    mutationFn: async (allowPartPayment: boolean) => {
+      const response = await apiRequest('PATCH', `/api/offers/${offerId}/allow-partial-payment`, { allowPartPayment });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      toast({
+        title: "Payment Settings Updated",
+        description: offer.allowPartPayment ? "Partial payments are now allowed" : "Partial payments are now disabled",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update payment settings.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Lender can close loan early
+  const closeLoanMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      const response = await apiRequest('PATCH', `/api/offers/${offerId}/close-loan`, { reason });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      setIsCloseLoanDialogOpen(false);
+      setCloseLoanReason("");
+      toast({
+        title: "Loan Closed",
+        description: "The loan has been closed successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to close the loan.",
         variant: "destructive",
       });
     }
@@ -960,15 +1008,82 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   <Download className="w-4 h-4 mr-2" />
                   Download KFS
                 </Button>
-                
-                {offer.status === 'accepted' && outstanding === 0 && (
-                  <Button 
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() => updateOfferMutation.mutate({ status: 'completed' })}
-                    disabled={updateOfferMutation.isPending || offer.status === 'completed'}
-                  >
-                    Mark as Completed
-                  </Button>
+
+                {/* Lender Controls */}
+                {offer.status === 'accepted' && isSender && (
+                  <>
+                    <div className="border-t pt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Allow Partial Payments</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => togglePartialPaymentMutation.mutate(!offer.allowPartPayment)}
+                          disabled={togglePartialPaymentMutation.isPending}
+                          className={offer.allowPartPayment ? "bg-green-50 border-green-200 text-green-700" : "bg-gray-50"}
+                        >
+                          {offer.allowPartPayment ? "Enabled" : "Disabled"}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-3">
+                        {offer.allowPartPayment 
+                          ? "Borrower can make partial payments for installments"
+                          : "Borrower must pay exact installment amounts"
+                        }
+                      </p>
+                    </div>
+
+                    <Dialog open={isCloseLoanDialogOpen} onOpenChange={setIsCloseLoanDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Close Loan Early
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Close Loan Early</DialogTitle>
+                          <p className="text-sm text-gray-600">
+                            This will mark the loan as completed regardless of remaining balance. 
+                            This action cannot be undone.
+                          </p>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="closeLoanReason">Reason for Early Closure (Optional)</Label>
+                            <Input
+                              id="closeLoanReason"
+                              value={closeLoanReason}
+                              onChange={(e) => setCloseLoanReason(e.target.value)}
+                              placeholder="e.g., Borrower paid remaining amount outside platform"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setIsCloseLoanDialogOpen(false);
+                                setCloseLoanReason("");
+                              }}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => closeLoanMutation.mutate(closeLoanReason)}
+                              disabled={closeLoanMutation.isPending}
+                              className="flex-1 bg-orange-600 hover:bg-orange-700"
+                            >
+                              {closeLoanMutation.isPending ? "Closing..." : "Close Loan"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
                 )}
               </CardContent>
             </Card>
