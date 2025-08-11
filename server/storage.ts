@@ -229,6 +229,14 @@ export class DatabaseStorage implements IStorage {
     return newPayment;
   }
 
+  async getPayment(id: string): Promise<Payment | null> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id));
+    return payment || null;
+  }
+
   async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> {
     const [payment] = await db
       .update(payments)

@@ -9,8 +9,8 @@ export const repaymentTypeEnum = pgEnum('repayment_type', ['emi', 'interest_only
 export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['weekly', 'monthly', 'yearly']);
 export const tenureUnitEnum = pgEnum('tenure_unit', ['days', 'weeks', 'months', 'years']);
 export const offerStatusEnum = pgEnum('offer_status', ['pending', 'accepted', 'declined', 'completed', 'overdue']);
-export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed']);
-export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received']);
+export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed', 'rejected']);
+export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

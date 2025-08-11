@@ -387,40 +387,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentData = insertPaymentSchema.parse(req.body);
       const payment = await storage.createPayment({
         ...paymentData,
-        status: 'paid'
+        status: 'pending'
       });
       
       // Get offer details to send notification
       const offer = await storage.getOffer(payment.offerId);
       if (offer) {
+        // Notify the lender about the payment submission
         await storage.createNotification({
           userId: offer.fromUserId,
           offerId: offer.id,
-          type: 'payment_received',
-          title: 'Payment Received',
-          message: `Payment of ₹${payment.amount} received`
+          type: 'payment_submitted',
+          title: 'Payment Submitted',
+          message: `Payment of ₹${payment.amount} submitted for approval`
         });
 
-        // Send WebSocket notification to offer creator
+        // Send WebSocket notification to lender
         const client = clients.get(offer.fromUserId);
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
-            type: 'payment_received',
+            type: 'payment_submitted',
             offerId: offer.id,
+            paymentId: payment.id,
             amount: payment.amount,
-            message: `Payment of ₹${payment.amount} received`
+            message: `Payment of ₹${payment.amount} submitted for approval`
           }));
         }
 
-        // Also send notification to payer if they're different and connected
+        // Notify borrower that payment is submitted
         if (offer.toUserId && offer.toUserId !== offer.fromUserId) {
+          await storage.createNotification({
+            userId: offer.toUserId,
+            offerId: offer.id,
+            type: 'payment_submitted',
+            title: 'Payment Submitted',
+            message: `Your payment of ₹${payment.amount} has been submitted and is awaiting approval`
+          });
+
           const payerClient = clients.get(offer.toUserId);
           if (payerClient && payerClient.readyState === WebSocket.OPEN) {
             payerClient.send(JSON.stringify({
-              type: 'payment_received',
+              type: 'payment_submitted',
               offerId: offer.id,
+              paymentId: payment.id,
               amount: payment.amount,
-              message: `Your payment of ₹${payment.amount} was recorded`
+              message: `Your payment of ₹${payment.amount} has been submitted and is awaiting approval`
             }));
           }
         }
@@ -430,6 +441,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Create payment error:', error);
       res.status(400).json({ message: 'Invalid payment data' });
+    }
+  });
+
+  // Approve payment
+  app.patch('/api/payments/:id/approve', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const payment = await storage.getPayment(id);
+      
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      // Get offer to verify permissions
+      const offer = await storage.getOffer(payment.offerId);
+      if (!offer || offer.fromUserId !== req.userId) {
+        return res.status(403).json({ message: 'Unauthorized to approve this payment' });
+      }
+
+      // Update payment status to paid
+      const updatedPayment = await storage.updatePayment(id, {
+        status: 'paid',
+        paidAt: new Date()
+      });
+
+      // Notify both users
+      await storage.createNotification({
+        userId: offer.fromUserId,
+        offerId: offer.id,
+        type: 'payment_approved',
+        title: 'Payment Approved',
+        message: `You approved payment of ₹${payment.amount}`
+      });
+
+      if (offer.toUserId) {
+        await storage.createNotification({
+          userId: offer.toUserId,
+          offerId: offer.id,
+          type: 'payment_approved',
+          title: 'Payment Approved',
+          message: `Your payment of ₹${payment.amount} has been approved`
+        });
+
+        const payerClient = clients.get(offer.toUserId);
+        if (payerClient && payerClient.readyState === WebSocket.OPEN) {
+          payerClient.send(JSON.stringify({
+            type: 'payment_approved',
+            offerId: offer.id,
+            paymentId: payment.id,
+            amount: payment.amount,
+            message: `Your payment of ₹${payment.amount} has been approved`
+          }));
+        }
+      }
+
+      res.json({ payment: updatedPayment });
+    } catch (error) {
+      console.error('Approve payment error:', error);
+      res.status(500).json({ message: 'Failed to approve payment' });
+    }
+  });
+
+  // Reject payment
+  app.patch('/api/payments/:id/reject', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const payment = await storage.getPayment(id);
+      
+      if (!payment) {
+        return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      // Get offer to verify permissions
+      const offer = await storage.getOffer(payment.offerId);
+      if (!offer || offer.fromUserId !== req.userId) {
+        return res.status(403).json({ message: 'Unauthorized to reject this payment' });
+      }
+
+      // Update payment status to rejected
+      const updatedPayment = await storage.updatePayment(id, {
+        status: 'rejected'
+      });
+
+      // Notify both users
+      await storage.createNotification({
+        userId: offer.fromUserId,
+        offerId: offer.id,
+        type: 'payment_rejected',
+        title: 'Payment Rejected',
+        message: `You rejected payment of ₹${payment.amount}${reason ? `: ${reason}` : ''}`
+      });
+
+      if (offer.toUserId) {
+        await storage.createNotification({
+          userId: offer.toUserId,
+          offerId: offer.id,
+          type: 'payment_rejected',
+          title: 'Payment Rejected',
+          message: `Your payment of ₹${payment.amount} was rejected${reason ? `: ${reason}` : ''}`
+        });
+
+        const payerClient = clients.get(offer.toUserId);
+        if (payerClient && payerClient.readyState === WebSocket.OPEN) {
+          payerClient.send(JSON.stringify({
+            type: 'payment_rejected',
+            offerId: offer.id,
+            paymentId: payment.id,
+            amount: payment.amount,
+            message: `Your payment of ₹${payment.amount} was rejected${reason ? `: ${reason}` : ''}`
+          }));
+        }
+      }
+
+      res.json({ payment: updatedPayment });
+    } catch (error) {
+      console.error('Reject payment error:', error);
+      res.status(500).json({ message: 'Failed to reject payment' });
     }
   });
 

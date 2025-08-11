@@ -25,7 +25,9 @@ import {
   Download,
   CheckCircle,
   XCircle,
-  Plus
+  Plus,
+  Clock,
+  Ban
 } from "lucide-react";
 
 interface ViewOfferProps {
@@ -79,9 +81,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     mutationFn: async (data: Omit<InsertPayment, 'offerId'>) => {
       const response = await apiRequest('POST', '/api/payments', {
         ...data,
-        offerId,
-        status: 'paid',
-        paidAt: new Date().toISOString()
+        offerId
       });
       return response.json();
     },
@@ -91,14 +91,56 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       reset();
       setPaymentMode("");
       toast({
-        title: "Payment Recorded",
-        description: "Payment has been recorded successfully.",
+        title: "Payment Submitted",
+        description: "Payment has been submitted for approval.",
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to record payment. Please try again.",
+        description: "Failed to submit payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const approvePaymentMutation = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const response = await apiRequest('PATCH', `/api/payments/${paymentId}/approve`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      toast({
+        title: "Payment Approved",
+        description: "Payment has been approved successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to approve payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const rejectPaymentMutation = useMutation({
+    mutationFn: async ({ paymentId, reason }: { paymentId: string; reason?: string }) => {
+      const response = await apiRequest('PATCH', `/api/payments/${paymentId}/reject`, { reason });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
+      toast({
+        title: "Payment Rejected",
+        description: "Payment has been rejected.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject payment. Please try again.",
         variant: "destructive",
       });
     }
@@ -376,12 +418,13 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <DialogTrigger asChild>
                         <Button size="sm">
                           <Plus className="w-4 h-4 mr-2" />
-                          Add Payment
+                          Submit Payment
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Record Payment</DialogTitle>
+                          <DialogTitle>Submit Payment</DialogTitle>
+                          <p className="text-sm text-gray-600">Submit payment details for lender approval. The payment will be marked as pending until approved.</p>
                         </DialogHeader>
                         <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-4">
                           <div>
@@ -428,7 +471,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             className="w-full"
                             disabled={addPaymentMutation.isPending}
                           >
-                            {addPaymentMutation.isPending ? "Recording..." : "Record Payment"}
+                            {addPaymentMutation.isPending ? "Submitting..." : "Submit Payment"}
                           </Button>
                         </form>
                       </DialogContent>
@@ -440,22 +483,63 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               <CardContent>
                 {payments.length > 0 ? (
                   <div className="space-y-3">
-                    {payments.map((payment: any) => (
-                      <div key={payment.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <div className="font-semibold">₹{parseFloat(payment.amount).toLocaleString()}</div>
-                          <div className="text-sm text-gray-600">
-                            {payment.paymentMode} • {new Date(payment.paidAt).toLocaleDateString()}
+                    {payments.map((payment: any) => {
+                      const getStatusBadge = (status: string) => {
+                        switch (status) {
+                          case 'pending':
+                            return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+                          case 'paid':
+                            return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Paid</Badge>;
+                          case 'rejected':
+                            return <Badge className="bg-red-100 text-red-800"><Ban className="w-3 h-3 mr-1" />Rejected</Badge>;
+                          default:
+                            return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+                        }
+                      };
+
+                      return (
+                        <div key={payment.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="font-semibold">₹{parseFloat(payment.amount).toLocaleString()}</div>
+                              <div className="text-sm text-gray-600">
+                                {payment.paymentMode} • {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString() : new Date(payment.createdAt).toLocaleDateString()}
+                              </div>
+                              {payment.refString && (
+                                <div className="text-xs text-gray-500">Ref: {payment.refString}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(payment.status)}
+                            </div>
                           </div>
-                          {payment.refString && (
-                            <div className="text-xs text-gray-500">Ref: {payment.refString}</div>
+                          
+                          {/* Approval buttons for lender when payment is pending */}
+                          {payment.status === 'pending' && isSender && (
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                onClick={() => approvePaymentMutation.mutate(payment.id)}
+                                disabled={approvePaymentMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => rejectPaymentMutation.mutate({ paymentId: payment.id })}
+                                disabled={rejectPaymentMutation.isPending}
+                              >
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
                           )}
                         </div>
-                        <Badge className="bg-green-100 text-green-800">
-                          {payment.status}
-                        </Badge>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-600">No payments recorded yet</p>
