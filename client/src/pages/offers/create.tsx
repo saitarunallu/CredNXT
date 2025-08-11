@@ -569,7 +569,9 @@ export default function CreateOffer() {
               </div>
 
               {/* Loan Summary */}
-              {(watch('amount') || watch('interestRate') || watch('tenureValue')) && (
+              {((watch('amount') !== '' && watch('amount') !== undefined) || 
+                (watch('interestRate') !== '' && watch('interestRate') !== undefined) || 
+                (watch('tenureValue') !== '' && watch('tenureValue') !== undefined)) && (
                 <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
                   <div className="flex items-center mb-3">
                     <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center mr-3">
@@ -579,16 +581,16 @@ export default function CreateOffer() {
                   </div>
                   <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
                     <div className="grid grid-cols-2 gap-4">
-                      {watch('amount') && (
+                      {watch('amount') !== undefined && watch('amount') !== '' && (
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
                           <p className="text-xs text-gray-500 font-medium">Principal Amount</p>
-                          <p className="text-lg font-bold text-gray-900">₹{watch('amount')}</p>
+                          <p className="text-lg font-bold text-gray-900">₹{watch('amount') || '0'}</p>
                         </div>
                       )}
-                      {watch('interestRate') && (
+                      {watch('interestRate') !== undefined && watch('interestRate') !== '' && (
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
                           <p className="text-xs text-gray-500 font-medium">Interest Rate</p>
-                          <p className="text-lg font-bold text-gray-900">{watch('interestRate')}%</p>
+                          <p className="text-lg font-bold text-gray-900">{watch('interestRate') || '0'}%</p>
                           {interestType && <p className="text-xs text-green-600 mt-1">{interestType === 'fixed' ? 'Fixed' : 'Reducing'}</p>}
                         </div>
                       )}
