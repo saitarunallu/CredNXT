@@ -73,7 +73,7 @@ export default function OffersPage() {
                   <OfferCard 
                     key={item.offer.id} 
                     offer={item.offer} 
-                    contact={item.contact}
+                    isReceived={false}
                   />
                 ))
               ) : (
@@ -95,7 +95,8 @@ export default function OffersPage() {
                   <OfferCard 
                     key={item.offer.id} 
                     offer={item.offer} 
-                    contact={item.contact}
+                    fromUser={item.fromUser}
+                    isReceived={true}
                   />
                 ))
               ) : (

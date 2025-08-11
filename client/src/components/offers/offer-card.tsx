@@ -2,12 +2,15 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Calendar, IndianRupee, User } from "lucide-react";
-import { Offer, Contact, User as UserType } from "@shared/schema";
+import { Calendar, IndianRupee, User, CheckCircle, XCircle } from "lucide-react";
+import { Offer, User as UserType } from "@shared/schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/lib/auth";
 
 interface OfferCardProps {
   offer: Offer;
-  contact?: Contact;
   fromUser?: UserType;
   totalPaid?: string;
   isReceived?: boolean;
@@ -15,15 +18,39 @@ interface OfferCardProps {
 
 export default function OfferCard({ 
   offer, 
-  contact, 
   fromUser, 
   totalPaid = "0",
   isReceived = false 
 }: OfferCardProps) {
-  const displayName = isReceived ? fromUser?.name : contact?.name;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const currentUser = authService.getUser();
+  
+  const displayName = isReceived ? fromUser?.name : offer.toUserName;
   const amount = parseFloat(offer.amount);
   const paid = parseFloat(totalPaid);
   const outstanding = amount - paid;
+
+  const updateOfferMutation = useMutation({
+    mutationFn: async ({ status }: { status: string }) => {
+      const response = await apiRequest('PATCH', `/api/offers/${offer.id}`, { status });
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      toast({
+        title: variables.status === 'accepted' ? "Offer Accepted" : "Offer Declined",
+        description: `The offer has been ${variables.status}.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update offer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -74,7 +101,7 @@ export default function OfferCard({
             <div>
               <h3 className="font-semibold text-gray-900">{displayName}</h3>
               <p className="text-sm text-gray-600">
-                {isReceived ? fromUser?.phone : contact?.phone}
+                {isReceived ? fromUser?.phone : offer.toUserPhone}
               </p>
             </div>
           </div>
@@ -138,11 +165,42 @@ export default function OfferCard({
       </CardContent>
 
       <CardFooter>
-        <Link href={`/offers/${offer.id}`}>
-          <Button variant="outline" className="w-full">
-            View Details
-          </Button>
-        </Link>
+        {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id ? (
+          <div className="w-full space-y-2">
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
+                disabled={updateOfferMutation.isPending}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Accept
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
+                disabled={updateOfferMutation.isPending}
+                className="flex-1"
+                size="sm"
+              >
+                <XCircle className="w-4 h-4 mr-1" />
+                Decline
+              </Button>
+            </div>
+            <Link href={`/offers/${offer.id}`} className="w-full">
+              <Button variant="outline" className="w-full" size="sm">
+                View Details
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <Link href={`/offers/${offer.id}`} className="w-full">
+            <Button variant="outline" className="w-full">
+              View Details
+            </Button>
+          </Link>
+        )}
       </CardFooter>
     </Card>
   );
