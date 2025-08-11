@@ -329,6 +329,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(p => p.status === 'paid')
         .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
+      // Calculate loan start date (should be from acceptance date, not creation date)
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt !== offer.createdAt 
+        ? new Date(offer.updatedAt)  // Use acceptance date
+        : new Date(); // If somehow not accepted yet, use today
+
       // Validate payment amount against repayment schedule
       const loanTerms = {
         principal: parseFloat(offer.amount),
@@ -338,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
         repaymentFrequency: offer.repaymentFrequency || undefined,
-        startDate: new Date(offer.createdAt)
+        startDate: loanStartDate
       };
 
       const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount), offer.allowPartPayment);
@@ -824,6 +829,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(p => p.status === 'paid')
         .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
+      // Calculate loan start date (should be from acceptance date, not creation date)
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt !== offer.createdAt 
+        ? new Date(offer.updatedAt)  // Use acceptance date
+        : new Date(offer.createdAt); // Use creation date as fallback
+
       const loanTerms = {
         principal: parseFloat(offer.amount),
         interestRate: parseFloat(offer.interestRate),
@@ -832,7 +842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
         repaymentFrequency: offer.repaymentFrequency || undefined,
-        startDate: new Date(offer.createdAt)
+        startDate: loanStartDate
       };
 
       const paymentStatus = getPaymentStatus(loanTerms, totalPaid);

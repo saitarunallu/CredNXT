@@ -241,59 +241,59 @@ export function getNextPaymentInfo(terms: LoanTerms, paidAmount: number) {
   let totalPaid = paidAmount;
   
   for (const payment of schedule.schedule) {
-    if (totalPaid >= payment.totalAmount) {
-      totalPaid -= payment.totalAmount;
-    } else {
+    const paidForThisPayment = Math.min(totalPaid, payment.totalAmount);
+    const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
+    
+    if (remainingForThisPayment > 0.01) { // Using small tolerance for floating point
       return {
         nextDueDate: payment.dueDate,
         nextAmount: payment.totalAmount,
-        remainingAmount: payment.totalAmount - totalPaid,
+        remainingAmount: remainingForThisPayment,
         installmentNumber: payment.installmentNumber,
         principalAmount: payment.principalAmount,
         interestAmount: payment.interestAmount,
-        isPartialPaid: totalPaid > 0
+        isPartialPaid: paidForThisPayment > 0,
+        paidAmount: paidForThisPayment
       };
     }
+    
+    totalPaid -= paidForThisPayment;
   }
   
   return null; // All payments completed
 }
 
-// Get payment status for each installment
+// Get payment status for each installment  
 export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
   const schedule = calculateRepaymentSchedule(terms);
   let totalPaid = paidAmount;
   const paymentStatus = [];
+  const today = new Date();
   
   for (const payment of schedule.schedule) {
-    let status: 'paid' | 'partial' | 'pending' | 'overdue';
-    let paidAmount = 0;
-    let remainingAmount = payment.totalAmount;
+    const paidForThisPayment = Math.min(totalPaid, payment.totalAmount);
+    const remainingAmount = payment.totalAmount - paidForThisPayment;
     
-    if (totalPaid >= payment.totalAmount) {
+    let status: 'paid' | 'partial' | 'pending' | 'overdue';
+    
+    if (remainingAmount <= 0.01) { // Using tolerance for floating point
       status = 'paid';
-      paidAmount = payment.totalAmount;
-      remainingAmount = 0;
-      totalPaid -= payment.totalAmount;
-    } else if (totalPaid > 0) {
+    } else if (paidForThisPayment > 0.01) {
       status = 'partial';
-      paidAmount = totalPaid;
-      remainingAmount = payment.totalAmount - totalPaid;
-      totalPaid = 0;
     } else {
-      // Check if payment is overdue
-      const now = new Date();
-      status = payment.dueDate < now ? 'overdue' : 'pending';
-      paidAmount = 0;
-      remainingAmount = payment.totalAmount;
+      // Check if overdue based on due date
+      status = payment.dueDate < today ? 'overdue' : 'pending';
     }
     
     paymentStatus.push({
       ...payment,
       status,
-      paidAmount,
-      remainingAmount
+      paidAmount: Math.round(paidForThisPayment * 100) / 100,
+      remainingAmount: Math.round(remainingAmount * 100) / 100
     });
+    
+    // Deduct the amount paid for this installment
+    totalPaid = Math.max(0, totalPaid - paidForThisPayment);
   }
   
   return paymentStatus;
@@ -305,72 +305,93 @@ export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newP
   expectedAmount?: number;
   message?: string;
 } {
-  const schedule = calculateRepaymentSchedule(terms);
-  
-  if (terms.repaymentType === 'emi') {
-    // For EMI payments, calculate which EMI installment is next
-    const emiAmount = schedule.emiAmount!;
-    const completedEMIs = Math.floor(paidAmount / emiAmount);
-    const remainingForCurrentEMI = paidAmount % emiAmount;
-    
-    // Check if all EMIs are completed
-    if (completedEMIs >= schedule.numberOfPayments) {
-      return {
-        isValid: false,
-        message: "All EMI payments have been completed"
-      };
-    }
-    
-    // If there's a partial payment for current EMI, require the remaining amount
-    if (remainingForCurrentEMI > 0) {
-      const requiredAmount = emiAmount - remainingForCurrentEMI;
-      if (Math.abs(newPaymentAmount - requiredAmount) > 0.01) {
-        return {
-          isValid: false,
-          expectedAmount: requiredAmount,
-          message: `Need ₹${requiredAmount.toLocaleString()} to complete EMI #${completedEMIs + 1}`
-        };
-      }
-    } else {
-      // For strict EMI validation, require exact amount unless partial payments are allowed
-      if (!allowPartPayment && Math.abs(newPaymentAmount - emiAmount) > 0.01) {
-        return {
-          isValid: false,
-          expectedAmount: emiAmount,
-          message: `EMI #${completedEMIs + 1} should be exactly ₹${emiAmount.toLocaleString()}`
-        };
-      }
-      
-      // If partial payments allowed, validate the amount is reasonable
-      if (allowPartPayment && newPaymentAmount > emiAmount) {
-        return {
-          isValid: false,
-          expectedAmount: emiAmount,
-          message: `Payment cannot exceed EMI amount of ₹${emiAmount.toLocaleString()}`
-        };
-      }
-    }
-    
-    return { isValid: true };
+  // Basic validation
+  if (newPaymentAmount <= 0) {
+    return {
+      isValid: false,
+      message: "Payment amount must be greater than zero"
+    };
   }
-  
-  // For non-EMI payments, use the original logic
+
+  const schedule = calculateRepaymentSchedule(terms);
   const nextPayment = getNextPaymentInfo(terms, paidAmount);
   
+  // Check if all payments are completed
   if (!nextPayment) {
     return {
       isValid: false,
       message: "All payments have been completed"
     };
   }
+
+  // Check if payment exceeds the total remaining loan amount
+  const totalLoanAmount = schedule.totalAmount;
+  const remainingLoanAmount = totalLoanAmount - paidAmount;
   
-  if (!allowPartPayment && newPaymentAmount > nextPayment.remainingAmount) {
+  if (newPaymentAmount > remainingLoanAmount + 0.01) { // Small tolerance for rounding
     return {
       isValid: false,
-      expectedAmount: nextPayment.remainingAmount,
-      message: `Payment amount cannot exceed ₹${nextPayment.remainingAmount.toLocaleString()}`
+      expectedAmount: Math.round(remainingLoanAmount * 100) / 100,
+      message: `Payment cannot exceed remaining loan amount of ₹${remainingLoanAmount.toLocaleString()}`
     };
   }
-  
+
+  // For partial payments from previous installment, require completion first
+  if (nextPayment.isPartialPaid && !allowPartPayment) {
+    const requiredAmount = nextPayment.remainingAmount;
+    if (Math.abs(newPaymentAmount - requiredAmount) > 0.01) {
+      return {
+        isValid: false,
+        expectedAmount: Math.round(requiredAmount * 100) / 100,
+        message: `Complete installment #${nextPayment.installmentNumber} with ₹${requiredAmount.toLocaleString()}`
+      };
+    }
+  }
+
+  // EMI specific validation
+  if (terms.repaymentType === 'emi' && !nextPayment.isPartialPaid) {
+    const emiAmount = schedule.emiAmount!;
+    
+    if (!allowPartPayment) {
+      // Strict EMI: must pay exact amount
+      if (Math.abs(newPaymentAmount - emiAmount) > 0.01) {
+        return {
+          isValid: false,
+          expectedAmount: Math.round(emiAmount * 100) / 100,
+          message: `EMI #${nextPayment.installmentNumber} should be exactly ₹${emiAmount.toLocaleString()}`
+        };
+      }
+    } else {
+      // Flexible EMI: can pay partial but not exceed
+      if (newPaymentAmount > emiAmount + 0.01) {
+        return {
+          isValid: false,
+          expectedAmount: Math.round(emiAmount * 100) / 100,
+          message: `Payment cannot exceed EMI amount of ₹${emiAmount.toLocaleString()}`
+        };
+      }
+    }
+  }
+
+  // For other payment types, validate against next installment
+  if (terms.repaymentType !== 'emi' && !allowPartPayment && !nextPayment.isPartialPaid) {
+    if (Math.abs(newPaymentAmount - nextPayment.nextAmount) > 0.01) {
+      return {
+        isValid: false,
+        expectedAmount: Math.round(nextPayment.nextAmount * 100) / 100,
+        message: `Payment #${nextPayment.installmentNumber} should be exactly ₹${nextPayment.nextAmount.toLocaleString()}`
+      };
+    }
+  }
+
+  // Additional validation for partial payments
+  if (allowPartPayment && newPaymentAmount > nextPayment.remainingAmount + 0.01) {
+    return {
+      isValid: false,
+      expectedAmount: Math.round(nextPayment.remainingAmount * 100) / 100,
+      message: `Payment cannot exceed installment amount of ₹${nextPayment.remainingAmount.toLocaleString()}`
+    };
+  }
+
   return { isValid: true };
 }
