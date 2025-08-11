@@ -385,29 +385,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/payments', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const paymentData = insertPaymentSchema.parse(req.body);
+      
+      // Get offer to validate payment amount
+      const offer = await storage.getOffer(paymentData.offerId);
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Import calculation functions (dynamic import for server compatibility)
+      const { validatePaymentAmount, calculateRepaymentSchedule } = await import('@shared/calculations');
+      
+      // Get existing payments to calculate total paid
+      const existingPayments = await storage.getOfferPayments(paymentData.offerId);
+      const totalPaid = existingPayments
+        .filter(p => p.status === 'paid')
+        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+      // Validate payment amount against repayment schedule
+      const loanTerms = {
+        principal: parseFloat(offer.amount),
+        interestRate: parseFloat(offer.interestRate),
+        interestType: offer.interestType,
+        tenureValue: offer.tenureValue,
+        tenureUnit: offer.tenureUnit,
+        repaymentType: offer.repaymentType,
+        repaymentFrequency: offer.repaymentFrequency
+      };
+
+      const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount));
+      
+      if (!validation.isValid && offer.repaymentType === 'emi' && !offer.allowPartPayment) {
+        return res.status(400).json({ 
+          message: validation.message,
+          expectedAmount: validation.expectedAmount
+        });
+      }
+
       const payment = await storage.createPayment({
         ...paymentData,
         status: 'pending'
       });
       
       // Get offer details to send notification
-      const offer = await storage.getOffer(payment.offerId);
-      if (offer) {
+      const offerForNotification = await storage.getOffer(payment.offerId);
+      if (offerForNotification) {
         // Notify the lender about the payment submission
         await storage.createNotification({
-          userId: offer.fromUserId,
-          offerId: offer.id,
+          userId: offerForNotification.fromUserId,
+          offerId: offerForNotification.id,
           type: 'payment_submitted',
           title: 'Payment Submitted',
           message: `Payment of ₹${payment.amount} submitted for approval`
         });
 
         // Send WebSocket notification to lender
-        const client = clients.get(offer.fromUserId);
+        const client = clients.get(offerForNotification.fromUserId);
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'payment_submitted',
-            offerId: offer.id,
+            offerId: offerForNotification.id,
             paymentId: payment.id,
             amount: payment.amount,
             message: `Payment of ₹${payment.amount} submitted for approval`
@@ -415,20 +451,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Notify borrower that payment is submitted
-        if (offer.toUserId && offer.toUserId !== offer.fromUserId) {
+        if (offerForNotification.toUserId && offerForNotification.toUserId !== offerForNotification.fromUserId) {
           await storage.createNotification({
-            userId: offer.toUserId,
-            offerId: offer.id,
+            userId: offerForNotification.toUserId,
+            offerId: offerForNotification.id,
             type: 'payment_submitted',
             title: 'Payment Submitted',
             message: `Your payment of ₹${payment.amount} has been submitted and is awaiting approval`
           });
 
-          const payerClient = clients.get(offer.toUserId);
+          const payerClient = clients.get(offerForNotification.toUserId);
           if (payerClient && payerClient.readyState === WebSocket.OPEN) {
             payerClient.send(JSON.stringify({
               type: 'payment_submitted',
-              offerId: offer.id,
+              offerId: offerForNotification.id,
               paymentId: payment.id,
               amount: payment.amount,
               message: `Your payment of ₹${payment.amount} has been submitted and is awaiting approval`
@@ -559,6 +595,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Reject payment error:', error);
       res.status(500).json({ message: 'Failed to reject payment' });
+    }
+  });
+
+  // Get repayment schedule for an offer
+  app.get('/api/offers/:id/schedule', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Import calculation functions
+      const { calculateRepaymentSchedule } = await import('@shared/calculations');
+      
+      const loanTerms = {
+        principal: parseFloat(offer.amount),
+        interestRate: parseFloat(offer.interestRate),
+        interestType: offer.interestType,
+        tenureValue: offer.tenureValue,
+        tenureUnit: offer.tenureUnit,
+        repaymentType: offer.repaymentType,
+        repaymentFrequency: offer.repaymentFrequency
+      };
+
+      const schedule = calculateRepaymentSchedule(loanTerms);
+      res.json({ schedule });
+    } catch (error) {
+      console.error('Get schedule error:', error);
+      res.status(500).json({ message: 'Failed to calculate repayment schedule' });
     }
   });
 

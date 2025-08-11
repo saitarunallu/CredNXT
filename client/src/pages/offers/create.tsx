@@ -136,9 +136,13 @@ export default function CreateOffer() {
       case 'weeks':
         return new Date(now.getTime() + (value * 7 * 24 * 60 * 60 * 1000));
       case 'months':
-        const newDate = new Date(now);
-        newDate.setMonth(newDate.getMonth() + value);
-        return newDate;
+        const monthDate = new Date(now);
+        monthDate.setMonth(monthDate.getMonth() + value);
+        return monthDate;
+      case 'years':
+        const yearDate = new Date(now);
+        yearDate.setFullYear(yearDate.getFullYear() + value);
+        return yearDate;
       default:
         return now;
     }
