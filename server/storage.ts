@@ -29,6 +29,8 @@ export interface IStorage {
   getOfferPayments(offerId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
   updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment>;
+  getPayments(): Promise<Payment[]>;
+  deletePayment(paymentId: string): Promise<void>;
 
   // Notifications
   getUserNotifications(userId: string): Promise<Notification[]>;
@@ -185,6 +187,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(payments.id, id))
       .returning();
     return payment;
+  }
+
+  async getPayments(): Promise<Payment[]> {
+    return await db.select().from(payments).orderBy(desc(payments.createdAt));
+  }
+
+  async deletePayment(paymentId: string): Promise<void> {
+    await db.delete(payments).where(eq(payments.id, paymentId));
   }
 
   // Notifications

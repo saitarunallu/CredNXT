@@ -334,24 +334,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? new Date(offer.updatedAt)  // Use acceptance date
         : new Date(); // If somehow not accepted yet, use today
 
-      // Validate payment amount against repayment schedule
-      const loanTerms = {
-        principal: parseFloat(offer.amount),
-        interestRate: parseFloat(offer.interestRate),
-        interestType: offer.interestType,
-        tenureValue: offer.tenureValue,
-        tenureUnit: offer.tenureUnit,
-        repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency || undefined,
-        startDate: loanStartDate
-      };
-
-      const validation = validatePaymentAmount(loanTerms, totalPaid, parseFloat(paymentData.amount), offer.allowPartPayment);
+      // Skip strict validation for direct payments - allow any reasonable amount
+      const paymentAmount = parseFloat(paymentData.amount);
+      const remainingBalance = parseFloat(offer.amount) - totalPaid;
       
-      if (!validation.isValid) {
+      if (paymentAmount <= 0) {
         return res.status(400).json({ 
-          message: validation.message,
-          expectedAmount: validation.expectedAmount
+          message: "Payment amount must be greater than zero"
+        });
+      }
+      
+      if (paymentAmount > remainingBalance) {
+        return res.status(400).json({ 
+          message: `Payment amount cannot exceed remaining balance of ₹${remainingBalance.toLocaleString()}`
         });
       }
 
@@ -908,23 +903,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auto-cleanup pending payments after 24 hours
   const cleanupPendingPayments = async () => {
     try {
-      const { sql, database } = await import('./storage');
+      // Use storage interface instead of direct database access
+      const allPayments = await storage.getPayments();
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       
-      // Find payments that have been pending for more than 24 hours
-      const expiredPayments = await database.all(sql`
-        SELECT * FROM payments 
-        WHERE status = 'pending' 
-        AND created_at < datetime('now', '-1 day')
-      `);
+      const expiredPayments = allPayments.filter(payment => 
+        payment.status === 'pending' && 
+        new Date(payment.createdAt) < oneDayAgo
+      );
       
       console.log(`Found ${expiredPayments.length} expired pending payments to cleanup`);
       
       // Remove expired pending payments
       for (const payment of expiredPayments) {
-        await database.run(sql`
-          DELETE FROM payments 
-          WHERE id = ${payment.id}
-        `);
+        await storage.deletePayment(payment.id);
         
         console.log(`Removed expired pending payment: ${payment.id} (₹${payment.amount})`);
         
