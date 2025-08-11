@@ -267,7 +267,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
   const outstanding = totalAmountDue - totalPaid;
   
-  const isReceiver = contact?.verifiedUserId === currentUser?.id;
+  const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
 
   const getStatusColor = (status: string) => {
