@@ -278,25 +278,16 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   // Direct payment function for simplified flow
   const handleDirectPayment = (amount: number) => {
     addPaymentMutation.mutate({
-      amount: amount,
-      mode: "upi", // Default payment mode for direct payments
+      amount: amount.toString(),
+      paymentMode: "upi", // Default payment mode for direct payments
       refString: undefined
     });
   };
 
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
-    if (!paymentMode) {
-      toast({
-        title: "Payment Mode Required",
-        description: "Please select a payment mode.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     addPaymentMutation.mutate({
       ...data,
-      mode: paymentMode as "cash" | "bank_transfer" | "upi" | "cheque" | "other"
+      paymentMode: "upi"
     });
   };
 
@@ -823,7 +814,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
             )}
 
             {/* Next Payment Due Section - Direct Payment */}
-            {offer.status === 'accepted' && outstanding > 0 && isReceiver && paymentStatusData?.nextPayment && (
+            {offer.status === 'accepted' && outstanding > 0 && isReceiver && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -836,25 +827,21 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <div className="font-semibold text-blue-900 dark:text-blue-100 text-lg">
-                          {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} #{paymentStatusData.nextPayment.installmentNumber}
+                          {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} Payment
                         </div>
                         <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
-                          Due: {new Date(paymentStatusData.nextPayment.nextDueDate).toLocaleDateString()}
+                          Outstanding Balance
                         </p>
-                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                          Principal: ₹{paymentStatusData.nextPayment.principalAmount.toLocaleString()} | 
-                          Interest: ₹{paymentStatusData.nextPayment.interestAmount.toLocaleString()}
-                        </div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-blue-900 dark:text-blue-100 text-3xl">
-                          ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
+                          ₹{outstanding.toLocaleString()}
                         </div>
                       </div>
                     </div>
                     
                     {/* Check if there's already a pending payment */}
-                    {offerData.payments?.some(p => p.status === 'pending') ? (
+                    {payments.some((p: any) => p.status === 'pending') ? (
                       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800">
                         <div className="flex items-center justify-between">
                           <div>
@@ -870,7 +857,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       </div>
                     ) : (
                       <Button 
-                        onClick={() => handleDirectPayment(paymentStatusData.nextPayment.remainingAmount)}
+                        onClick={() => {
+                          // Calculate EMI amount or use outstanding balance
+                          const paymentAmount = scheduleData?.schedule?.emiAmount || Math.min(outstanding, 10000);
+                          handleDirectPayment(paymentAmount);
+                        }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
                         disabled={addPaymentMutation.isPending}
                       >
@@ -880,7 +871,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             Processing Payment...
                           </div>
                         ) : (
-                          `Pay ₹${paymentStatusData.nextPayment.remainingAmount.toLocaleString()}`
+                          `Pay ₹${(scheduleData?.schedule?.emiAmount || Math.min(outstanding, 10000)).toLocaleString()}`
                         )}
                       </Button>
                     )}
