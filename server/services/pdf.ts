@@ -14,17 +14,29 @@ export class PdfService {
   }
 
   async generateContract(offer: Offer, fromUser: User): Promise<string> {
-    const contractKey = `contracts/${offer.id}-${Date.now()}.pdf`;
-    const filePath = path.join(process.cwd(), contractKey);
+    const fileName = `${offer.id}-${Date.now()}.pdf`;
+    const contractKey = `contracts/${fileName}`;
+    const filePath = path.join(this.contractsDir, fileName);
     
     try {
+      console.log(`Creating PDF contract at: ${filePath}`);
+      console.log(`Directory exists: ${fs.existsSync(this.contractsDir)}`);
+      
       const pdfBuffer = await this.createPdfContract(offer, fromUser);
       fs.writeFileSync(filePath, pdfBuffer);
       
-      console.log(`Generated PDF contract: ${contractKey}`);
+      console.log(`Generated PDF contract: ${contractKey}, file size: ${pdfBuffer.length} bytes`);
+      console.log(`File exists after write: ${fs.existsSync(filePath)}`);
+      
       return contractKey;
     } catch (error) {
       console.error('PDF generation failed:', error);
+      console.error('Error details:', {
+        contractsDir: this.contractsDir,
+        filePath,
+        dirExists: fs.existsSync(this.contractsDir),
+        error: error.message
+      });
       throw new Error('Failed to generate contract PDF');
     }
   }

@@ -485,13 +485,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If no contract exists or file is missing, generate it
       if (!contractKey || !await pdfService.contractExists(contractKey)) {
+        console.log(`Generating contract for offer ${offer.id}, current contractKey: ${contractKey}`);
+        
         const fromUser = await storage.getUser(offer.fromUserId);
         if (!fromUser) {
           return res.status(404).json({ message: 'User not found' });
         }
 
-        contractKey = await pdfService.generateContract(offer, fromUser);
-        await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
+        console.log(`Found user for contract generation: ${fromUser.name} (${fromUser.phone})`);
+        
+        try {
+          contractKey = await pdfService.generateContract(offer, fromUser);
+          console.log(`Generated contract with key: ${contractKey}`);
+          
+          await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
+          console.log(`Updated offer with contract key`);
+        } catch (genError) {
+          console.error('Contract generation failed:', genError);
+          return res.status(500).json({ message: 'Failed to generate contract' });
+        }
       }
 
       const pdfBuffer = await pdfService.downloadContract(contractKey);
