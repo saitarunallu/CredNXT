@@ -40,8 +40,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [paymentMode, setPaymentMode] = useState("");
+  // Removed payment dialog state - using direct payment now
   const [isCloseLoanDialogOpen, setIsCloseLoanDialogOpen] = useState(false);
   const [closeLoanReason, setCloseLoanReason] = useState("");
 
@@ -104,12 +103,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-status'] });
-      setIsPaymentDialogOpen(false);
-      reset();
-      setPaymentMode("");
       toast({
         title: "Payment Submitted",
-        description: "Payment has been submitted for approval.",
+        description: "Payment submitted successfully. It will be auto-approved within 24 hours or you can try again if declined.",
       });
     },
     onError: () => {
@@ -277,12 +273,16 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
-  // Auto-fill payment amount when dialog opens
-  useEffect(() => {
-    if (isPaymentDialogOpen && paymentStatusData?.nextPayment) {
-      setValue('amount', paymentStatusData.nextPayment.remainingAmount);
-    }
-  }, [isPaymentDialogOpen, paymentStatusData?.nextPayment, setValue]);
+  // Removed auto-fill effect - no longer needed for direct payment
+
+  // Direct payment function for simplified flow
+  const handleDirectPayment = (amount: number) => {
+    addPaymentMutation.mutate({
+      amount: amount,
+      mode: "upi", // Default payment mode for direct payments
+      refString: undefined
+    });
+  };
 
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
     if (!paymentMode) {
@@ -822,128 +822,77 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
+            {/* Next Payment Due Section - Direct Payment */}
+            {offer.status === 'accepted' && outstanding > 0 && isReceiver && paymentStatusData?.nextPayment && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Next Payment Due
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <div className="font-semibold text-blue-900 dark:text-blue-100 text-lg">
+                          {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} #{paymentStatusData.nextPayment.installmentNumber}
+                        </div>
+                        <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
+                          Due: {new Date(paymentStatusData.nextPayment.nextDueDate).toLocaleDateString()}
+                        </p>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                          Principal: ₹{paymentStatusData.nextPayment.principalAmount.toLocaleString()} | 
+                          Interest: ₹{paymentStatusData.nextPayment.interestAmount.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-blue-900 dark:text-blue-100 text-3xl">
+                          ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Check if there's already a pending payment */}
+                    {offerData.payments?.some(p => p.status === 'pending') ? (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-yellow-800 dark:text-yellow-200 font-medium">Payment Pending Approval</p>
+                            <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+                              Your payment is awaiting lender approval. It will be auto-removed if not approved within 24 hours.
+                            </p>
+                          </div>
+                          <div className="text-yellow-600 dark:text-yellow-400">
+                            <Clock className="w-6 h-6" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={() => handleDirectPayment(paymentStatusData.nextPayment.remainingAmount)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
+                        disabled={addPaymentMutation.isPending}
+                      >
+                        {addPaymentMutation.isPending ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                            Processing Payment...
+                          </div>
+                        ) : (
+                          `Pay ₹${paymentStatusData.nextPayment.remainingAmount.toLocaleString()}`
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Payment History */}
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Payment History</CardTitle>
-                  {offer.status === 'accepted' && outstanding > 0 && isReceiver && (
-                    <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button size="sm">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Submit Payment
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Submit Payment</DialogTitle>
-                          <p className="text-sm text-gray-600">Submit payment details for lender approval. The payment will be marked as pending until approved.</p>
-                        </DialogHeader>
-                        {/* Next Payment Information */}
-                        {paymentStatusData?.nextPayment && (
-                          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h3 className="font-semibold text-blue-900">
-                                  {paymentStatusData.nextPayment.isPartialPaid ? 'Complete Payment' : 'Next Payment Due'}
-                                </h3>
-                                <p className="text-sm text-blue-700">
-                                  {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} #{paymentStatusData.nextPayment.installmentNumber}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-bold text-blue-900">
-                                  ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
-                                </div>
-                                <div className="text-xs text-blue-600">
-                                  Due: {new Date(paymentStatusData.nextPayment.nextDueDate).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                            {paymentStatusData.nextPayment.isPartialPaid && (
-                              <div className="text-xs text-blue-600">
-                                ₹{(paymentStatusData.nextPayment.nextAmount - paymentStatusData.nextPayment.remainingAmount).toLocaleString()} already paid
-                              </div>
-                            )}
-                            <div className="text-xs text-blue-600 mt-1">
-                              Principal: ₹{paymentStatusData.nextPayment.principalAmount.toLocaleString()} | 
-                              Interest: ₹{paymentStatusData.nextPayment.interestAmount.toLocaleString()}
-                            </div>
-                          </div>
-                        )}
-
-                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-4">
-                          <div>
-                            <Label htmlFor="amount">Payment Amount</Label>
-                            {paymentStatusData?.nextPayment && (
-                              <div className="text-sm font-medium text-blue-600 mb-2">
-                                {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} #{paymentStatusData.nextPayment.installmentNumber}: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
-                              </div>
-                            )}
-                            <Input
-                              id="amount"
-                              type="number"
-                              step="0.01"
-                              {...register("amount", { 
-                                valueAsNumber: true
-                              })}
-                              value={paymentStatusData?.nextPayment?.remainingAmount || ''}
-                              readOnly={!offer.allowPartPayment}
-                              className={!offer.allowPartPayment ? "bg-gray-100 cursor-not-allowed font-semibold text-lg" : "font-semibold text-lg"}
-                            />
-                            {!offer.allowPartPayment && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Payment amount is fixed as per loan agreement
-                              </p>
-                            )}
-                            {offer.allowPartPayment && paymentStatusData?.nextPayment && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                You can pay any amount up to ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
-                              </p>
-                            )}
-                            {errors.amount && (
-                              <p className="text-sm text-red-600 mt-1">{errors.amount.message}</p>
-                            )}
-                          </div>
-                          
-                          <div>
-                            <Label>Payment Mode</Label>
-                            <Select value={paymentMode} onValueChange={setPaymentMode}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select payment mode" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="cash">Cash</SelectItem>
-                                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                <SelectItem value="upi">UPI</SelectItem>
-                                <SelectItem value="cheque">Cheque</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="refString">Reference Number (Optional)</Label>
-                            <Input
-                              id="refString"
-                              {...register("refString")}
-                              placeholder="Transaction ID, cheque number, etc."
-                            />
-                          </div>
-                          
-                          <Button 
-                            type="submit" 
-                            className="w-full"
-                            disabled={addPaymentMutation.isPending}
-                          >
-                            {addPaymentMutation.isPending ? "Submitting..." : "Submit Payment"}
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </div>
+                <CardTitle>Payment History</CardTitle>
               </CardHeader>
               
               <CardContent>

@@ -905,5 +905,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Start reminder service
   reminderService.start();
 
+  // Auto-cleanup pending payments after 24 hours
+  const cleanupPendingPayments = async () => {
+    try {
+      const { sql, database } = await import('./storage');
+      
+      // Find payments that have been pending for more than 24 hours
+      const expiredPayments = await database.all(sql`
+        SELECT * FROM payments 
+        WHERE status = 'pending' 
+        AND created_at < datetime('now', '-1 day')
+      `);
+      
+      console.log(`Found ${expiredPayments.length} expired pending payments to cleanup`);
+      
+      // Remove expired pending payments
+      for (const payment of expiredPayments) {
+        await database.run(sql`
+          DELETE FROM payments 
+          WHERE id = ${payment.id}
+        `);
+        
+        console.log(`Removed expired pending payment: ${payment.id} (₹${payment.amount})`);
+        
+        // Notify the borrower that payment was auto-removed
+        const offer = await storage.getOffer(payment.offerId);
+        if (offer && offer.toUserId) {
+          await storage.createNotification({
+            userId: offer.toUserId,
+            offerId: offer.id,
+            type: 'payment_rejected',
+            title: 'Payment Expired',
+            message: `Your payment of ₹${payment.amount} was automatically removed after 24 hours. You can submit a new payment.`
+          });
+          
+          // Send WebSocket notification
+          const userClient = clients.get(offer.toUserId);
+          if (userClient && userClient.readyState === WebSocket.OPEN) {
+            userClient.send(JSON.stringify({
+              type: 'payment_expired',
+              offerId: offer.id,
+              paymentId: payment.id,
+              amount: payment.amount,
+              message: `Payment of ₹${payment.amount} was automatically removed. You can submit a new payment.`
+            }));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up pending payments:', error);
+    }
+  };
+
+  // Run cleanup every hour
+  setInterval(cleanupPendingPayments, 60 * 60 * 1000); // 1 hour
+  // Run cleanup on startup
+  cleanupPendingPayments();
+
   return httpServer;
 }
