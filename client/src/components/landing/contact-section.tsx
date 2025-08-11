@@ -73,7 +73,7 @@ export default function ContactSection() {
                     id="name"
                     {...register("name")}
                     placeholder="Your full name"
-                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                   />
                   {errors.name && (
                     <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
@@ -87,7 +87,7 @@ export default function ContactSection() {
                     type="email"
                     {...register("email")}
                     placeholder="your@email.com"
-                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                   />
                   {errors.email && (
                     <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
@@ -100,7 +100,7 @@ export default function ContactSection() {
                     id="phone"
                     {...register("phone")}
                     placeholder="+91 98765 43210"
-                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                   />
                   {errors.phone && (
                     <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
@@ -113,14 +113,14 @@ export default function ContactSection() {
                     id="organization"
                     {...register("organization")}
                     placeholder="Your company name"
-                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    className="mt-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="interest" className="text-gray-700 font-medium">Interest</Label>
                   <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-                    <SelectTrigger className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0">
                       <SelectValue placeholder="Select your interest" />
                     </SelectTrigger>
                     <SelectContent>
