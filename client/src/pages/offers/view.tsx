@@ -269,6 +269,17 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   
   const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
+  
+  // Debug logging
+  console.log('Debug offer data:', {
+    offerStatus: offer.status,
+    currentUserId: currentUser?.id,
+    toUserId: offer.toUserId,
+    fromUserId: offer.fromUserId,
+    isReceiver,
+    isSender,
+    shouldShowButtons: offer.status === 'pending' && isReceiver
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
