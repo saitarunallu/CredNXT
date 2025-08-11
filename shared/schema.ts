@@ -43,6 +43,7 @@ export const offers = pgTable("offers", {
   note: text("note"),
   status: offerStatusEnum("status").default('pending'),
   contractPdfKey: text("contract_pdf_key"),
+  kfsPdfKey: text("kfs_pdf_key"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

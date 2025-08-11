@@ -686,6 +686,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // KFS download - generates KFS document if it doesn't exist
+  app.get('/api/offers/:id/kfs', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      let kfsKey = offer.kfsPdfKey;
+
+      // If no KFS exists or file is missing, generate it
+      if (!kfsKey || !await pdfService.kfsExists(kfsKey)) {
+        console.log(`Generating KFS for offer ${offer.id}, current kfsKey: ${kfsKey}`);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log(`Found user for KFS generation: ${fromUser.name} (${fromUser.phone})`);
+        
+        try {
+          kfsKey = await pdfService.generateKFS(offer, fromUser);
+          console.log(`Generated KFS with key: ${kfsKey}`);
+          
+          await storage.updateOffer(offer.id, { kfsPdfKey: kfsKey });
+          console.log(`Updated offer with KFS key`);
+        } catch (genError) {
+          console.error('KFS generation failed:', genError);
+          return res.status(500).json({ message: 'Failed to generate KFS document' });
+        }
+      }
+
+      const pdfBuffer = await pdfService.downloadKFS(kfsKey);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="kfs-${offer.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('KFS download error:', error);
+      res.status(500).json({ message: 'Failed to generate or download KFS document' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server

@@ -184,6 +184,41 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
+  const downloadKFS = async () => {
+    try {
+      const response = await fetch(`/api/offers/${offerId}/kfs`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kfs-${offerId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast({
+          title: "Success",
+          description: "KFS document downloaded successfully.",
+        });
+      } else {
+        throw new Error('Failed to download');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download KFS document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
     // Client-side validation for EMI payments
     if (offer.repaymentType === 'emi' && scheduleData?.schedule?.emiAmount) {
@@ -780,6 +815,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download Contract
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
+                  onClick={downloadKFS}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download KFS
                 </Button>
                 
                 {offer.status === 'accepted' && outstanding === 0 && (
