@@ -902,7 +902,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             <Label htmlFor="amount">Payment Amount</Label>
                             {paymentStatusData?.nextPayment && (
                               <div className="text-sm text-green-600 mb-1">
-                                Required: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
+                                {offer.allowPartPayment ? 'Maximum' : 'Required'}: ₹{paymentStatusData.nextPayment.remainingAmount.toLocaleString()}
                               </div>
                             )}
                             <Input
@@ -918,7 +918,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                                   ? paymentStatusData.nextPayment.remainingAmount.toString()
                                   : "Enter payment amount"
                               }
+                              readOnly={!offer.allowPartPayment}
+                              className={!offer.allowPartPayment ? "bg-gray-100 cursor-not-allowed" : ""}
                             />
+                            {!offer.allowPartPayment && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} amount is fixed for this loan
+                              </p>
+                            )}
                             {errors.amount && (
                               <p className="text-sm text-red-600 mt-1">{errors.amount.message}</p>
                             )}

@@ -586,36 +586,17 @@ export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newP
 function validateRepaymentTypeSpecific(terms: LoanTerms, nextPayment: any, newPaymentAmount: number, allowPartPayment: boolean, schedule: RepaymentSchedule) {
   const { repaymentType } = terms;
   
-  if (repaymentType === 'emi' && !nextPayment.isPartialPaid) {
-    const emiAmount = schedule.emiAmount!;
-    
-    if (!allowPartPayment) {
-      if (Math.abs(newPaymentAmount - emiAmount) > 0.01) {
-        return {
-          isValid: false,
-          expectedAmount: Math.round(emiAmount * 100) / 100,
-          message: `EMI #${nextPayment.installmentNumber} should be exactly ₹${emiAmount.toLocaleString()}`
-        };
-      }
-    } else {
-      if (newPaymentAmount > emiAmount + 0.01) {
-        return {
-          isValid: false,
-          expectedAmount: Math.round(emiAmount * 100) / 100,
-          message: `Payment cannot exceed EMI amount of ₹${emiAmount.toLocaleString()}`
-        };
-      }
-    }
-  } else if ((repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon') && !nextPayment.isPartialPaid) {
-    // For step-up/step-down/balloon payments, validate against the specific installment amount
+  // For EMI, step-up, step-down, and balloon payments - enforce exact payment amounts
+  if ((repaymentType === 'emi' || repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon') && !nextPayment.isPartialPaid) {
     const expectedAmount = nextPayment.nextAmount;
     
     if (!allowPartPayment) {
       if (Math.abs(newPaymentAmount - expectedAmount) > 0.01) {
+        const paymentTypeLabel = repaymentType === 'emi' ? 'EMI' : repaymentType.replace('_', '-') + ' payment';
         return {
           isValid: false,
           expectedAmount: Math.round(expectedAmount * 100) / 100,
-          message: `${repaymentType.replace('_', '-')} payment #${nextPayment.installmentNumber} should be exactly ₹${expectedAmount.toLocaleString()}`
+          message: `${paymentTypeLabel} #${nextPayment.installmentNumber} should be exactly ₹${expectedAmount.toLocaleString()}`
         };
       }
     } else {
