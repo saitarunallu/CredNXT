@@ -68,12 +68,12 @@ export default function ContactSection() {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Request a Demo</h3>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="text-gray-700 font-medium">Full Name</Label>
                   <Input
                     id="name"
                     {...register("name")}
                     placeholder="Your full name"
-                    className="mt-1"
+                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                   {errors.name && (
                     <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
@@ -81,13 +81,13 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
                   <Input
                     id="email"
                     type="email"
                     {...register("email")}
                     placeholder="your@email.com"
-                    className="mt-1"
+                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                   {errors.email && (
                     <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
@@ -95,12 +95,12 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-gray-700 font-medium">Phone Number</Label>
                   <Input
                     id="phone"
                     {...register("phone")}
                     placeholder="+91 98765 43210"
-                    className="mt-1"
+                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                   {errors.phone && (
                     <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
@@ -108,19 +108,19 @@ export default function ContactSection() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="organization">Organization</Label>
+                  <Label htmlFor="organization" className="text-gray-700 font-medium">Organization</Label>
                   <Input
                     id="organization"
                     {...register("organization")}
                     placeholder="Your company name"
-                    className="mt-1"
+                    className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="interest">Interest</Label>
+                  <Label htmlFor="interest" className="text-gray-700 font-medium">Interest</Label>
                   <Select value={selectedInterest} onValueChange={setSelectedInterest}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                       <SelectValue placeholder="Select your interest" />
                     </SelectTrigger>
                     <SelectContent>
