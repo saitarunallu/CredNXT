@@ -59,13 +59,19 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 15 * 1000, // Refresh data every 15 seconds for critical queries
-      refetchOnWindowFocus: true, // Enable refetch on window focus for real-time feel
-      staleTime: 10 * 1000, // 10 seconds - consider data stale quickly for immediate updates
+      refetchInterval: 3 * 1000, // Aggressive refresh every 3 seconds for real-time feel
+      refetchOnWindowFocus: true,
+      staleTime: 0, // Always consider data stale for immediate updates
       retry: false,
     },
     mutations: {
       retry: false,
+      onSuccess: () => {
+        // Immediately invalidate all related data after mutations
+        queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      },
     },
   },
 });

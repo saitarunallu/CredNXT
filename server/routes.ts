@@ -307,15 +307,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`
         });
 
-        // Send WebSocket notification
-        const client = clients.get(recipientUser.id);
-        if (client && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
+        // Send WebSocket notification to recipient
+        const recipientClient = clients.get(recipientUser.id);
+        if (recipientClient && recipientClient.readyState === WebSocket.OPEN) {
+          recipientClient.send(JSON.stringify({
             type: 'offer_received',
             offerId: offer.id,
             message: `New ${offer.offerType} offer for ₹${offer.amount}`
           }));
         }
+      }
+
+      // Always send notification to offer creator about their new offer
+      const creatorClient = clients.get(req.userId!);
+      if (creatorClient && creatorClient.readyState === WebSocket.OPEN) {
+        creatorClient.send(JSON.stringify({
+          type: 'offer_created',
+          offerId: offer.id,
+          message: `Your ${offer.offerType} offer for ₹${offer.amount} has been created`
+        }));
       }
 
       res.json({ offer });
