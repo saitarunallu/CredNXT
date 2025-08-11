@@ -287,8 +287,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const parsedOfferData = insertOfferSchema.parse(completeOfferData);
       const offer = await storage.createOffer(parsedOfferData);
       
+      // Get the user data for PDF generation
+      const fromUser = await storage.getUser(req.userId!);
+      if (!fromUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
       // Generate PDF contract
-      const pdfKey = await pdfService.generateContract(offer);
+      const pdfKey = await pdfService.generateContract(offer, fromUser);
       await storage.updateOffer(offer.id, { contractPdfKey: pdfKey });
       
       // Send notification to recipient if they're registered
@@ -359,7 +365,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentData = insertPaymentSchema.parse(req.body);
       const payment = await storage.createPayment({
         ...paymentData,
-        paidAt: new Date(),
         status: 'paid'
       });
       

@@ -1,24 +1,27 @@
-import { Offer } from "@shared/schema";
+import { Offer, User } from "@shared/schema";
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 
 export class PdfService {
-  async generateContract(offer: Offer): Promise<string> {
-    // In a real implementation, this would use puppeteer or similar
-    // to generate a PDF from an HTML template
-    
-    const contractKey = `contracts/${offer.id}-${Date.now()}.pdf`;
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Generated PDF contract: ${contractKey}`);
-      return contractKey;
-    }
+  private contractsDir = path.join(process.cwd(), 'contracts');
 
+  constructor() {
+    // Ensure contracts directory exists
+    if (!fs.existsSync(this.contractsDir)) {
+      fs.mkdirSync(this.contractsDir, { recursive: true });
+    }
+  }
+
+  async generateContract(offer: Offer, fromUser: User): Promise<string> {
+    const contractKey = `contracts/${offer.id}-${Date.now()}.pdf`;
+    const filePath = path.join(process.cwd(), contractKey);
+    
     try {
-      // Implementation would include:
-      // 1. HTML template with offer details
-      // 2. PDF generation (puppeteer, pdfkit, etc.)
-      // 3. Upload to S3 or MinIO
-      // 4. Return the file key
+      const pdfBuffer = await this.createPdfContract(offer, fromUser);
+      fs.writeFileSync(filePath, pdfBuffer);
       
+      console.log(`Generated PDF contract: ${contractKey}`);
       return contractKey;
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -26,16 +29,132 @@ export class PdfService {
     }
   }
 
-  async downloadContract(contractKey: string): Promise<Buffer> {
-    if (process.env.NODE_ENV === 'development') {
-      // Return a mock PDF buffer for development
-      return Buffer.from('Mock PDF content for development');
-    }
+  private async createPdfContract(offer: Offer, fromUser: User): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ margin: 50 });
+        const buffers: Buffer[] = [];
 
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+          const pdfBuffer = Buffer.concat(buffers);
+          resolve(pdfBuffer);
+        });
+
+        // Header
+        doc.fontSize(20).font('Helvetica-Bold');
+        doc.text('LENDING AGREEMENT', { align: 'center' });
+        doc.moveDown(2);
+
+        // Parties section
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('PARTIES TO THE AGREEMENT', { underline: true });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica');
+        if (offer.offerType === 'lend') {
+          doc.text(`Lender: ${fromUser.name || 'N/A'}`);
+          doc.text(`Phone: ${fromUser.phone}`);
+          doc.moveDown(0.5);
+          doc.text(`Borrower: ${offer.toUserName}`);
+          doc.text(`Phone: ${offer.toUserPhone}`);
+        } else {
+          doc.text(`Borrower: ${fromUser.name || 'N/A'}`);
+          doc.text(`Phone: ${fromUser.phone}`);
+          doc.moveDown(0.5);
+          doc.text(`Lender: ${offer.toUserName}`);
+          doc.text(`Phone: ${offer.toUserPhone}`);
+        }
+        doc.moveDown(1);
+
+        // Loan details section
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('LOAN DETAILS', { underline: true });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Principal Amount: ₹${offer.amount.toLocaleString()}`);
+        doc.text(`Interest Rate: ${offer.interestRate}% per annum`);
+        doc.text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`);
+        doc.text(`Repayment Type: ${offer.repaymentType}`);
+        
+        if (offer.repaymentFrequency) {
+          doc.text(`Repayment Frequency: ${offer.repaymentFrequency}`);
+        }
+        
+        doc.moveDown(1);
+
+        // Terms and conditions
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('TERMS AND CONDITIONS', { underline: true });
+        doc.moveDown(0.5);
+        
+        doc.fontSize(11).font('Helvetica');
+        doc.text('1. The borrower agrees to repay the principal amount along with the agreed interest rate within the specified tenure.');
+        doc.moveDown(0.3);
+        doc.text('2. Late payment may result in additional charges as mutually agreed upon by both parties.');
+        doc.moveDown(0.3);
+        doc.text('3. This agreement is legally binding and enforceable under the laws of India.');
+        doc.moveDown(0.3);
+        doc.text('4. Any disputes arising from this agreement shall be resolved through mutual discussion or legal proceedings.');
+        doc.moveDown(0.3);
+        doc.text('5. Both parties acknowledge that they have read and understood all terms of this agreement.');
+        doc.moveDown(1.5);
+
+        // Signatures section
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('SIGNATURES', { underline: true });
+        doc.moveDown(1);
+        
+        doc.fontSize(12).font('Helvetica');
+        
+        // Create two columns for signatures
+        const leftX = 70;
+        const rightX = 350;
+        const signatureY = doc.y;
+        
+        doc.text('Lender Signature:', leftX, signatureY);
+        doc.text('Borrower Signature:', rightX, signatureY);
+        
+        doc.moveDown(2);
+        doc.text('_____________________', leftX);
+        doc.text('_____________________', rightX);
+        
+        doc.moveDown(0.5);
+        if (offer.offerType === 'lend') {
+          doc.text(fromUser.name || 'N/A', leftX);
+          doc.text(offer.toUserName, rightX);
+        } else {
+          doc.text(offer.toUserName, leftX);
+          doc.text(fromUser.name || 'N/A', rightX);
+        }
+        
+        doc.moveDown(1);
+        doc.text('Date: _______________', leftX);
+        doc.text('Date: _______________', rightX);
+        
+        // Footer
+        doc.moveDown(2);
+        doc.fontSize(10).font('Helvetica');
+        doc.text('This document was generated by CredNXT - Secure Lending Platform', { align: 'center' });
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')}`, { align: 'center' });
+
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async downloadContract(contractKey: string): Promise<Buffer> {
     try {
-      // Implementation would download from S3/MinIO
-      // and return the PDF buffer
-      return Buffer.from('PDF content');
+      const filePath = path.join(process.cwd(), contractKey);
+      
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Contract file not found');
+      }
+      
+      return fs.readFileSync(filePath);
     } catch (error) {
       console.error('PDF download failed:', error);
       throw new Error('Failed to download contract PDF');
