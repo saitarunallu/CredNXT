@@ -665,11 +665,26 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           </div>
                           <div>
                             <div className="font-medium text-sm">
-                              {offer.repaymentType === 'emi' ? 'EMI' : 'Payment'} #{payment.installmentNumber}
+                              {offer.repaymentType === 'emi' ? 'EMI' :
+                               offer.repaymentType === 'step_up' ? 'Step-Up' :
+                               offer.repaymentType === 'step_down' ? 'Step-Down' :
+                               offer.repaymentType === 'balloon' ? 'Balloon' :
+                               offer.repaymentType === 'interest_only' ? 'Interest' : 'Payment'} #{payment.installmentNumber}
                             </div>
                             <div className="text-xs text-gray-600">
                               Due: {new Date(payment.dueDate).toLocaleDateString()}
+                              {payment.gracePeriodEndDate && (
+                                <span className="ml-2 text-blue-600">
+                                  (Grace: {new Date(payment.gracePeriodEndDate).toLocaleDateString()})
+                                </span>
+                              )}
                             </div>
+                            {(payment.principalAmount || payment.interestAmount) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Principal: ₹{payment.principalAmount?.toLocaleString() || '0'} | 
+                                Interest: ₹{payment.interestAmount?.toLocaleString() || '0'}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="text-right">
@@ -679,6 +694,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           {payment.status === 'partial' && (
                             <div className="text-xs text-yellow-700">
                               Paid: ₹{payment.paidAmount.toLocaleString()}
+                            </div>
+                          )}
+                          {payment.latePaymentFee && payment.status === 'overdue' && (
+                            <div className="text-xs text-red-600">
+                              Late Fee: ₹{payment.latePaymentFee.toLocaleString()}
                             </div>
                           )}
                           <div className={`text-xs font-medium ${
@@ -717,6 +737,108 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         <div className="font-semibold text-gray-900">
                           ₹{paymentStatusData.totalAmount.toLocaleString()}
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Enhanced Loan Analytics Card */}
+            {offer.status === 'accepted' && scheduleData?.schedule && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calculator className="w-5 h-5 mr-2" />
+                    Loan Analytics & Structure
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Payment Structure Details */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Payment Structure</h4>
+                      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Interest Type:</span>
+                          <span className="font-medium">{offer.interestType === 'fixed' ? 'Fixed' : 'Reducing Balance'}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Payment Method:</span>
+                          <span className="font-medium">
+                            {offer.repaymentType === 'emi' ? 'Equal Monthly Installments' :
+                             offer.repaymentType === 'step_up' ? 'Step-Up Payments' :
+                             offer.repaymentType === 'step_down' ? 'Step-Down Payments' :
+                             offer.repaymentType === 'balloon' ? 'Balloon Payment' :
+                             offer.repaymentType === 'interest_only' ? 'Interest-Only Payments' : 'Lump Sum'}
+                          </span>
+                        </div>
+                        {offer.repaymentFrequency && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Payment Frequency:</span>
+                            <span className="font-medium">{offer.repaymentFrequency.replace('_', '-')}</span>
+                          </div>
+                        )}
+                        {offer.gracePeriodDays > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Grace Period:</span>
+                            <span className="font-medium text-blue-600">{offer.gracePeriodDays} days</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Fee Structure */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-gray-900">Fee Structure</h4>
+                      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                        {offer.latePaymentPenalty && parseFloat(offer.latePaymentPenalty) > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Late Payment Penalty:</span>
+                            <span className="font-medium text-red-600">{offer.latePaymentPenalty}%</span>
+                          </div>
+                        )}
+                        {offer.prepaymentPenalty && parseFloat(offer.prepaymentPenalty) > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Prepayment Penalty:</span>
+                            <span className="font-medium text-orange-600">{offer.prepaymentPenalty}%</span>
+                          </div>
+                        )}
+                        {offer.compoundingFrequency && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Compounding:</span>
+                            <span className="font-medium">{offer.compoundingFrequency}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Financial Summary */}
+                    <div className="col-span-full">
+                      <h4 className="font-medium text-gray-900 mb-3">Financial Summary</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="bg-blue-50 p-3 rounded-lg text-center">
+                          <div className="text-xs text-blue-600 mb-1">Principal Amount</div>
+                          <div className="font-bold text-blue-900">₹{parseFloat(offer.amount).toLocaleString()}</div>
+                        </div>
+                        {scheduleData.summary?.totalInterest && (
+                          <div className="bg-orange-50 p-3 rounded-lg text-center">
+                            <div className="text-xs text-orange-600 mb-1">Total Interest</div>
+                            <div className="font-bold text-orange-900">₹{scheduleData.summary.totalInterest.toLocaleString()}</div>
+                          </div>
+                        )}
+                        {scheduleData.summary?.totalAmount && (
+                          <div className="bg-green-50 p-3 rounded-lg text-center">
+                            <div className="text-xs text-green-600 mb-1">Total Repayment</div>
+                            <div className="font-bold text-green-900">₹{scheduleData.summary.totalAmount.toLocaleString()}</div>
+                          </div>
+                        )}
+                        {scheduleData.summary?.effectiveRate && (
+                          <div className="bg-purple-50 p-3 rounded-lg text-center">
+                            <div className="text-xs text-purple-600 mb-1">Effective Rate</div>
+                            <div className="font-bold text-purple-900">{scheduleData.summary.effectiveRate.toFixed(2)}%</div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

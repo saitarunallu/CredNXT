@@ -35,6 +35,7 @@ export default function CreateOffer() {
   const [tenureUnit, setTenureUnit] = useState("");
   const [repaymentFrequency, setRepaymentFrequency] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
+  const [compoundingFrequency, setCompoundingFrequency] = useState("monthly");
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -54,7 +55,10 @@ export default function CreateOffer() {
       interestRate: "",
       tenureValue: "",
       purpose: "",
-      note: ""
+      note: "",
+      gracePeriodDays: 0,
+      latePaymentPenalty: 0,
+      prepaymentPenalty: 0
     }
   });
 
@@ -222,9 +226,13 @@ export default function CreateOffer() {
       interestType: interestType as "fixed" | "reducing",
       tenureValue: parseInt(data.tenureValue) || 1,
       tenureUnit: tenureUnit as "days" | "weeks" | "months" | "years",
-      repaymentType: repaymentType as "emi" | "interest_only" | "full_payment",
-      repaymentFrequency: (repaymentFrequency as "weekly" | "monthly" | "yearly") || null,
+      repaymentType: repaymentType as "emi" | "interest_only" | "full_payment" | "step_up" | "step_down" | "balloon",
+      repaymentFrequency: (repaymentFrequency as "weekly" | "bi_weekly" | "monthly" | "quarterly" | "semi_annual" | "yearly") || null,
       allowPartPayment,
+      gracePeriodDays: parseInt(data.gracePeriodDays) || 0,
+      prepaymentPenalty: (parseFloat(data.prepaymentPenalty) || 0).toString(),
+      latePaymentPenalty: (parseFloat(data.latePaymentPenalty) || 0).toString(),
+      compoundingFrequency: compoundingFrequency as "daily" | "monthly" | "quarterly" | "annually",
       startDate: new Date(startDate),
       dueDate: dueDate,
       purpose: data.purpose || null,
@@ -455,11 +463,22 @@ export default function CreateOffer() {
                         <SelectValue placeholder="Choose repayment method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="emi">📅 EMI (Equal Monthly Installments)</SelectItem>
+                        <SelectItem value="emi">📅 EMI (Equal Installments)</SelectItem>
+                        <SelectItem value="step_up">📈 Step-Up EMI (Increasing)</SelectItem>
+                        <SelectItem value="step_down">📉 Step-Down EMI (Decreasing)</SelectItem>
+                        <SelectItem value="balloon">🎈 Balloon Payment</SelectItem>
                         <SelectItem value="interest_only">💰 Interest Only</SelectItem>
                         <SelectItem value="full_payment">🎯 Full Payment at End</SelectItem>
                       </SelectContent>
                     </Select>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {repaymentType === 'step_up' && 'Payments increase gradually over time'}
+                      {repaymentType === 'step_down' && 'Payments decrease gradually over time'}
+                      {repaymentType === 'balloon' && 'Lower regular payments with large final payment'}
+                      {repaymentType === 'interest_only' && 'Pay only interest, principal at the end'}
+                      {repaymentType === 'full_payment' && 'Single payment of principal and interest'}
+                      {repaymentType === 'emi' && 'Fixed equal payments throughout the term'}
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -519,11 +538,11 @@ export default function CreateOffer() {
                     </Select>
                   </div>
 
-                  {/* Repayment Frequency - Only show for EMI and Interest Only */}
-                  {(repaymentType === 'emi' || repaymentType === 'interest_only') && (
+                  {/* Repayment Frequency - Show for multiple payment types */}
+                  {(repaymentType === 'emi' || repaymentType === 'interest_only' || repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon') && (
                     <div className="space-y-2">
                       <Label className="text-gray-700 font-medium text-sm">
-                        {repaymentType === 'emi' ? 'EMI Frequency' : 'Interest Payment Frequency'}
+                        Payment Frequency
                       </Label>
                       <Select value={repaymentFrequency} onValueChange={setRepaymentFrequency}>
                         <SelectTrigger className="bg-white border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
@@ -531,14 +550,15 @@ export default function CreateOffer() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="weekly">📅 Weekly</SelectItem>
+                          <SelectItem value="bi_weekly">📅 Bi-Weekly</SelectItem>
                           <SelectItem value="monthly">📆 Monthly</SelectItem>
+                          <SelectItem value="quarterly">📆 Quarterly</SelectItem>
+                          <SelectItem value="semi_annual">📆 Semi-Annual</SelectItem>
                           <SelectItem value="yearly">🗓️ Yearly</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-gray-500 mt-1">
-                        {repaymentType === 'emi' 
-                          ? 'How often should EMI payments be made?' 
-                          : 'How often should interest payments be made?'}
+                        How often should payments be made?
                       </p>
                     </div>
                   )}
@@ -555,6 +575,71 @@ export default function CreateOffer() {
                 </div>
                 
                 <div className="space-y-5">
+                  {/* Advanced Payment Terms */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="gracePeriodDays" className="text-gray-700 font-medium text-sm">Grace Period (Days)</Label>
+                      <Input
+                        id="gracePeriodDays"
+                        type="number"
+                        {...register("gracePeriodDays", { valueAsNumber: true })}
+                        placeholder="0"
+                        min="0"
+                        max="30"
+                        className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm"
+                      />
+                      <p className="text-xs text-gray-500">Days allowed after due date before penalties apply</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="latePaymentPenalty" className="text-gray-700 font-medium text-sm">Late Payment Penalty (%)</Label>
+                      <Input
+                        id="latePaymentPenalty"
+                        type="number"
+                        step="0.1"
+                        {...register("latePaymentPenalty", { valueAsNumber: true })}
+                        placeholder="0"
+                        min="0"
+                        max="10"
+                        className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm"
+                      />
+                      <p className="text-xs text-gray-500">Penalty percentage for late payments</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="prepaymentPenalty" className="text-gray-700 font-medium text-sm">Prepayment Penalty (%)</Label>
+                      <Input
+                        id="prepaymentPenalty"
+                        type="number"
+                        step="0.1"
+                        {...register("prepaymentPenalty", { valueAsNumber: true })}
+                        placeholder="0"
+                        min="0"
+                        max="5"
+                        className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm"
+                      />
+                      <p className="text-xs text-gray-500">Penalty for early loan repayment</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-gray-700 font-medium text-sm">Compounding Frequency</Label>
+                      <Select value={compoundingFrequency} onValueChange={setCompoundingFrequency}>
+                        <SelectTrigger className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
+                          <SelectValue placeholder="Select compounding" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">📅 Daily</SelectItem>
+                          <SelectItem value="monthly">📆 Monthly</SelectItem>
+                          <SelectItem value="quarterly">📊 Quarterly</SelectItem>
+                          <SelectItem value="annually">🗓️ Annually</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">How often interest compounds (for reducing balance)</p>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="purpose" className="text-gray-700 font-medium text-sm">Purpose</Label>
                     <Input
@@ -644,12 +729,15 @@ export default function CreateOffer() {
                         <p className="text-xs text-gray-500 font-medium">Repayment Method</p>
                         <p className="text-sm font-semibold text-gray-900">
                           {repaymentType === 'emi' ? 'EMI Payments' : 
+                           repaymentType === 'step_up' ? 'Step-Up EMI' :
+                           repaymentType === 'step_down' ? 'Step-Down EMI' :
+                           repaymentType === 'balloon' ? 'Balloon Payment' :
                            repaymentType === 'interest_only' ? 'Interest Only' : 
                            'Full Payment at End'}
                         </p>
-                        {repaymentFrequency && (repaymentType === 'emi' || repaymentType === 'interest_only') && (
+                        {repaymentFrequency && (repaymentType !== 'full_payment') && (
                           <p className="text-xs text-green-600 mt-1">
-                            {repaymentFrequency.charAt(0).toUpperCase() + repaymentFrequency.slice(1)} payments
+                            {repaymentFrequency.replace('_', '-')} payments
                           </p>
                         )}
                       </div>

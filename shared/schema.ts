@@ -5,12 +5,13 @@ import { z } from "zod";
 
 export const offerTypeEnum = pgEnum('offer_type', ['lend', 'borrow']);
 export const interestTypeEnum = pgEnum('interest_type', ['fixed', 'reducing']);
-export const repaymentTypeEnum = pgEnum('repayment_type', ['emi', 'interest_only', 'full_payment']);
-export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['weekly', 'monthly', 'yearly']);
+export const repaymentTypeEnum = pgEnum('repayment_type', ['emi', 'interest_only', 'full_payment', 'step_down', 'step_up', 'balloon']);
+export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', 'yearly']);
 export const tenureUnitEnum = pgEnum('tenure_unit', ['days', 'weeks', 'months', 'years']);
 export const offerStatusEnum = pgEnum('offer_status', ['pending', 'accepted', 'declined', 'completed', 'overdue']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed', 'rejected']);
 export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected']);
+export const compoundingFrequencyEnum = pgEnum('compounding_frequency', ['daily', 'monthly', 'quarterly', 'annually']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -37,6 +38,10 @@ export const offers = pgTable("offers", {
   repaymentType: repaymentTypeEnum("repayment_type").notNull(),
   repaymentFrequency: repaymentFrequencyEnum("repayment_frequency"),
   allowPartPayment: boolean("allow_part_payment").default(false),
+  gracePeriodDays: integer("grace_period_days").default(0),
+  prepaymentPenalty: decimal("prepayment_penalty", { precision: 5, scale: 2 }).default('0'),
+  latePaymentPenalty: decimal("late_payment_penalty", { precision: 5, scale: 2 }).default('0'),
+  compoundingFrequency: compoundingFrequencyEnum("compounding_frequency").default('monthly'),
   purpose: text("purpose"),
   startDate: timestamp("start_date").defaultNow().notNull(),
   dueDate: timestamp("due_date").notNull(),
@@ -136,6 +141,9 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   interestRate: z.coerce.string(),
   tenureValue: z.coerce.number(),
   dueDate: z.coerce.date(),
+  gracePeriodDays: z.coerce.number().optional(),
+  prepaymentPenalty: z.coerce.string().optional(),
+  latePaymentPenalty: z.coerce.string().optional(),
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
