@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { wsService } from "@/lib/websocket";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -19,6 +20,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       return await authService.getCurrentUser();
     },
   });
+
+  // Enable real-time updates for authenticated users
+  useRealtimeUpdates();
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {

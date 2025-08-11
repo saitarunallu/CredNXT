@@ -31,6 +31,13 @@ Preferred communication style: Simple, everyday language.
 - **Comprehensive contract content** - Includes party details, loan terms, legal conditions, and signature sections
 - **Secure file storage** - Contracts stored locally with proper file management and access controls
 
+### Enhanced Real-time Updates System (August 2025)
+- **WebSocket-based notifications** - Instant real-time updates when offers, payments, or notifications change
+- **Automatic cache invalidation** - React Query cache refreshes immediately when WebSocket events arrive
+- **Background polling** - Data refreshes every 15 seconds as a backup mechanism
+- **Multi-user support** - Notifications sent to both offer creators and recipients when connected
+- **Comprehensive event handling** - Covers offer creation, acceptance, payment recording, and status changes
+
 ## System Architecture
 
 ### Frontend Architecture

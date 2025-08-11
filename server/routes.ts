@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `Your offer has been ${status}`
         });
 
-        // Send WebSocket notification
+        // Send WebSocket notification to offer creator
         const client = clients.get(offer.fromUserId);
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
@@ -350,6 +350,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             offerId: offer.id,
             message: `Your offer has been ${status}`
           }));
+        }
+
+        // Also send notification to offer recipient if they're connected
+        if (offer.toUserId) {
+          const recipientClient = clients.get(offer.toUserId);
+          if (recipientClient && recipientClient.readyState === WebSocket.OPEN) {
+            recipientClient.send(JSON.stringify({
+              type: `offer_${status}`,
+              offerId: offer.id,
+              message: `You have ${status} an offer`
+            }));
+          }
         }
       }
 
@@ -379,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `Payment of ₹${payment.amount} received`
         });
 
-        // Send WebSocket notification
+        // Send WebSocket notification to offer creator
         const client = clients.get(offer.fromUserId);
         if (client && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
@@ -388,6 +400,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             amount: payment.amount,
             message: `Payment of ₹${payment.amount} received`
           }));
+        }
+
+        // Also send notification to payer if they're different and connected
+        if (offer.toUserId && offer.toUserId !== offer.fromUserId) {
+          const payerClient = clients.get(offer.toUserId);
+          if (payerClient && payerClient.readyState === WebSocket.OPEN) {
+            payerClient.send(JSON.stringify({
+              type: 'payment_received',
+              offerId: offer.id,
+              amount: payment.amount,
+              message: `Your payment of ₹${payment.amount} was recorded`
+            }));
+          }
         }
       }
 
