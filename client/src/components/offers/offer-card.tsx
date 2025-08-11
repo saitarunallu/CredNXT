@@ -69,6 +69,24 @@ export default function OfferCard({
 
   // Get the offer type from the perspective of the current viewer
   const getDisplayType = () => {
+    // If offer is accepted, show it as an active agreement
+    if (offer.status === 'accepted') {
+      if (isReceived) {
+        if (offer.offerType === 'lend') {
+          return { label: 'LOAN AGREEMENT', subtitle: 'You borrowed money' };
+        } else {
+          return { label: 'LENDING AGREEMENT', subtitle: 'You lent money' };
+        }
+      } else {
+        if (offer.offerType === 'lend') {
+          return { label: 'LENDING AGREEMENT', subtitle: 'You lent money' };
+        } else {
+          return { label: 'LOAN AGREEMENT', subtitle: 'You borrowed money' };
+        }
+      }
+    }
+    
+    // For pending/declined/completed offers, show original intent
     if (isReceived) {
       // Received offers: flip the perspective
       if (offer.offerType === 'lend') {
@@ -87,6 +105,16 @@ export default function OfferCard({
   };
 
   const getDisplayTypeColor = () => {
+    // Special styling for accepted agreements
+    if (offer.status === 'accepted') {
+      if (isReceived) {
+        return offer.offerType === 'lend' ? 'bg-blue-50 text-blue-900 border-blue-400' : 'bg-green-50 text-green-900 border-green-400';
+      } else {
+        return offer.offerType === 'lend' ? 'bg-green-50 text-green-900 border-green-400' : 'bg-blue-50 text-blue-900 border-blue-400';
+      }
+    }
+    
+    // Original colors for pending/other statuses
     if (isReceived) {
       return offer.offerType === 'lend' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-orange-100 text-orange-800 border-orange-300';
     } else {
@@ -95,6 +123,11 @@ export default function OfferCard({
   };
 
   const getTypeIcon = () => {
+    // Use checkmark icon for accepted agreements
+    if (offer.status === 'accepted') {
+      return CheckCircle;
+    }
+    
     if (isReceived) {
       return offer.offerType === 'lend' ? ArrowDownLeft : ArrowUpRight;
     } else {
