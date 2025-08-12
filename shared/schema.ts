@@ -140,6 +140,7 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   amount: z.coerce.string(),
   interestRate: z.coerce.string(),
   tenureValue: z.coerce.number(),
+  startDate: z.coerce.date(),
   dueDate: z.coerce.date(),
   gracePeriodDays: z.coerce.number().optional(),
   prepaymentPenalty: z.coerce.string().optional(),
