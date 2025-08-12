@@ -322,9 +322,42 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
   
   const amount = parseFloat(offer.amount);
-  // Use total amount from schedule if available, otherwise use principal
-  const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
-  const outstanding = totalAmountDue - totalPaid;
+  
+  // Calculate outstanding based on what's actually due vs future payments
+  let outstanding = 0;
+  if (scheduleData?.schedule?.schedule) {
+    const today = new Date();
+    const paymentStatus = scheduleData.schedule.schedule;
+    let remainingPaid = totalPaid;
+    
+    for (const payment of paymentStatus) {
+      const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
+      const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
+      
+      // For interest-only loans, only count as outstanding if:
+      // 1. Payment is due (past due date) OR
+      // 2. Payment is partially paid
+      if (offer.repaymentType === 'interest_only') {
+        const paymentDueDate = new Date(payment.dueDate);
+        const isDue = paymentDueDate <= today;
+        const isPartiallyPaid = paidForThisPayment > 0.01;
+        
+        if ((isDue || isPartiallyPaid) && remainingForThisPayment > 0.01) {
+          outstanding += remainingForThisPayment;
+        }
+      } else {
+        // For other repayment types, count all unpaid amounts
+        outstanding += remainingForThisPayment;
+      }
+      
+      remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
+      if (remainingPaid <= 0) break;
+    }
+  } else {
+    // Fallback calculation
+    const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
+    outstanding = totalAmountDue - totalPaid;
+  }
   
   const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
@@ -814,7 +847,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
             )}
 
             {/* Next Payment Due Section - Direct Payment */}
-            {offer.status === 'accepted' && outstanding > 0 && isReceiver && (
+            {offer.status === 'accepted' && outstanding > 0.01 && isReceiver && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -864,11 +897,23 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             // For EMI-based repayment types
                             paymentAmount = scheduleData.schedule.emiAmount;
                           } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
-                            // For interest-only, use the payment amount from the first unpaid installment
+                            // For interest-only, find the next payment that is actually due or partially paid
+                            const today = new Date();
+                            let remainingPaid = totalPaid;
+                            
                             const nextPayment = scheduleData.schedule.schedule.find((p: any) => {
-                              const totalPaidForPayment = Math.min(totalPaid, p.totalAmount);
-                              return (p.totalAmount - totalPaidForPayment) > 0.01;
+                              const paidForThisPayment = Math.min(remainingPaid, p.totalAmount);
+                              const remainingForThisPayment = p.totalAmount - paidForThisPayment;
+                              const paymentDueDate = new Date(p.dueDate);
+                              const isDue = paymentDueDate <= today;
+                              const isPartiallyPaid = paidForThisPayment > 0.01;
+                              
+                              remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
+                              
+                              // Return this payment if it's due or partially paid
+                              return (isDue || isPartiallyPaid) && remainingForThisPayment > 0.01;
                             });
+                            
                             paymentAmount = nextPayment ? nextPayment.totalAmount : outstanding;
                           } else {
                             // Fallback for other repayment types
