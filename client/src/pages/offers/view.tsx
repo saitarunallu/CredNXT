@@ -347,15 +347,25 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
       
       if (paidForThisPayment > 0) {
-        // Allocate payment between interest and principal
+        // Banking Standard: Interest is paid first, then principal
         const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
         const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
         
         totalInterestPaid += interestPaidForThis;
-        totalPrincipalPaid += principalPaidForThis;
+        
+        // CRITICAL: For interest-only loans, principal payment only applies to final installment
+        if (offer.repaymentType === 'interest_only') {
+          // Only count principal payment if this is the final payment and it has principal component
+          if (payment.principalAmount > 0 && principalPaidForThis > 0) {
+            totalPrincipalPaid += principalPaidForThis;
+          }
+        } else {
+          // For EMI and other repayment types
+          totalPrincipalPaid += principalPaidForThis;
+        }
       }
       
-      // Calculate due and overdue amounts
+      // Calculate due and overdue amounts - only count unpaid portions
       if (remainingForThisPayment > 0.01) {
         if (paymentDueDate <= today) {
           // Payment is due or overdue
@@ -371,21 +381,21 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       if (remainingPaid <= 0) break;
     }
     
-    // Outstanding Principal = Original Principal - Principal Paid
+    // Outstanding Principal = Original Principal - Principal Actually Paid
     outstandingPrincipal = Math.max(0, amount - totalPrincipalPaid);
     
-    // Outstanding amount = due + overdue (not entire principal)
+    // Current Due Amount = due + overdue (NOT entire principal balance)
     outstanding = dueAmount + overDueAmount;
   } else {
-    // Fallback calculation - for interest-only, principal doesn't reduce
+    // Fallback calculation - Banking Industry Standard
     if (offer.repaymentType === 'interest_only') {
+      // For interest-only: Principal NEVER reduces from interest payments
       outstandingPrincipal = amount;
-      // Only show due amount, not entire principal
-      const today = new Date();
-      const monthlyInterest = (amount * parseFloat(offer.interestRate)) / (12 * 100);
-      // Simple check if any payment is due (this is fallback, should use proper schedule)
-      outstanding = totalPaid < monthlyInterest ? monthlyInterest : 0;
+      // Only show interest payment amount as due
+      const monthlyInterest = Math.round(((amount * parseFloat(offer.interestRate)) / (12 * 100)) * 100) / 100;
+      outstanding = monthlyInterest;
     } else {
+      // For EMI and other types: Outstanding principal reduces with payments
       outstandingPrincipal = Math.max(0, amount - totalPaid);
       outstanding = outstandingPrincipal;
     }
@@ -878,8 +888,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
-            {/* Next Payment Due Section - Direct Payment */}
-            {offer.status === 'accepted' && outstanding > 0.01 && isReceiver && (
+            {/* Next Payment Due Section - Only show when payment is actually due */}
+            {offer.status === 'accepted' && (dueAmount > 0.01 || overDueAmount > 0.01) && isReceiver && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -905,6 +915,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                           Principal Outstanding: ₹{outstandingPrincipal.toLocaleString()}
                         </div>
+                        {overDueAmount > 0 && (
+                          <div className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">
+                            Overdue: ₹{overDueAmount.toLocaleString()}
+                          </div>
+                        )}
                       </div>
                     </div>
                     

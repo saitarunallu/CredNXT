@@ -252,15 +252,19 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   let cumulativeInterest = 0;
   
   if (repaymentType === 'interest_only') {
-    const interestPerPayment = (principal * annualRate * paymentFrequencyInMonths) / 12;
+    // Banking Standard: Interest-only payments do NOT reduce principal
+    const interestPerPayment = Math.round(((principal * annualRate * paymentFrequencyInMonths) / 12) * 100) / 100;
     
     for (let i = 1; i <= numberOfPayments; i++) {
       const dueDate = dueDates[i - 1];
       const isLastPayment = i === numberOfPayments;
+      
+      // CRITICAL: Principal payment ONLY on final installment
       const principalAmount = isLastPayment ? principal : 0;
-      const interestAmount = Math.round(interestPerPayment * 100) / 100;
+      const interestAmount = interestPerPayment;
       const totalPayment = principalAmount + interestAmount;
       
+      // Only add principal to cumulative on final payment
       cumulativePrincipal += principalAmount;
       cumulativeInterest += interestAmount;
       totalInterest += interestAmount;
@@ -274,11 +278,12 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
         principalAmount,
         interestAmount,
         totalAmount: totalPayment,
+        // CRITICAL: Principal balance NEVER reduces until final payment
         remainingBalance: isLastPayment ? 0 : principal,
         cumulativePrincipal,
-        cumulativeInterest,
-        principalPercentage: totalPayment > 0 ? (principalAmount / totalPayment) * 100 : 0,
-        interestPercentage: totalPayment > 0 ? (interestAmount / totalPayment) * 100 : 0,
+        cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
+        principalPercentage: totalPayment > 0 ? Math.round((principalAmount / totalPayment) * 10000) / 100 : 0,
+        interestPercentage: totalPayment > 0 ? Math.round((interestAmount / totalPayment) * 10000) / 100 : 0,
         gracePeriodEndDate,
         latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
       });
@@ -526,22 +531,32 @@ export function calculateOutstandingPrincipal(terms: LoanTerms, paidAmount: numb
   let overDueAmount = 0;
   const today = new Date();
   
-  // Process payments in chronological order
+  // Process payments in chronological order - Banking Industry Standard
   for (const payment of schedule.schedule) {
     const paymentDueDate = new Date(payment.dueDate);
     const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
     const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
     
     if (paidForThisPayment > 0) {
-      // Allocate payment between interest and principal
+      // Banking Standard: Interest is paid first, then principal
       const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
       const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
       
       totalInterestPaid += interestPaidForThis;
-      totalPrincipalPaid += principalPaidForThis;
+      
+      // CRITICAL: For interest-only loans, principal payment only applies to final installment
+      if (terms.repaymentType === 'interest_only') {
+        // Only count principal payment if this is the final payment and it has principal component
+        if (payment.principalAmount > 0 && principalPaidForThis > 0) {
+          totalPrincipalPaid += principalPaidForThis;
+        }
+      } else {
+        // For EMI and other repayment types
+        totalPrincipalPaid += principalPaidForThis;
+      }
     }
     
-    // Calculate due and overdue amounts
+    // Calculate due and overdue amounts - only count unpaid portions
     if (remainingForThisPayment > 0.01) {
       if (paymentDueDate <= today) {
         // Payment is due or overdue
@@ -557,7 +572,8 @@ export function calculateOutstandingPrincipal(terms: LoanTerms, paidAmount: numb
     if (remainingPaid <= 0) break;
   }
   
-  const outstandingPrincipal = terms.principal - totalPrincipalPaid;
+  // Outstanding Principal = Original Principal - Principal Actually Paid
+  const outstandingPrincipal = Math.max(0, terms.principal - totalPrincipalPaid);
   
   return {
     outstandingPrincipal: Math.round(outstandingPrincipal * 100) / 100,
