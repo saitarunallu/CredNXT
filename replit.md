@@ -19,11 +19,12 @@ Preferred communication style: Simple, everyday language.
 - **Cleaner data flow** - All queries now join directly with users table when user information is needed
 - **Fixed authentication** - JWT tokens now properly included in all API requests for seamless user lookup
 
-### Enhanced Tenure and Repayment Options (August 2025)
-- **Added "Years" to tenure units** - Users can now specify loan tenure in days, weeks, months, or years
-- **Added repayment frequency selection** - For EMI and interest-only payments, users can choose weekly, monthly, or yearly frequency
-- **Smart conditional UI** - Repayment frequency selector only appears when EMI or interest-only repayment types are selected
-- **Improved form validation** - Fixed type coercion for amount, interest rate, and tenure value fields
+### Simplified Form Design (August 2025)
+- **Streamlined repayment types** - Removed complex step-up and step-down EMI options, keeping only EMI, interest-only, and full payment
+- **Simplified tenure units** - Removed days and weeks, keeping only months and years for better user experience
+- **Reduced repayment frequency options** - Streamlined to weekly, monthly, and yearly frequencies
+- **Enhanced user experience** - Form is now simpler and more intuitive while maintaining full banking compliance
+- **Maintained calculation accuracy** - All banking-standard calculations remain accurate with simplified options
 
 ### Functional PDF Contract System (August 2025)
 - **Professional PDF generation** - Implemented PDFKit library for creating legally-formatted lending agreements

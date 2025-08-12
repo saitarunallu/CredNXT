@@ -1162,24 +1162,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test route for calculation system
-  app.post('/test-calculations', async (req, res) => {
-    try {
-      const { calculateRepaymentSchedule } = await import('@shared/calculations');
-      const terms = req.body;
-      
-      // Convert string date to Date object
-      if (terms.startDate) {
-        terms.startDate = new Date(terms.startDate);
-      }
-      
-      const result = calculateRepaymentSchedule(terms);
-      res.json(result);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-
   const httpServer = createServer(app);
 
   // WebSocket server

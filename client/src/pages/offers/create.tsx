@@ -464,17 +464,11 @@ export default function CreateOffer() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="emi">📅 EMI (Equal Installments)</SelectItem>
-                        <SelectItem value="step_up">📈 Step-Up EMI (Increasing)</SelectItem>
-                        <SelectItem value="step_down">📉 Step-Down EMI (Decreasing)</SelectItem>
-                        <SelectItem value="balloon">🎈 Balloon Payment</SelectItem>
                         <SelectItem value="interest_only">💰 Interest Only</SelectItem>
                         <SelectItem value="full_payment">🎯 Full Payment at End</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="text-xs text-gray-500 mt-1">
-                      {repaymentType === 'step_up' && 'Payments increase gradually over time'}
-                      {repaymentType === 'step_down' && 'Payments decrease gradually over time'}
-                      {repaymentType === 'balloon' && 'Lower regular payments with large final payment'}
                       {repaymentType === 'interest_only' && 'Pay only interest, principal at the end'}
                       {repaymentType === 'full_payment' && 'Single payment of principal and interest'}
                       {repaymentType === 'emi' && 'Fixed equal payments throughout the term'}
@@ -530,8 +524,6 @@ export default function CreateOffer() {
                         <SelectValue placeholder="Select time unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="days">📅 Days</SelectItem>
-                        <SelectItem value="weeks">🗓️ Weeks</SelectItem>
                         <SelectItem value="months">📆 Months</SelectItem>
                         <SelectItem value="years">🗓️ Years</SelectItem>
                       </SelectContent>
@@ -539,7 +531,7 @@ export default function CreateOffer() {
                   </div>
 
                   {/* Repayment Frequency - Show for multiple payment types */}
-                  {(repaymentType === 'emi' || repaymentType === 'interest_only' || repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon') && (
+                  {(repaymentType === 'emi' || repaymentType === 'interest_only') && (
                     <div className="space-y-2">
                       <Label className="text-gray-700 font-medium text-sm">
                         Payment Frequency
@@ -550,10 +542,7 @@ export default function CreateOffer() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="weekly">📅 Weekly</SelectItem>
-                          <SelectItem value="bi_weekly">📅 Bi-Weekly</SelectItem>
                           <SelectItem value="monthly">📆 Monthly</SelectItem>
-                          <SelectItem value="quarterly">📆 Quarterly</SelectItem>
-                          <SelectItem value="semi_annual">📆 Semi-Annual</SelectItem>
                           <SelectItem value="yearly">🗓️ Yearly</SelectItem>
                         </SelectContent>
                       </Select>

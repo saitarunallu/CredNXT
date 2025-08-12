@@ -3,9 +3,9 @@ export interface LoanTerms {
   interestRate: number; // Annual percentage rate
   interestType: 'fixed' | 'reducing';
   tenureValue: number;
-  tenureUnit: 'days' | 'weeks' | 'months' | 'years';
-  repaymentType: 'emi' | 'interest_only' | 'full_payment' | 'step_down' | 'step_up' | 'balloon';
-  repaymentFrequency?: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly';
+  tenureUnit: 'months' | 'years';
+  repaymentType: 'emi' | 'interest_only' | 'full_payment';
+  repaymentFrequency?: 'weekly' | 'monthly' | 'yearly';
   startDate: Date;
   gracePeriodDays?: number;
   prepaymentPenalty?: number;
@@ -60,32 +60,24 @@ export interface PaymentScheduleItem {
 // Banking industry standard tenure conversion
 function convertTenureToMonths(tenureValue: number, tenureUnit: string): number {
   switch (tenureUnit) {
-    case 'days':
-      return tenureValue / 30.44; // Banking standard: 365.25/12
-    case 'weeks':
-      return tenureValue / 4.345; // Banking standard: 52.18/12
     case 'months':
       return tenureValue;
     case 'years':
       return tenureValue * 12;
     default:
-      throw new Error(`Invalid tenure unit: ${tenureUnit}`);
+      throw new Error(`Invalid tenure unit: ${tenureUnit}. Only months and years are supported.`);
   }
 }
 
 // Convert tenure to days for precise APR calculation
 function convertTenureToDays(tenureValue: number, tenureUnit: string): number {
   switch (tenureUnit) {
-    case 'days':
-      return tenureValue;
-    case 'weeks':
-      return tenureValue * 7;
     case 'months':
       return tenureValue * 30.44; // Banking standard average
     case 'years':
       return tenureValue * 365.25; // Accounting for leap years
     default:
-      throw new Error(`Invalid tenure unit: ${tenureUnit}`);
+      throw new Error(`Invalid tenure unit: ${tenureUnit}. Only months and years are supported.`);
   }
 }
 
@@ -94,18 +86,12 @@ function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
     case 'weekly':
       return 1/4.345; // 52.18 weeks per year / 12 months
-    case 'bi_weekly':
-      return 1/2.1725; // 26.09 bi-weeks per year / 12 months
     case 'monthly':
       return 1;
-    case 'quarterly':
-      return 3;
-    case 'semi_annual':
-      return 6;
     case 'yearly':
       return 12;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Only weekly, monthly, and yearly are supported.`);
   }
 }
 
@@ -114,18 +100,12 @@ function getPaymentsPerYear(frequency: string): number {
   switch (frequency) {
     case 'weekly':
       return 52.18; // Banking standard
-    case 'bi_weekly':
-      return 26.09;
     case 'monthly':
       return 12;
-    case 'quarterly':
-      return 4;
-    case 'semi_annual':
-      return 2;
     case 'yearly':
       return 1;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Only weekly, monthly, and yearly are supported.`);
   }
 }
 
@@ -333,10 +313,9 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     
     const finalDate = new Date(startDate);
     switch (tenureUnit) {
-      case 'days': finalDate.setDate(finalDate.getDate() + tenureValue); break;
-      case 'weeks': finalDate.setDate(finalDate.getDate() + (tenureValue * 7)); break;
       case 'months': finalDate.setMonth(finalDate.getMonth() + tenureValue); break;
       case 'years': finalDate.setFullYear(finalDate.getFullYear() + tenureValue); break;
+      default: throw new Error(`Invalid tenure unit: ${tenureUnit}. Only months and years are supported.`);
     }
     
     const totalPayment = principal + totalInterest;
