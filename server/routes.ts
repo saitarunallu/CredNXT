@@ -561,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import calculation functions (dynamic import for server compatibility)
-      const { validatePaymentAmount, calculateRepaymentSchedule, getNextPaymentInfo } = await import('@shared/calculations');
+      const { validatePaymentAmount, calculateRepaymentSchedule, getNextPaymentDue } = await import('@shared/calculations');
       
       // Get existing payments to calculate total paid
       const existingPayments = await storage.getOfferPayments(paymentData.offerId);
@@ -1056,7 +1056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import calculation functions
-      const { calculateRepaymentSchedule, getPaymentStatus, getNextPaymentInfo, calculateOutstandingPrincipal } = await import('@shared/calculations');
+      const { calculateRepaymentSchedule, getNextPaymentDue } = await import('@shared/calculations');
       
       // Get all payments for this offer
       const payments = await storage.getOfferPayments(id);
@@ -1080,28 +1080,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: loanStartDate
       };
 
-      const paymentStatus = getPaymentStatus(loanTerms, totalPaid);
-      const nextPayment = getNextPaymentInfo(loanTerms, totalPaid);
+      // Generate complete repayment schedule
       const schedule = calculateRepaymentSchedule(loanTerms);
       
-      // Calculate outstanding principal using banking industry standards
-      const principalInfo = calculateOutstandingPrincipal(loanTerms, totalPaid);
+      // Get paid installments by analyzing payments
+      const paidPayments = payments.filter(p => p.status === 'paid');
+      const paidInstallments = paidPayments.map(p => p.installmentNumber || 1);
+      
+      // Get next payment due
+      const nextPayment = getNextPaymentDue(schedule.schedule, paidInstallments);
+      
+      // Calculate payment status based on schedule and payments
+      const totalAmount = schedule.totalAmount;
+      const remainingAmount = totalAmount - totalPaid;
+      
+      // Calculate outstanding principal (remaining principal balance)
+      const outstandingPrincipal = nextPayment ? nextPayment.remainingBalance : 0;
+      
+      // Calculate interest and principal paid
+      let totalPrincipalPaid = 0;
+      let totalInterestPaid = 0;
+      
+      // Match payments to schedule items to get accurate breakdown
+      for (const payment of paidPayments) {
+        const scheduleItem = schedule.schedule.find(s => s.installmentNumber === (payment.installmentNumber || 1));
+        if (scheduleItem) {
+          totalPrincipalPaid += scheduleItem.principalAmount;
+          totalInterestPaid += scheduleItem.interestAmount;
+        }
+      }
+      
+      // Calculate due amounts based on current date
+      const today = new Date();
+      let dueAmount = 0;
+      let overDueAmount = 0;
+      
+      for (const item of schedule.schedule) {
+        if (!paidInstallments.includes(item.installmentNumber)) {
+          if (item.dueDate <= today) {
+            // This payment is overdue
+            overDueAmount += item.totalAmount;
+          } else {
+            // This is the next due payment
+            dueAmount = item.totalAmount;
+            break;
+          }
+        }
+      }
 
       res.json({
-        paymentStatus,
-        nextPayment,
+        paymentStatus: {
+          isComplete: remainingAmount <= 0.01,
+          totalPaid,
+          remainingAmount,
+          completionPercentage: (totalPaid / totalAmount) * 100
+        },
+        nextPayment: nextPayment ? {
+          installmentNumber: nextPayment.installmentNumber,
+          dueDate: nextPayment.dueDate,
+          amount: nextPayment.totalAmount,
+          principalAmount: nextPayment.principalAmount,
+          interestAmount: nextPayment.interestAmount,
+          remainingBalance: nextPayment.remainingBalance
+        } : null,
         totalPaid,
-        totalAmount: schedule.totalAmount,
-        remainingAmount: schedule.totalAmount - totalPaid,
-        outstandingPrincipal: principalInfo.outstandingPrincipal,
-        totalPrincipalPaid: principalInfo.totalPrincipalPaid,
-        totalInterestPaid: principalInfo.totalInterestPaid,
-        dueAmount: principalInfo.dueAmount,
-        overDueAmount: principalInfo.overDueAmount
+        totalAmount,
+        remainingAmount,
+        outstandingPrincipal,
+        totalPrincipalPaid,
+        totalInterestPaid,
+        dueAmount,
+        overDueAmount,
+        schedule: schedule.schedule,
+        annualPercentageRate: schedule.annualPercentageRate,
+        effectiveInterestRate: schedule.effectiveInterestRate,
+        rbiCompliance: schedule.rbiCompliance
       });
     } catch (error) {
       console.error('Payment status error:', error);
       res.status(500).json({ message: 'Failed to get payment status' });
+    }
+  });
+
+  // Test route for calculation system
+  app.post('/test-calculations', async (req, res) => {
+    try {
+      const { calculateRepaymentSchedule } = await import('@shared/calculations');
+      const terms = req.body;
+      
+      // Convert string date to Date object
+      if (terms.startDate) {
+        terms.startDate = new Date(terms.startDate);
+      }
+      
+      const result = calculateRepaymentSchedule(terms);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

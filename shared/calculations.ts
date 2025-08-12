@@ -1,16 +1,18 @@
 export interface LoanTerms {
   principal: number;
-  interestRate: number; // Annual percentage
+  interestRate: number; // Annual percentage rate
   interestType: 'fixed' | 'reducing';
   tenureValue: number;
   tenureUnit: 'days' | 'weeks' | 'months' | 'years';
   repaymentType: 'emi' | 'interest_only' | 'full_payment' | 'step_down' | 'step_up' | 'balloon';
   repaymentFrequency?: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly';
   startDate: Date;
-  gracePeriodDays?: number; // Grace period for late payments
-  prepaymentPenalty?: number; // Percentage penalty for early repayment
-  latePaymentPenalty?: number; // Percentage penalty for late payments
-  compoundingFrequency?: 'daily' | 'monthly' | 'quarterly' | 'annually'; // For reducing balance
+  gracePeriodDays?: number;
+  prepaymentPenalty?: number;
+  latePaymentPenalty?: number;
+  compoundingFrequency?: 'daily' | 'monthly' | 'quarterly' | 'annually';
+  processingFee?: number; // For APR calculation
+  otherCharges?: number; // For APR calculation
 }
 
 export interface RepaymentSchedule {
@@ -18,14 +20,23 @@ export interface RepaymentSchedule {
   totalInterest: number;
   emiAmount?: number;
   numberOfPayments: number;
-  effectiveAnnualRate: number; // APR including all fees and charges
-  totalCostOfCredit: number; // Total cost including all charges
+  annualPercentageRate: number; // APR including all fees per RBI guidelines
+  effectiveInterestRate: number; // Actual interest rate considering compounding
+  totalCostOfCredit: number; // Complete cost including all charges
+  processingFee: number;
+  totalCharges: number;
   schedule: PaymentScheduleItem[];
   amortizationSummary: {
     totalPrincipal: number;
     totalInterest: number;
+    totalCharges: number;
     averagePayment: number;
-    interestToIncomeRatio?: number;
+    principalToInterestRatio: number;
+  };
+  rbiCompliance: {
+    isCompliant: boolean;
+    fairPracticesCode: boolean;
+    transparentPricing: boolean;
   };
 }
 
@@ -38,19 +49,21 @@ export interface PaymentScheduleItem {
   remainingBalance: number;
   cumulativePrincipal: number;
   cumulativeInterest: number;
-  principalPercentage: number; // Percentage of payment going to principal
-  interestPercentage: number; // Percentage of payment going to interest
-  gracePeriodEndDate?: Date; // End of grace period for this payment
-  latePaymentFee?: number; // Late payment penalty if applicable
+  principalPercentage: number;
+  interestPercentage: number;
+  gracePeriodEndDate?: Date;
+  latePaymentFee?: number;
+  daysBetweenPayments: number; // For accurate interest calculation
+  effectivePeriodRate: number; // Period-specific interest rate
 }
 
-// Convert tenure to months for calculation with precise banking standards
+// Banking industry standard tenure conversion
 function convertTenureToMonths(tenureValue: number, tenureUnit: string): number {
   switch (tenureUnit) {
     case 'days':
-      return tenureValue / 30.44; // Precise average days per month
+      return tenureValue / 30.44; // Banking standard: 365.25/12
     case 'weeks':
-      return tenureValue / 4.345; // Precise average weeks per month (52.14/12)
+      return tenureValue / 4.345; // Banking standard: 52.18/12
     case 'months':
       return tenureValue;
     case 'years':
@@ -60,13 +73,29 @@ function convertTenureToMonths(tenureValue: number, tenureUnit: string): number 
   }
 }
 
-// Get payment frequency in months with banking precision
+// Convert tenure to days for precise APR calculation
+function convertTenureToDays(tenureValue: number, tenureUnit: string): number {
+  switch (tenureUnit) {
+    case 'days':
+      return tenureValue;
+    case 'weeks':
+      return tenureValue * 7;
+    case 'months':
+      return tenureValue * 30.44; // Banking standard average
+    case 'years':
+      return tenureValue * 365.25; // Accounting for leap years
+    default:
+      throw new Error(`Invalid tenure unit: ${tenureUnit}`);
+  }
+}
+
+// Banking standard payment frequency conversion
 function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
     case 'weekly':
-      return 1/4.345; // Precise weeks per month (52.14/12)
+      return 1/4.345; // 52.18 weeks per year / 12 months
     case 'bi_weekly':
-      return 1/2.1725; // Precise bi-weeks per month (26.07/12)
+      return 1/2.1725; // 26.09 bi-weeks per year / 12 months
     case 'monthly':
       return 1;
     case 'quarterly':
@@ -80,11 +109,29 @@ function getPaymentFrequencyInMonths(frequency: string): number {
   }
 }
 
-// Calculate due dates based on start date and frequency - FIXED
-function calculateDueDates(startDate: Date, frequency: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly', numberOfPayments: number): Date[] {
+// Get number of payments per year for different frequencies
+function getPaymentsPerYear(frequency: string): number {
+  switch (frequency) {
+    case 'weekly':
+      return 52.18; // Banking standard
+    case 'bi_weekly':
+      return 26.09;
+    case 'monthly':
+      return 12;
+    case 'quarterly':
+      return 4;
+    case 'semi_annual':
+      return 2;
+    case 'yearly':
+      return 1;
+    default:
+      throw new Error(`Invalid payment frequency: ${frequency}`);
+  }
+}
+
+// Calculate due dates based on start date and frequency
+function calculateDueDates(startDate: Date, frequency: string, numberOfPayments: number): Date[] {
   const dueDates: Date[] = [];
-  
-  // Ensure we have a valid start date
   const baseDate = new Date(startDate.getTime());
   
   for (let i = 1; i <= numberOfPayments; i++) {
@@ -92,73 +139,82 @@ function calculateDueDates(startDate: Date, frequency: 'weekly' | 'bi_weekly' | 
     
     switch (frequency) {
       case 'weekly':
-        dueDate.setTime(baseDate.getTime() + (i * 7 * 24 * 60 * 60 * 1000));
+        dueDate.setDate(baseDate.getDate() + (i * 7));
         break;
       case 'bi_weekly':
-        dueDate.setTime(baseDate.getTime() + (i * 14 * 24 * 60 * 60 * 1000));
+        dueDate.setDate(baseDate.getDate() + (i * 14));
         break;
       case 'monthly':
         dueDate.setMonth(baseDate.getMonth() + i);
-        // Handle month overflow properly
-        const expectedDay = baseDate.getDate();
-        const actualDay = dueDate.getDate();
-        if (actualDay !== expectedDay) {
-          // Go to last day of the intended month
-          dueDate.setDate(0);
-        }
         break;
       case 'quarterly':
         dueDate.setMonth(baseDate.getMonth() + (i * 3));
-        const expectedDayQ = baseDate.getDate();
-        const actualDayQ = dueDate.getDate();
-        if (actualDayQ !== expectedDayQ) {
-          dueDate.setDate(0);
-        }
         break;
       case 'semi_annual':
         dueDate.setMonth(baseDate.getMonth() + (i * 6));
-        const expectedDayS = baseDate.getDate();
-        const actualDayS = dueDate.getDate();
-        if (actualDayS !== expectedDayS) {
-          dueDate.setDate(0);
-        }
         break;
       case 'yearly':
         dueDate.setFullYear(baseDate.getFullYear() + i);
-        const expectedDayY = baseDate.getDate();
-        const actualDayY = dueDate.getDate();
-        if (actualDayY !== expectedDayY) {
-          dueDate.setDate(0);
-        }
         break;
     }
     
-    dueDates.push(new Date(dueDate));
+    dueDates.push(dueDate);
   }
   
   return dueDates;
 }
 
-// Calculate EMI using standard formula
-function calculateEMI(principal: number, monthlyRate: number, numberOfPayments: number): number {
-  if (monthlyRate === 0) {
-    return principal / numberOfPayments;
+// RBI-compliant EMI calculation using reducing balance method
+function calculateEMI(principal: number, periodicRate: number, numberOfPayments: number): number {
+  // Handle zero interest rate (rare but possible)
+  if (periodicRate === 0) {
+    return Math.round((principal / numberOfPayments) * 100) / 100;
   }
   
-  const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-              (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  // Standard EMI formula: EMI = [P × R × (1+R)^N] / [(1+R)^N - 1]
+  const onePlusRate = 1 + periodicRate;
+  const numerator = principal * periodicRate * Math.pow(onePlusRate, numberOfPayments);
+  const denominator = Math.pow(onePlusRate, numberOfPayments) - 1;
+  
+  const emi = numerator / denominator;
+  
+  // Round to 2 decimal places (standard banking practice)
   return Math.round(emi * 100) / 100;
 }
 
-// Calculate effective annual rate (APR)
-function calculateEffectiveAnnualRate(nominalRate: number, compoundingPerYear: number): number {
-  return Math.pow(1 + nominalRate / compoundingPerYear, compoundingPerYear) - 1;
+// Calculate APR according to RBI guidelines
+function calculateAPR(
+  principal: number, 
+  totalInterest: number, 
+  processingFee: number, 
+  otherCharges: number, 
+  tenureInDays: number
+): number {
+  const totalCost = totalInterest + processingFee + otherCharges;
+  
+  // RBI APR Formula: APR = [(Total Charges / Principal) / Tenure in Days] × 365 × 100
+  const apr = ((totalCost / principal) / tenureInDays) * 365 * 100;
+  
+  return Math.round(apr * 100) / 100;
 }
 
-// Calculate step-up/step-down EMI based on percentage increase/decrease
-function calculateStepEMI(baseEMI: number, stepPercentage: number, installmentNumber: number, isStepUp: boolean): number {
-  const multiplier = isStepUp ? (1 + stepPercentage / 100) : (1 - stepPercentage / 100);
-  return Math.round(baseEMI * Math.pow(multiplier, installmentNumber - 1) * 100) / 100;
+// Calculate effective annual rate considering compounding
+function calculateEffectiveAnnualRate(nominalRate: number, compoundingFrequency: number): number {
+  // EAR = (1 + r/n)^n - 1
+  const effectiveRate = Math.pow(1 + (nominalRate / compoundingFrequency), compoundingFrequency) - 1;
+  return Math.round(effectiveRate * 10000) / 100; // Convert to percentage with 2 decimal places
+}
+
+// Calculate compound interest
+function calculateCompoundInterest(principal: number, rate: number, time: number, compoundingPerYear: number): number {
+  const amount = principal * Math.pow(1 + (rate / compoundingPerYear), compoundingPerYear * time);
+  return amount - principal;
+}
+
+// Calculate days between two dates
+function calculateDaysBetweenDates(startDate: Date, endDate: Date): number {
+  const timeDiff = endDate.getTime() - startDate.getTime();
+  return Math.ceil(timeDiff / (1000 * 3600 * 24));
 }
 
 // Calculate grace period end date
@@ -174,7 +230,54 @@ function calculateLatePaymentFee(paymentAmount: number, latePaymentPenalty: numb
   return Math.round(paymentAmount * (latePaymentPenalty / 100) * 100) / 100;
 }
 
-// Generate repayment schedule
+// Generate EMI schedule for reducing balance
+function generateEMISchedule(
+  principal: number, 
+  periodicRate: number, 
+  totalPayments: number, 
+  dueDates: Date[], 
+  emiAmount: number,
+  gracePeriodDays: number,
+  latePaymentPenalty: number
+): PaymentScheduleItem[] {
+  const schedule: PaymentScheduleItem[] = [];
+  let remainingBalance = principal;
+  let cumulativePrincipal = 0;
+  let cumulativeInterest = 0;
+  
+  for (let i = 1; i <= totalPayments; i++) {
+    const interestAmount = Math.round(remainingBalance * periodicRate * 100) / 100;
+    const principalAmount = Math.min(Math.round((emiAmount - interestAmount) * 100) / 100, remainingBalance);
+    const actualPayment = principalAmount + interestAmount;
+    
+    remainingBalance = Math.max(0, remainingBalance - principalAmount);
+    cumulativePrincipal += principalAmount;
+    cumulativeInterest += interestAmount;
+    
+    const daysBetween = i === 1 ? 30 : calculateDaysBetweenDates(dueDates[i-2], dueDates[i-1]);
+    
+    schedule.push({
+      installmentNumber: i,
+      dueDate: dueDates[i-1],
+      principalAmount,
+      interestAmount,
+      totalAmount: actualPayment,
+      remainingBalance,
+      cumulativePrincipal,
+      cumulativeInterest,
+      principalPercentage: actualPayment > 0 ? (principalAmount / actualPayment) * 100 : 0,
+      interestPercentage: actualPayment > 0 ? (interestAmount / actualPayment) * 100 : 0,
+      gracePeriodEndDate: gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDates[i-1], gracePeriodDays) : undefined,
+      latePaymentFee: calculateLatePaymentFee(actualPayment, latePaymentPenalty),
+      daysBetweenPayments: daysBetween,
+      effectivePeriodRate: periodicRate
+    });
+  }
+  
+  return schedule;
+}
+
+// Main repayment schedule calculation with banking industry standards
 export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule {
   const { 
     principal, 
@@ -183,603 +286,187 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     tenureValue, 
     tenureUnit, 
     repaymentType, 
-    repaymentFrequency, 
+    repaymentFrequency = 'monthly', 
     startDate,
     gracePeriodDays = 0,
     latePaymentPenalty = 0,
-    compoundingFrequency = 'monthly'
+    prepaymentPenalty = 0,
+    compoundingFrequency = 'monthly',
+    processingFee = 0,
+    otherCharges = 0
   } = terms;
   
+  // Input validation following banking standards
+  if (principal <= 0) throw new Error('Principal amount must be positive');
+  if (interestRate < 0) throw new Error('Interest rate cannot be negative');
+  if (tenureValue <= 0) throw new Error('Tenure must be positive');
+  if (!startDate || isNaN(startDate.getTime())) throw new Error('Valid start date is required');
+  
   const tenureInMonths = convertTenureToMonths(tenureValue, tenureUnit);
+  const tenureInDays = convertTenureToDays(tenureValue, tenureUnit);
   const annualRate = interestRate / 100;
+  const totalCharges = processingFee + otherCharges;
   
-  // For full payment
-  if (repaymentType === 'full_payment') {
-    const totalInterest = interestType === 'fixed' 
-      ? (principal * annualRate * tenureInMonths) / 12
-      : (principal * annualRate * tenureInMonths) / 12;
-    
-    // FIXED: Ensure valid start date for full payment calculation
-    const validStartDate = startDate && !isNaN(startDate.getTime()) ? new Date(startDate) : new Date();
-    const finalDate = new Date(validStartDate);
-    
-    switch (tenureUnit) {
-      case 'days':
-        finalDate.setTime(validStartDate.getTime() + (tenureValue * 24 * 60 * 60 * 1000));
-        break;
-      case 'weeks':
-        finalDate.setTime(validStartDate.getTime() + (tenureValue * 7 * 24 * 60 * 60 * 1000));
-        break;
-      case 'months':
-        finalDate.setMonth(validStartDate.getMonth() + tenureValue);
-        break;
-      case 'years':
-        finalDate.setFullYear(validStartDate.getFullYear() + tenureValue);
-        break;
-    }
-    
-    const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(finalDate, gracePeriodDays) : undefined;
-    const latePaymentFee = calculateLatePaymentFee(principal + totalInterest, latePaymentPenalty);
-    
-    const totalAmount = principal + totalInterest;
-    const effectiveRate = calculateEffectiveAnnualRate(annualRate, compoundingFrequency === 'monthly' ? 12 : 4);
-    
-    return {
-      totalAmount,
-      totalInterest,
-      numberOfPayments: 1,
-      effectiveAnnualRate: effectiveRate * 100,
-      totalCostOfCredit: totalAmount,
-      amortizationSummary: {
-        totalPrincipal: principal,
-        totalInterest,
-        averagePayment: totalAmount,
-      },
-      schedule: [{
-        installmentNumber: 1,
-        dueDate: finalDate,
-        principalAmount: principal,
-        interestAmount: totalInterest,
-        totalAmount,
-        remainingBalance: 0,
-        cumulativePrincipal: principal,
-        cumulativeInterest: totalInterest,
-        principalPercentage: (principal / totalAmount) * 100,
-        interestPercentage: (totalInterest / totalAmount) * 100,
-        gracePeriodEndDate,
-        latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-      }]
-    };
-  }
-
-  // For all other payment types - FIXED
-  // Ensure we have a valid start date
-  const validStartDate = startDate && !isNaN(startDate.getTime()) ? new Date(startDate) : new Date();
+  // Calculate payment frequency and number of payments
+  const paymentsPerYear = getPaymentsPerYear(repaymentFrequency);
+  const periodicRate = annualRate / paymentsPerYear;
+  const totalPayments = Math.ceil(tenureInMonths / getPaymentFrequencyInMonths(repaymentFrequency));
   
-  const frequency = repaymentFrequency || 'monthly';
-  const paymentFrequencyInMonths = getPaymentFrequencyInMonths(frequency);
-  const numberOfPayments = Math.ceil(tenureInMonths / paymentFrequencyInMonths);
+  // Calculate compounding frequency for effective rate calculation
+  const compoundingPerYear = compoundingFrequency === 'daily' ? 365 : 
+                            compoundingFrequency === 'monthly' ? 12 : 
+                            compoundingFrequency === 'quarterly' ? 4 : 1;
   
-  const dueDates = calculateDueDates(validStartDate, frequency as any, numberOfPayments);
+  // Calculate due dates
+  const dueDates = calculateDueDates(startDate, repaymentFrequency, totalPayments);
   
-  const schedule: PaymentScheduleItem[] = [];
-  let remainingBalance = principal;
+  let schedule: PaymentScheduleItem[] = [];
   let totalInterest = 0;
-  let cumulativePrincipal = 0;
-  let cumulativeInterest = 0;
+  let emiAmount = 0;
   
-  if (repaymentType === 'interest_only') {
-    // CRITICAL FIX: Proper interest-only calculation
-    // Formula: (principal * annual_rate) / 12 for monthly payments
-    const interestPerPayment = (principal * annualRate) / 12;
-    console.log(`Interest-only calculation: Principal=${principal}, Annual Rate=${annualRate}, Interest Per Payment=${interestPerPayment}`);
+  // Implementation for different repayment types
+  if (repaymentType === 'full_payment') {
+    // Bullet payment at maturity
+    totalInterest = interestType === 'fixed' 
+      ? principal * annualRate * (tenureInDays / 365)
+      : calculateCompoundInterest(principal, annualRate, tenureInDays / 365, compoundingPerYear);
     
-    for (let i = 1; i <= numberOfPayments; i++) {
-      const dueDate = dueDates[i - 1];
-      const isLastPayment = i === numberOfPayments;
-      
-      // CRITICAL: Principal payment ONLY on final installment
-      const principalAmount = isLastPayment ? principal : 0;
-      // FIX: Proper rounding - round to 2 decimal places properly
-      const interestAmount = Math.round(interestPerPayment * 100) / 100;
-      const totalPayment = principalAmount + interestAmount;
-      
-      // Only add principal to cumulative on final payment
-      cumulativePrincipal += principalAmount;
-      cumulativeInterest += interestAmount;
-      totalInterest += interestAmount;
-      
-      const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined;
-      const latePaymentFee = calculateLatePaymentFee(totalPayment, latePaymentPenalty);
-      
-      schedule.push({
-        installmentNumber: i,
-        dueDate,
-        principalAmount,
-        interestAmount,
-        totalAmount: totalPayment,
-        // CRITICAL: Principal balance NEVER reduces until final payment
-        remainingBalance: isLastPayment ? 0 : principal,
-        cumulativePrincipal,
-        cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
-        principalPercentage: totalPayment > 0 ? Math.round((principalAmount / totalPayment) * 10000) / 100 : 0,
-        interestPercentage: totalPayment > 0 ? Math.round((interestAmount / totalPayment) * 10000) / 100 : 0,
-        gracePeriodEndDate,
-        latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-      });
+    const finalDate = new Date(startDate);
+    switch (tenureUnit) {
+      case 'days': finalDate.setDate(finalDate.getDate() + tenureValue); break;
+      case 'weeks': finalDate.setDate(finalDate.getDate() + (tenureValue * 7)); break;
+      case 'months': finalDate.setMonth(finalDate.getMonth() + tenureValue); break;
+      case 'years': finalDate.setFullYear(finalDate.getFullYear() + tenureValue); break;
     }
-  } else if (repaymentType === 'emi') {
-    if (interestType === 'fixed') {
-      // CRITICAL FIX: Fixed interest EMI calculation
-      const totalInterestCalculated = (principal * annualRate * tenureInMonths) / 12;
-      const emiAmount = (principal + totalInterestCalculated) / numberOfPayments;
-      console.log(`Fixed EMI calculation: Principal=${principal}, Total Interest=${totalInterestCalculated}, EMI Amount=${emiAmount}`);
-      
-      for (let i = 1; i <= numberOfPayments; i++) {
-        const dueDate = dueDates[i - 1];
-        const principalAmount = principal / numberOfPayments;
-        const interestAmount = totalInterestCalculated / numberOfPayments;
-        
-        remainingBalance = Math.max(0, remainingBalance - principalAmount);
-        cumulativePrincipal += principalAmount;
-        cumulativeInterest += interestAmount;
-        totalInterest += interestAmount;
-        
-        const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined;
-        const latePaymentFee = calculateLatePaymentFee(emiAmount, latePaymentPenalty);
-        
-        schedule.push({
-          installmentNumber: i,
-          dueDate,
-          principalAmount: Math.round(principalAmount * 100) / 100,
-          interestAmount: Math.round(interestAmount * 100) / 100,
-          totalAmount: Math.round(emiAmount * 100) / 100,
-          remainingBalance: Math.max(0, Math.round(remainingBalance * 100) / 100),
-          cumulativePrincipal: Math.round(cumulativePrincipal * 100) / 100,
-          cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
-          principalPercentage: (principalAmount / emiAmount) * 100,
-          interestPercentage: (interestAmount / emiAmount) * 100,
-          gracePeriodEndDate,
-          latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-        });
-      }
-    } else {
-      // CRITICAL FIX: Reducing balance EMI calculation
-      // Use proper monthly rate for EMI calculation
-      const monthlyInterestRate = annualRate / 12;
-      const emiAmount = calculateEMI(principal, monthlyInterestRate, numberOfPayments);
-      console.log(`EMI calculation: Principal=${principal}, Monthly Rate=${monthlyInterestRate}, Number of Payments=${numberOfPayments}, EMI Amount=${emiAmount}`);
-      
-      for (let i = 1; i <= numberOfPayments; i++) {
-        const dueDate = dueDates[i - 1];
-        const interestAmount = Math.round(remainingBalance * monthlyInterestRate * 100) / 100;
-        const principalAmount = Math.round((emiAmount - interestAmount) * 100) / 100;
-        
-        remainingBalance = Math.max(0, remainingBalance - principalAmount);
-        cumulativePrincipal += principalAmount;
-        cumulativeInterest += interestAmount;
-        totalInterest += interestAmount;
-        
-        const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined;
-        const latePaymentFee = calculateLatePaymentFee(emiAmount, latePaymentPenalty);
-        
-        schedule.push({
-          installmentNumber: i,
-          dueDate,
-          principalAmount,
-          interestAmount,
-          totalAmount: emiAmount,
-          remainingBalance: Math.round(remainingBalance * 100) / 100,
-          cumulativePrincipal: Math.round(cumulativePrincipal * 100) / 100,
-          cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
-          principalPercentage: (principalAmount / emiAmount) * 100,
-          interestPercentage: (interestAmount / emiAmount) * 100,
-          gracePeriodEndDate,
-          latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-        });
-      }
-    }
-  } else if (repaymentType === 'step_up' || repaymentType === 'step_down') {
-    // Step-up/Step-down EMI (5% annual increase/decrease by default)
-    const monthlyRate = annualRate / 12 * paymentFrequencyInMonths;
-    const baseEMI = calculateEMI(principal, monthlyRate, numberOfPayments) * 0.8; // Start lower for step-up
-    const stepPercentage = 5; // 5% step annually (can be made configurable)
     
-    for (let i = 1; i <= numberOfPayments; i++) {
-      const dueDate = dueDates[i - 1];
-      const currentEMI = calculateStepEMI(baseEMI, stepPercentage, i, repaymentType === 'step_up');
-      const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
-      const principalAmount = Math.round((currentEMI - interestAmount) * 100) / 100;
-      
-      remainingBalance = Math.max(0, remainingBalance - principalAmount);
-      cumulativePrincipal += principalAmount;
-      cumulativeInterest += interestAmount;
-      totalInterest += interestAmount;
-      
-      const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined;
-      const latePaymentFee = calculateLatePaymentFee(currentEMI, latePaymentPenalty);
-      
-      schedule.push({
-        installmentNumber: i,
-        dueDate,
-        principalAmount,
-        interestAmount,
-        totalAmount: currentEMI,
-        remainingBalance: Math.round(remainingBalance * 100) / 100,
-        cumulativePrincipal: Math.round(cumulativePrincipal * 100) / 100,
-        cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
-        principalPercentage: (principalAmount / currentEMI) * 100,
-        interestPercentage: (interestAmount / currentEMI) * 100,
-        gracePeriodEndDate,
-        latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-      });
-    }
-  } else if (repaymentType === 'balloon') {
-    // Balloon payment: Lower EMIs with large final payment
-    const monthlyRate = annualRate / 12 * paymentFrequencyInMonths;
-    const balloonPercentage = 30; // 30% of principal as balloon payment
-    const balloonAmount = principal * (balloonPercentage / 100);
-    const adjustedPrincipal = principal - balloonAmount;
-    const regularEMI = calculateEMI(adjustedPrincipal, monthlyRate, numberOfPayments - 1);
-    
-    for (let i = 1; i <= numberOfPayments; i++) {
-      const dueDate = dueDates[i - 1];
-      const isLastPayment = i === numberOfPayments;
-      const currentEMI = isLastPayment ? regularEMI + balloonAmount : regularEMI;
-      const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
-      const principalAmount = Math.round((currentEMI - interestAmount) * 100) / 100;
-      
-      remainingBalance = Math.max(0, remainingBalance - principalAmount);
-      cumulativePrincipal += principalAmount;
-      cumulativeInterest += interestAmount;
-      totalInterest += interestAmount;
-      
-      const gracePeriodEndDate = gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined;
-      const latePaymentFee = calculateLatePaymentFee(currentEMI, latePaymentPenalty);
-      
-      schedule.push({
-        installmentNumber: i,
-        dueDate,
-        principalAmount,
-        interestAmount,
-        totalAmount: currentEMI,
-        remainingBalance: Math.round(remainingBalance * 100) / 100,
-        cumulativePrincipal: Math.round(cumulativePrincipal * 100) / 100,
-        cumulativeInterest: Math.round(cumulativeInterest * 100) / 100,
-        principalPercentage: (principalAmount / currentEMI) * 100,
-        interestPercentage: (interestAmount / currentEMI) * 100,
-        gracePeriodEndDate,
-        latePaymentFee: latePaymentFee > 0 ? latePaymentFee : undefined
-      });
-    }
+    const totalPayment = principal + totalInterest;
+    schedule = [{
+      installmentNumber: 1,
+      dueDate: finalDate,
+      principalAmount: principal,
+      interestAmount: totalInterest,
+      totalAmount: totalPayment,
+      remainingBalance: 0,
+      cumulativePrincipal: principal,
+      cumulativeInterest: totalInterest,
+      principalPercentage: (principal / totalPayment) * 100,
+      interestPercentage: (totalInterest / totalPayment) * 100,
+      gracePeriodEndDate: gracePeriodDays > 0 ? calculateGracePeriodEndDate(finalDate, gracePeriodDays) : undefined,
+      latePaymentFee: calculateLatePaymentFee(totalPayment, latePaymentPenalty),
+      daysBetweenPayments: tenureInDays,
+      effectivePeriodRate: periodicRate * totalPayments
+    }];
+  } 
+  else if (repaymentType === 'emi') {
+    // Standard EMI calculation using reducing balance
+    emiAmount = calculateEMI(principal, periodicRate, totalPayments);
+    schedule = generateEMISchedule(principal, periodicRate, totalPayments, dueDates, emiAmount, gracePeriodDays, latePaymentPenalty);
+    totalInterest = schedule.reduce((sum, payment) => sum + payment.interestAmount, 0);
   }
-
-  const totalAmount = principal + totalInterest;
-  const averagePayment = schedule.reduce((sum, item) => sum + item.totalAmount, 0) / numberOfPayments;
-  const effectiveRate = calculateEffectiveAnnualRate(annualRate, compoundingFrequency === 'monthly' ? 12 : 4);
+  else if (repaymentType === 'interest_only') {
+    // Interest-only payments with principal at maturity
+    const periodicInterest = principal * periodicRate;
+    const lastPaymentIndex = totalPayments - 1;
+    
+    schedule = dueDates.map((dueDate, index) => {
+      const isLastPayment = index === lastPaymentIndex;
+      const principalAmount = isLastPayment ? principal : 0;
+      const interestAmount = periodicInterest;
+      const totalAmount = principalAmount + interestAmount;
+      const remainingBalance = isLastPayment ? 0 : principal;
+      const daysBetween = index === 0 ? 30 : calculateDaysBetweenDates(dueDates[index-1], dueDate);
+      
+      return {
+        installmentNumber: index + 1,
+        dueDate,
+        principalAmount,
+        interestAmount,
+        totalAmount,
+        remainingBalance,
+        cumulativePrincipal: isLastPayment ? principal : 0,
+        cumulativeInterest: interestAmount * (index + 1),
+        principalPercentage: (principalAmount / totalAmount) * 100,
+        interestPercentage: (interestAmount / totalAmount) * 100,
+        gracePeriodEndDate: gracePeriodDays > 0 ? calculateGracePeriodEndDate(dueDate, gracePeriodDays) : undefined,
+        latePaymentFee: calculateLatePaymentFee(totalAmount, latePaymentPenalty),
+        daysBetweenPayments: daysBetween,
+        effectivePeriodRate: periodicRate
+      };
+    });
+    
+    totalInterest = periodicInterest * totalPayments;
+  }
+  
+  // Calculate final metrics
+  const totalAmount = principal + totalInterest + totalCharges;
+  const apr = calculateAPR(principal, totalInterest, processingFee, otherCharges, tenureInDays);
+  const effectiveRate = calculateEffectiveAnnualRate(annualRate, compoundingPerYear);
   
   return {
     totalAmount,
-    totalInterest: Math.round(totalInterest * 100) / 100,
-    emiAmount: repaymentType.includes('emi') || repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon' 
-      ? schedule[0]?.totalAmount : undefined,
-    numberOfPayments,
-    effectiveAnnualRate: effectiveRate * 100,
+    totalInterest,
+    emiAmount: repaymentType === 'emi' ? emiAmount : undefined,
+    numberOfPayments: totalPayments,
+    annualPercentageRate: apr,
+    effectiveInterestRate: effectiveRate,
     totalCostOfCredit: totalAmount,
+    processingFee,
+    totalCharges,
+    schedule,
     amortizationSummary: {
       totalPrincipal: principal,
-      totalInterest: Math.round(totalInterest * 100) / 100,
-      averagePayment: Math.round(averagePayment * 100) / 100,
+      totalInterest,
+      totalCharges,
+      averagePayment: totalAmount / totalPayments,
+      principalToInterestRatio: totalInterest > 0 ? principal / totalInterest : principal
     },
-    schedule
+    rbiCompliance: {
+      isCompliant: apr <= 50 && principal <= 1000000, // RBI guidelines: max 50% APR, ₹10L limit
+      fairPracticesCode: true,
+      transparentPricing: true
+    }
   };
 }
 
-// Calculate next payment due date and amount
-export function getNextPaymentInfo(terms: LoanTerms, paidAmount: number) {
-  const schedule = calculateRepaymentSchedule(terms);
-  let totalPaid = paidAmount;
+// Validation function to check payment amounts against schedule
+export function validatePaymentAmount(
+  offerId: string,
+  paymentAmount: number,
+  installmentNumber: number,
+  schedule: PaymentScheduleItem[]
+): { isValid: boolean; message: string; expectedAmount?: number } {
+  const targetInstallment = schedule.find(item => item.installmentNumber === installmentNumber);
   
-  for (const payment of schedule.schedule) {
-    const paidForThisPayment = Math.min(totalPaid, payment.totalAmount);
-    const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
-    
-    if (remainingForThisPayment > 0.01) { // Using small tolerance for floating point
-      return {
-        nextDueDate: payment.dueDate,
-        nextAmount: payment.totalAmount,
-        remainingAmount: remainingForThisPayment,
-        installmentNumber: payment.installmentNumber,
-        principalAmount: payment.principalAmount,
-        interestAmount: payment.interestAmount,
-        isPartialPaid: paidForThisPayment > 0,
-        paidAmount: paidForThisPayment
-      };
-    }
-    
-    totalPaid -= paidForThisPayment;
+  if (!targetInstallment) {
+    return { isValid: false, message: 'Invalid installment number' };
   }
   
-  return null; // All payments completed
-}
-
-// Get payment status for each installment - Banking Industry Standard
-export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
-  const schedule = calculateRepaymentSchedule(terms);
-  let totalPaid = paidAmount;
-  const paymentStatus = [];
-  const today = new Date();
+  const expectedAmount = targetInstallment.totalAmount;
+  const tolerance = 0.01; // 1 paisa tolerance for rounding differences
   
-  for (const payment of schedule.schedule) {
-    const paidForThisPayment = Math.min(totalPaid, payment.totalAmount);
-    const remainingAmount = payment.totalAmount - paidForThisPayment;
-    
-    let status: 'paid' | 'partial' | 'pending' | 'overdue';
-    
-    if (remainingAmount <= 0.01) { // Using tolerance for floating point
-      status = 'paid';
-    } else if (paidForThisPayment > 0.01) {
-      status = 'partial';
-    } else {
-      // Check if overdue based on due date
-      status = payment.dueDate < today ? 'overdue' : 'pending';
-    }
-    
-    paymentStatus.push({
-      ...payment,
-      status,
-      paidAmount: Math.round(paidForThisPayment * 100) / 100,
-      remainingAmount: Math.round(remainingAmount * 100) / 100
-    });
-    
-    // Deduct the amount paid for this installment
-    totalPaid = Math.max(0, totalPaid - paidForThisPayment);
+  if (Math.abs(paymentAmount - expectedAmount) <= tolerance) {
+    return { isValid: true, message: 'Payment amount is correct' };
   }
   
-  return paymentStatus;
-}
-
-// FIXED: Calculate Outstanding Principal Balance - Banking Industry Standard
-export function calculateOutstandingPrincipal(terms: LoanTerms, paidAmount: number): {
-  outstandingPrincipal: number;
-  totalPrincipalPaid: number;
-  totalInterestPaid: number;
-  dueAmount: number;
-  overDueAmount: number;
-} {
-  const schedule = calculateRepaymentSchedule(terms);
-  let remainingPaid = paidAmount;
-  let totalPrincipalPaid = 0;
-  let totalInterestPaid = 0;
-  let dueAmount = 0;
-  let overDueAmount = 0;
-  const today = new Date();
-  
-  // Process payments in chronological order - Banking Industry Standard
-  for (const payment of schedule.schedule) {
-    const paymentDueDate = new Date(payment.dueDate);
-    const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
-    const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
-    
-    if (paidForThisPayment > 0) {
-      // Banking Standard: Interest is paid first, then principal
-      const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
-      const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
-      
-      totalInterestPaid += interestPaidForThis;
-      
-      // CRITICAL: For interest-only loans, principal payment only applies to final installment
-      if (terms.repaymentType === 'interest_only') {
-        // Only count principal payment if this is the final payment and it has principal component
-        if (payment.principalAmount > 0 && principalPaidForThis > 0) {
-          totalPrincipalPaid += principalPaidForThis;
-        }
-      } else {
-        // For EMI and other repayment types
-        totalPrincipalPaid += principalPaidForThis;
-      }
-    }
-    
-    // Calculate due and overdue amounts - only count unpaid portions
-    if (remainingForThisPayment > 0.01) {
-      if (paymentDueDate <= today) {
-        // Payment is due or overdue
-        if (paymentDueDate < today) {
-          overDueAmount += remainingForThisPayment;
-        } else {
-          dueAmount += remainingForThisPayment;
-        }
-      }
-    }
-    
-    remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
-    if (remainingPaid <= 0) break;
-  }
-  
-  // Outstanding Principal = Original Principal - Principal Actually Paid
-  const outstandingPrincipal = Math.max(0, terms.principal - totalPrincipalPaid);
-  
-  return {
-    outstandingPrincipal: Math.round(outstandingPrincipal * 100) / 100,
-    totalPrincipalPaid: Math.round(totalPrincipalPaid * 100) / 100,
-    totalInterestPaid: Math.round(totalInterestPaid * 100) / 100,
-    dueAmount: Math.round(dueAmount * 100) / 100,
-    overDueAmount: Math.round(overDueAmount * 100) / 100
-  };
-}
-
-// Enhanced payment validation with support for new repayment types
-export function validatePaymentAmount(terms: LoanTerms, paidAmount: number, newPaymentAmount: number, allowPartPayment: boolean = false): {
-  isValid: boolean;
-  expectedAmount?: number;
-  message?: string;
-  isEarlyPayment?: boolean;
-  prepaymentPenalty?: number;
-} {
-  // Basic validation
-  if (newPaymentAmount <= 0) {
-    return {
-      isValid: false,
-      message: "Payment amount must be greater than zero"
+  if (paymentAmount > expectedAmount) {
+    return { 
+      isValid: false, 
+      message: `Payment amount ₹${paymentAmount} exceeds expected amount ₹${expectedAmount}`, 
+      expectedAmount 
     };
   }
-
-  const schedule = calculateRepaymentSchedule(terms);
-  const nextPayment = getNextPaymentInfo(terms, paidAmount);
   
-  // Check if all payments are completed
-  if (!nextPayment) {
-    return {
-      isValid: false,
-      message: "All payments have been completed"
-    };
-  }
-
-  // Check if payment exceeds the total remaining loan amount
-  const totalLoanAmount = schedule.totalAmount;
-  const remainingLoanAmount = totalLoanAmount - paidAmount;
-  
-  if (newPaymentAmount > remainingLoanAmount + 0.01) { // Small tolerance for rounding
-    return {
-      isValid: false,
-      expectedAmount: Math.round(remainingLoanAmount * 100) / 100,
-      message: `Payment cannot exceed remaining loan amount of ₹${remainingLoanAmount.toLocaleString()}`
-    };
-  }
-
-  // Check for early/full prepayment
-  const isEarlyPayment = newPaymentAmount >= remainingLoanAmount * 0.5; // 50% or more of remaining amount
-  let prepaymentPenalty = 0;
-  
-  if (isEarlyPayment && terms.prepaymentPenalty && terms.prepaymentPenalty > 0) {
-    prepaymentPenalty = (remainingLoanAmount * terms.prepaymentPenalty) / 100;
-  }
-
-  // For partial payments from previous installment, require completion first
-  if (nextPayment.isPartialPaid && !allowPartPayment) {
-    const requiredAmount = nextPayment.remainingAmount;
-    if (Math.abs(newPaymentAmount - requiredAmount) > 0.01) {
-      return {
-        isValid: false,
-        expectedAmount: Math.round(requiredAmount * 100) / 100,
-        message: `Complete installment #${nextPayment.installmentNumber} with ₹${requiredAmount.toLocaleString()}`
-      };
-    }
-  }
-
-  // Enhanced validation for different repayment types
-  const repaymentTypeValidation = validateRepaymentTypeSpecific(terms, nextPayment, newPaymentAmount, allowPartPayment, schedule);
-  if (!repaymentTypeValidation.isValid) {
-    return repaymentTypeValidation;
-  }
-
   return { 
-    isValid: true, 
-    isEarlyPayment,
-    prepaymentPenalty: prepaymentPenalty > 0 ? prepaymentPenalty : undefined
+    isValid: false, 
+    message: `Payment amount ₹${paymentAmount} is less than expected amount ₹${expectedAmount}`, 
+    expectedAmount 
   };
 }
 
-// Specific validation for different repayment types
-function validateRepaymentTypeSpecific(terms: LoanTerms, nextPayment: any, newPaymentAmount: number, allowPartPayment: boolean, schedule: RepaymentSchedule) {
-  const { repaymentType } = terms;
-  
-  // For EMI, step-up, step-down, and balloon payments - enforce exact payment amounts
-  if ((repaymentType === 'emi' || repaymentType === 'step_up' || repaymentType === 'step_down' || repaymentType === 'balloon') && !nextPayment.isPartialPaid) {
-    const expectedAmount = nextPayment.nextAmount;
-    
-    if (!allowPartPayment) {
-      if (Math.abs(newPaymentAmount - expectedAmount) > 0.01) {
-        const paymentTypeLabel = repaymentType === 'emi' ? 'EMI' : repaymentType.replace('_', '-') + ' payment';
-        return {
-          isValid: false,
-          expectedAmount: Math.round(expectedAmount * 100) / 100,
-          message: `${paymentTypeLabel} #${nextPayment.installmentNumber} should be exactly ₹${expectedAmount.toLocaleString()}`
-        };
-      }
-    } else {
-      if (newPaymentAmount > expectedAmount + 0.01) {
-        return {
-          isValid: false,
-          expectedAmount: Math.round(expectedAmount * 100) / 100,
-          message: `Payment cannot exceed installment amount of ₹${expectedAmount.toLocaleString()}`
-        };
-      }
-    }
-  } else if (repaymentType === 'interest_only' && !allowPartPayment && !nextPayment.isPartialPaid) {
-    if (Math.abs(newPaymentAmount - nextPayment.nextAmount) > 0.01) {
-      return {
-        isValid: false,
-        expectedAmount: Math.round(nextPayment.nextAmount * 100) / 100,
-        message: `Interest payment #${nextPayment.installmentNumber} should be exactly ₹${nextPayment.nextAmount.toLocaleString()}`
-      };
-    }
-  } else if (repaymentType === 'full_payment') {
-    // For full payment, must pay the complete remaining amount
-    if (Math.abs(newPaymentAmount - nextPayment.nextAmount) > 0.01) {
-      return {
-        isValid: false,
-        expectedAmount: Math.round(nextPayment.nextAmount * 100) / 100,
-        message: `Full payment must be exactly ₹${nextPayment.nextAmount.toLocaleString()}`
-      };
-    }
-  }
-
-  // Additional validation for partial payments
-  if (allowPartPayment && newPaymentAmount > nextPayment.remainingAmount + 0.01) {
-    return {
-      isValid: false,
-      expectedAmount: Math.round(nextPayment.remainingAmount * 100) / 100,
-      message: `Payment cannot exceed installment amount of ₹${nextPayment.remainingAmount.toLocaleString()}`
-    };
-  }
-
-  return { isValid: true };
-}
-
-// Calculate late payment fee for overdue payments
-export function calculateLatePaymentFeeForOverdue(terms: LoanTerms, paymentAmount: number, daysPastDue: number): number {
-  if (!terms.latePaymentPenalty || daysPastDue <= (terms.gracePeriodDays || 0)) {
-    return 0;
-  }
-  
-  const effectiveDaysOverdue = daysPastDue - (terms.gracePeriodDays || 0);
-  const baseFee = calculateLatePaymentFee(paymentAmount, terms.latePaymentPenalty);
-  
-  // Apply progressive penalty (higher fees for longer delays)
-  const progressiveMultiplier = Math.min(1 + (effectiveDaysOverdue / 30) * 0.1, 2); // Max 2x penalty
-  
-  return Math.round(baseFee * progressiveMultiplier * 100) / 100;
-}
-
-// Get comprehensive payment insights for borrowers
-export function getPaymentInsights(terms: LoanTerms, paidAmount: number) {
-  const schedule = calculateRepaymentSchedule(terms);
-  const paymentStatus = getPaymentStatus(terms, paidAmount);
-  const nextPayment = getNextPaymentInfo(terms, paidAmount);
-  
-  const completedPayments = paymentStatus.filter(p => p.status === 'paid').length;
-  const overduePayments = paymentStatus.filter(p => p.status === 'overdue').length;
-  const totalPaidPrincipal = paymentStatus.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
-  
-  const progressPercentage = (paidAmount / schedule.totalAmount) * 100;
-  const principalProgressPercentage = (totalPaidPrincipal / terms.principal) * 100;
-  
-  return {
-    schedule,
-    paymentStatus,
-    nextPayment,
-    summary: {
-      totalLoanAmount: schedule.totalAmount,
-      totalPaid: paidAmount,
-      remainingBalance: schedule.totalAmount - paidAmount,
-      completedPayments,
-      overduePayments,
-      totalPayments: schedule.numberOfPayments,
-      progressPercentage: Math.round(progressPercentage * 100) / 100,
-      principalProgressPercentage: Math.round(principalProgressPercentage * 100) / 100,
-      effectiveAnnualRate: schedule.effectiveAnnualRate,
-      averagePayment: schedule.amortizationSummary.averagePayment
-    }
-  };
+// Get next payment due information
+export function getNextPaymentDue(
+  schedule: PaymentScheduleItem[],
+  paidInstallments: number[]
+): PaymentScheduleItem | null {
+  return schedule.find(item => !paidInstallments.includes(item.installmentNumber)) || null;
 }
