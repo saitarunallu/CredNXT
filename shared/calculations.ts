@@ -44,29 +44,29 @@ export interface PaymentScheduleItem {
   latePaymentFee?: number; // Late payment penalty if applicable
 }
 
-// Convert tenure to months for calculation
+// Convert tenure to months for calculation with precise banking standards
 function convertTenureToMonths(tenureValue: number, tenureUnit: string): number {
   switch (tenureUnit) {
     case 'days':
-      return tenureValue / 30; // Approximate
+      return tenureValue / 30.44; // Precise average days per month
     case 'weeks':
-      return tenureValue / 4.33; // Approximate
+      return tenureValue / 4.345; // Precise average weeks per month (52.14/12)
     case 'months':
       return tenureValue;
     case 'years':
       return tenureValue * 12;
     default:
-      return tenureValue;
+      throw new Error(`Invalid tenure unit: ${tenureUnit}`);
   }
 }
 
-// Get payment frequency in months
+// Get payment frequency in months with banking precision
 function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
     case 'weekly':
-      return 1/4.33; // Approximate weeks per month
+      return 1/4.345; // Precise weeks per month (52.14/12)
     case 'bi_weekly':
-      return 1/2.17; // Approximate bi-weeks per month
+      return 1/2.1725; // Precise bi-weeks per month (26.07/12)
     case 'monthly':
       return 1;
     case 'quarterly':
@@ -76,7 +76,7 @@ function getPaymentFrequencyInMonths(frequency: string): number {
     case 'yearly':
       return 12;
     default:
-      return 1;
+      throw new Error(`Invalid payment frequency: ${frequency}`);
   }
 }
 

@@ -6,6 +6,8 @@ import { authService } from "./services/auth";
 import { notificationService } from "./services/notification";
 import { pdfService } from "./services/pdf";
 import { reminderService } from "./services/reminder";
+import { complianceService } from "./services/compliance";
+import { securityService } from "./services/security";
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
@@ -19,19 +21,87 @@ interface AuthenticatedRequest extends Request {
 const clients = new Map<string, WebSocket>();
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Middleware to parse JSON and authenticate
+  // Enhanced authentication middleware with banking compliance and security
   const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const requestId = (req as any).requestId;
+    const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
+    
     try {
+      // Security analysis
+      const securityAlerts = securityService.analyzeRequestPattern(req);
+      if (securityAlerts.some(alert => alert.level === 'critical')) {
+        return res.status(403).json({ 
+          message: 'Access denied due to security policy',
+          code: 'SECURITY_VIOLATION'
+        });
+      }
+
+      // Rate limiting check
+      if (!securityService.checkRateLimit(clientIp, req.path, undefined, 100, 15 * 60 * 1000)) {
+        return res.status(429).json({ 
+          message: 'Too many requests, please try again later',
+          code: 'RATE_LIMIT_EXCEEDED'
+        });
+      }
+
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
+        console.log(`SECURITY_ALERT: Authentication attempt without token from ${clientIp} [${requestId}]`);
+        return res.status(401).json({ 
+          message: 'Authentication required',
+          code: 'AUTH_TOKEN_MISSING'
+        });
       }
 
       const payload = authService.verifyToken(token);
+      
+      // Additional security checks
+      if (!payload.userId) {
+        console.log(`SECURITY_ALERT: Invalid token payload from ${clientIp} [${requestId}]`);
+        return res.status(401).json({ 
+          message: 'Invalid authentication credentials',
+          code: 'AUTH_INVALID_PAYLOAD'
+        });
+      }
+
+      // Verify user still exists and is active
+      const user = await storage.getUser(payload.userId);
+      if (!user) {
+        console.log(`SECURITY_ALERT: Token for non-existent user ${payload.userId} from ${clientIp} [${requestId}]`);
+        return res.status(401).json({ 
+          message: 'User account not found',
+          code: 'AUTH_USER_NOT_FOUND'
+        });
+      }
+
+      // Validate user compliance
+      const compliance = await complianceService.validateCompliance('user', user);
+      if (!compliance.isCompliant) {
+        console.log(`COMPLIANCE_ALERT: User ${payload.userId} failed compliance check:`, compliance.violations);
+        return res.status(403).json({ 
+          message: 'Account does not meet security requirements',
+          code: 'COMPLIANCE_VIOLATION',
+          details: compliance.violations
+        });
+      }
+
       req.userId = payload.userId;
       next();
     } catch (error) {
-      res.status(401).json({ message: 'Invalid token' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown authentication error';
+      console.log(`SECURITY_ALERT: Authentication failed from ${clientIp}: ${errorMessage} [${requestId}]`);
+      
+      if (errorMessage.includes('expired')) {
+        return res.status(401).json({ 
+          message: 'Session expired, please login again',
+          code: 'AUTH_TOKEN_EXPIRED'
+        });
+      }
+      
+      res.status(401).json({ 
+        message: 'Invalid authentication credentials',
+        code: 'AUTH_INVALID_TOKEN'
+      });
     }
   };
 
@@ -52,20 +122,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, message: 'Demo request submitted successfully' });
     } catch (error) {
-      console.error('Demo request error:', error);
-      res.status(400).json({ message: 'Invalid request data' });
+      const requestId = (req as any).requestId;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`AUDIT: Demo request failed [${requestId}]:`, {
+        error: errorMessage,
+        body: req.body,
+        ip: req.ip
+      });
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid request data',
+          code: 'VALIDATION_ERROR',
+          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Failed to process demo request',
+        code: 'DEMO_REQUEST_FAILED'
+      });
     }
   });
 
-  // Authentication routes
+  // Authentication routes with enhanced security
   app.post('/api/auth/login', async (req, res) => {
+    const requestId = (req as any).requestId;
+    const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
+    
     try {
+      // Input validation and sanitization
+      const phoneValidation = securityService.validateInput(req.body.phone, 'phone');
+      if (!phoneValidation.isValid) {
+        securityService.createAlert({
+          level: 'medium',
+          type: 'SUSPICIOUS_INPUT',
+          description: 'Suspicious input detected in login attempt',
+          clientIp,
+          details: { alerts: phoneValidation.alerts, field: 'phone' }
+        });
+        return res.status(400).json({ 
+          message: 'Invalid input detected',
+          code: 'SECURITY_VALIDATION_FAILED'
+        });
+      }
+
+      // Rate limiting for login attempts
+      if (!securityService.checkRateLimit(clientIp, '/api/auth/login', undefined, 10, 15 * 60 * 1000)) {
+        return res.status(429).json({ 
+          message: 'Too many login attempts, please try again later',
+          code: 'LOGIN_RATE_LIMIT_EXCEEDED'
+        });
+      }
+
       const { phone } = loginSchema.parse(req.body);
       
       const code = authService.generateOtp();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
       
       await storage.createOtp(phone, code, expiresAt);
+      
+      // Audit trail for login attempt
+      complianceService.createAuditEntry({
+        operation: 'LOGIN_ATTEMPT',
+        entityType: 'user',
+        entityId: phone, // Use phone as identifier for unregistered users
+        details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+        compliance: {
+          ruleId: 'AUTHENTICATION',
+          status: 'passed',
+          message: 'OTP generated and sent successfully'
+        }
+      });
       
       // In development, log the OTP
       if (process.env.NODE_ENV === 'development') {
@@ -76,26 +204,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {
-      console.error('Login error:', error);
-      res.status(400).json({ message: 'Invalid phone number' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`AUDIT: Login failed [${requestId}]:`, {
+        error: errorMessage,
+        phone: req.body.phone?.substring(0, 3) + '***',
+        ip: clientIp
+      });
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid phone number format',
+          code: 'VALIDATION_ERROR',
+          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Authentication service temporarily unavailable',
+        code: 'AUTH_SERVICE_ERROR'
+      });
     }
   });
 
   app.post('/api/auth/verify-otp', async (req, res) => {
+    const requestId = (req as any).requestId;
+    const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
+    
     try {
+      // Security validation
+      const phoneValidation = securityService.validateInput(req.body.phone, 'phone');
+      const codeValidation = securityService.validateInput(req.body.code, 'otp_code');
+      
+      if (!phoneValidation.isValid || !codeValidation.isValid) {
+        return res.status(400).json({ 
+          message: 'Invalid input detected',
+          code: 'SECURITY_VALIDATION_FAILED'
+        });
+      }
+
+      // Rate limiting for OTP verification
+      if (!securityService.checkRateLimit(clientIp, '/api/auth/verify-otp', undefined, 5, 15 * 60 * 1000)) {
+        return res.status(429).json({ 
+          message: 'Too many OTP verification attempts',
+          code: 'OTP_RATE_LIMIT_EXCEEDED'
+        });
+      }
+
       const { phone, code } = verifyOtpSchema.parse(req.body);
       
       const isValid = await storage.verifyOtp(phone, code);
       if (!isValid) {
-        return res.status(400).json({ message: 'Invalid or expired OTP' });
+        // Audit failed OTP attempt
+        complianceService.createAuditEntry({
+          operation: 'OTP_VERIFICATION_FAILED',
+          entityType: 'user',
+          entityId: phone,
+          details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+          compliance: {
+            ruleId: 'AUTHENTICATION',
+            status: 'failed',
+            message: 'Invalid or expired OTP provided'
+          }
+        });
+        
+        return res.status(400).json({ 
+          message: 'Invalid or expired OTP',
+          code: 'OTP_INVALID'
+        });
       }
 
       let user = await storage.getUserByPhone(phone);
       if (!user) {
-        user = await storage.createUser({ phone });
+        user = await storage.createUser({ phone, isVerified: true });
+        
+        // Audit new user creation
+        complianceService.createAuditEntry({
+          operation: 'USER_CREATED',
+          entityType: 'user',
+          entityId: user.id,
+          details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+          compliance: {
+            ruleId: 'USER_REGISTRATION',
+            status: 'passed',
+            message: 'New user account created successfully'
+          }
+        });
+      } else {
+        // Update user verification status
+        await storage.updateUser(user.id, { isVerified: true });
+        user = { ...user, isVerified: true };
+      }
+
+      // Validate user compliance before issuing token
+      const compliance = await complianceService.validateCompliance('user', user);
+      if (!compliance.isCompliant) {
+        return res.status(403).json({ 
+          message: 'Account does not meet security requirements',
+          code: 'COMPLIANCE_VIOLATION',
+          details: compliance.violations
+        });
       }
 
       const token = authService.generateToken(user.id);
+      
+      // Audit successful login
+      complianceService.createAuditEntry({
+        operation: 'LOGIN_SUCCESS',
+        entityType: 'user',
+        entityId: user.id,
+        details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+        compliance: {
+          ruleId: 'AUTHENTICATION',
+          status: 'passed',
+          message: 'User authenticated successfully'
+        }
+      });
       
       res.json({ 
         success: true, 
@@ -104,8 +327,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requiresProfile: !user.name 
       });
     } catch (error) {
-      console.error('OTP verification error:', error);
-      res.status(400).json({ message: 'Invalid request' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`AUDIT: OTP verification failed [${requestId}]:`, {
+        error: errorMessage,
+        phone: req.body.phone?.substring(0, 3) + '***',
+        ip: clientIp
+      });
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid request format',
+          code: 'VALIDATION_ERROR',
+          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Authentication service error',
+        code: 'AUTH_SERVICE_ERROR'
+      });
     }
   });
 
@@ -330,9 +570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
       // Calculate loan start date (should be from acceptance date, not creation date)
-      const loanStartDate = offer.status === 'accepted' && offer.updatedAt !== offer.createdAt 
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
         ? new Date(offer.updatedAt)  // Use acceptance date
-        : new Date(); // If somehow not accepted yet, use today
+        : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
 
       // Skip strict validation for direct payments - allow any reasonable amount
       const paymentAmount = parseFloat(paymentData.amount);
@@ -825,9 +1065,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
       // Calculate loan start date (should be from acceptance date, not creation date)
-      const loanStartDate = offer.status === 'accepted' && offer.updatedAt !== offer.createdAt 
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
         ? new Date(offer.updatedAt)  // Use acceptance date
-        : new Date(offer.createdAt); // Use creation date as fallback
+        : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
 
       const loanTerms = {
         principal: parseFloat(offer.amount),
@@ -917,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const expiredPayments = allPayments.filter(payment => 
         payment.status === 'pending' && 
-        new Date(payment.createdAt) < oneDayAgo
+        payment.createdAt && new Date(payment.createdAt) < oneDayAgo
       );
       
       console.log(`Found ${expiredPayments.length} expired pending payments to cleanup`);
@@ -961,6 +1201,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setInterval(cleanupPendingPayments, 60 * 60 * 1000); // 1 hour
   // Run cleanup on startup
   cleanupPendingPayments();
+
+  // Banking Compliance and Security Management Routes
+  app.get('/api/admin/compliance/report', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only allow authorized users to generate compliance reports
+      const user = await storage.getUser(req.userId!);
+      if (!user || !user.name?.includes('admin')) { // Simple admin check
+        return res.status(403).json({ 
+          message: 'Access denied - insufficient privileges',
+          code: 'ACCESS_DENIED'
+        });
+      }
+
+      const { fromDate, toDate, entityId } = req.query;
+      const report = complianceService.generateComplianceReport(
+        entityId as string,
+        fromDate ? new Date(fromDate as string) : undefined,
+        toDate ? new Date(toDate as string) : undefined
+      );
+
+      res.json(report);
+    } catch (error) {
+      console.error('Compliance report error:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate compliance report',
+        code: 'COMPLIANCE_REPORT_FAILED'
+      });
+    }
+  });
+
+  app.get('/api/admin/security/alerts', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only allow authorized users to view security alerts
+      const user = await storage.getUser(req.userId!);
+      if (!user || !user.name?.includes('admin')) {
+        return res.status(403).json({ 
+          message: 'Access denied - insufficient privileges',
+          code: 'ACCESS_DENIED'
+        });
+      }
+
+      const { level, resolved } = req.query;
+      const alerts = securityService.getAlerts(
+        level as string, 
+        resolved === 'true' ? true : resolved === 'false' ? false : undefined
+      );
+
+      res.json(alerts);
+    } catch (error) {
+      console.error('Security alerts error:', error);
+      res.status(500).json({ 
+        message: 'Failed to retrieve security alerts',
+        code: 'SECURITY_ALERTS_FAILED'
+      });
+    }
+  });
+
+  app.post('/api/admin/security/alerts/:id/resolve', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.userId!);
+      if (!user || !user.name?.includes('admin')) {
+        return res.status(403).json({ 
+          message: 'Access denied - insufficient privileges',
+          code: 'ACCESS_DENIED'
+        });
+      }
+
+      const { id } = req.params;
+      const resolved = securityService.resolveAlert(id);
+      
+      if (!resolved) {
+        return res.status(404).json({ 
+          message: 'Alert not found',
+          code: 'ALERT_NOT_FOUND'
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Resolve alert error:', error);
+      res.status(500).json({ 
+        message: 'Failed to resolve alert',
+        code: 'RESOLVE_ALERT_FAILED'
+      });
+    }
+  });
+
+  app.get('/api/admin/security/report', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.userId!);
+      if (!user || !user.name?.includes('admin')) {
+        return res.status(403).json({ 
+          message: 'Access denied - insufficient privileges',
+          code: 'ACCESS_DENIED'
+        });
+      }
+
+      const { fromDate, toDate } = req.query;
+      const report = securityService.generateSecurityReport(
+        fromDate ? new Date(fromDate as string) : undefined,
+        toDate ? new Date(toDate as string) : undefined
+      );
+
+      res.json(report);
+    } catch (error) {
+      console.error('Security report error:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate security report',
+        code: 'SECURITY_REPORT_FAILED'
+      });
+    }
+  });
 
   return httpServer;
 }

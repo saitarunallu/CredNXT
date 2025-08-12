@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import crypto from "crypto";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -9,6 +10,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
+  const userAgent = req.get('User-Agent') || 'Unknown';
+  const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
+  const requestId = crypto.randomUUID();
+  
+  // Add request ID to request for tracing
+  (req as any).requestId = requestId;
+  
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -20,16 +28,37 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
+      // Enhanced audit log for banking compliance
+      const auditLog = {
+        timestamp: new Date().toISOString(),
+        requestId,
+        method: req.method,
+        path,
+        statusCode: res.statusCode,
+        duration,
+        clientIp,
+        userAgent,
+        userId: (req as any).userId || null,
+        success: res.statusCode < 400,
+        ...(capturedJsonResponse && { 
+          responseData: JSON.stringify(capturedJsonResponse).substring(0, 500) 
+        })
+      };
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+      // Log sensitive operations with more detail
+      const sensitiveOperations = ['/api/auth/', '/api/offers', '/api/payments'];
+      const isSensitive = sensitiveOperations.some(op => path.includes(op));
+      
+      if (isSensitive || res.statusCode >= 400) {
+        console.log('AUDIT:', JSON.stringify(auditLog));
+      } else {
+        // Regular operations get shorter log
+        let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms [${requestId.substring(0, 8)}]`;
+        if (logLine.length > 100) {
+          logLine = logLine.slice(0, 99) + "…";
+        }
+        log(logLine);
       }
-
-      log(logLine);
     }
   });
 

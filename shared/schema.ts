@@ -10,7 +10,7 @@ export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['weekly', '
 export const tenureUnitEnum = pgEnum('tenure_unit', ['days', 'weeks', 'months', 'years']);
 export const offerStatusEnum = pgEnum('offer_status', ['pending', 'accepted', 'declined', 'completed', 'overdue']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed', 'rejected']);
-export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected']);
+export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected', 'loan_closed']);
 export const compoundingFrequencyEnum = pgEnum('compounding_frequency', ['daily', 'monthly', 'quarterly', 'annually']);
 
 export const users = pgTable("users", {
@@ -137,14 +137,58 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  amount: z.coerce.string(),
-  interestRate: z.coerce.string(),
-  tenureValue: z.coerce.number(),
-  startDate: z.coerce.date(),
+  amount: z.coerce.string()
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0 && num <= 10000000; // Max 1 crore
+    }, "Amount must be between ₹1 and ₹1,00,00,000")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return Number.isFinite(num) && num.toString().split('.')[1]?.length <= 2;
+    }, "Amount can have maximum 2 decimal places"),
+  interestRate: z.coerce.string()
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 50; // Max 50% interest rate
+    }, "Interest rate must be between 0% and 50%")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return Number.isFinite(num) && num.toString().split('.')[1]?.length <= 2;
+    }, "Interest rate can have maximum 2 decimal places"),
+  tenureValue: z.coerce.number()
+    .min(1, "Tenure must be at least 1")
+    .max(360, "Tenure cannot exceed 360 units")
+    .int("Tenure must be a whole number"),
+  startDate: z.coerce.date()
+    .refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), "Start date cannot be in the past"),
   dueDate: z.coerce.date(),
-  gracePeriodDays: z.coerce.number().optional(),
-  prepaymentPenalty: z.coerce.string().optional(),
-  latePaymentPenalty: z.coerce.string().optional(),
+  gracePeriodDays: z.coerce.number()
+    .min(0, "Grace period cannot be negative")
+    .max(30, "Grace period cannot exceed 30 days")
+    .int("Grace period must be a whole number")
+    .optional(),
+  prepaymentPenalty: z.coerce.string()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 10;
+    }, "Prepayment penalty must be between 0% and 10%")
+    .optional(),
+  latePaymentPenalty: z.coerce.string()
+    .refine((val) => {
+      if (!val) return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 5;
+    }, "Late payment penalty must be between 0% and 5%")
+    .optional(),
+  toUserPhone: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number cannot exceed 15 digits")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
+  toUserName: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens"),
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
@@ -152,7 +196,24 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
   paidAt: true,
 }).extend({
-  amount: z.coerce.string(),
+  amount: z.coerce.string()
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0 && num <= 10000000;
+    }, "Payment amount must be between ₹1 and ₹1,00,00,000")
+    .refine((val) => {
+      const num = parseFloat(val);
+      return Number.isFinite(num) && num.toString().split('.')[1]?.length <= 2;
+    }, "Payment amount can have maximum 2 decimal places"),
+  paymentMode: z.string()
+    .min(1, "Payment mode is required")
+    .max(50, "Payment mode cannot exceed 50 characters")
+    .optional(),
+  refString: z.string()
+    .min(1, "Reference string is required")
+    .max(100, "Reference string cannot exceed 100 characters")
+    .regex(/^[a-zA-Z0-9\-_/]+$/, "Reference string can only contain alphanumeric characters, hyphens, underscores, and forward slashes")
+    .optional(),
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
@@ -161,17 +222,31 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 });
 
 export const loginSchema = z.object({
-  phone: z.string().min(10).max(15),
+  phone: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number cannot exceed 15 digits")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
 });
 
 export const verifyOtpSchema = z.object({
-  phone: z.string().min(10).max(15),
-  code: z.string().length(6),
+  phone: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number cannot exceed 15 digits")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
+  code: z.string()
+    .length(6, "OTP must be exactly 6 digits")
+    .regex(/^\d{6}$/, "OTP must contain only digits"),
 });
 
 export const completeProfileSchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email().optional(),
+  name: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens"),
+  email: z.string()
+    .email("Invalid email format")
+    .max(254, "Email cannot exceed 254 characters")
+    .optional(),
 });
 
 export const demoRequestSchema = z.object({
