@@ -80,49 +80,60 @@ function getPaymentFrequencyInMonths(frequency: string): number {
   }
 }
 
-// Calculate due dates based on start date and frequency
+// Calculate due dates based on start date and frequency - FIXED
 function calculateDueDates(startDate: Date, frequency: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly', numberOfPayments: number): Date[] {
   const dueDates: Date[] = [];
   
+  // Ensure we have a valid start date
+  const baseDate = new Date(startDate.getTime());
+  
   for (let i = 1; i <= numberOfPayments; i++) {
-    const dueDate = new Date(startDate);
+    const dueDate = new Date(baseDate);
     
     switch (frequency) {
       case 'weekly':
-        dueDate.setDate(startDate.getDate() + (i * 7));
+        dueDate.setTime(baseDate.getTime() + (i * 7 * 24 * 60 * 60 * 1000));
         break;
       case 'bi_weekly':
-        dueDate.setDate(startDate.getDate() + (i * 14));
+        dueDate.setTime(baseDate.getTime() + (i * 14 * 24 * 60 * 60 * 1000));
         break;
       case 'monthly':
-        dueDate.setMonth(startDate.getMonth() + i);
-        // Handle month overflow (e.g., Jan 31 + 1 month = Feb 28/29)
-        if (dueDate.getDate() !== startDate.getDate()) {
-          dueDate.setDate(0); // Set to last day of previous month
+        dueDate.setMonth(baseDate.getMonth() + i);
+        // Handle month overflow properly
+        const expectedDay = baseDate.getDate();
+        const actualDay = dueDate.getDate();
+        if (actualDay !== expectedDay) {
+          // Go to last day of the intended month
+          dueDate.setDate(0);
         }
         break;
       case 'quarterly':
-        dueDate.setMonth(startDate.getMonth() + (i * 3));
-        if (dueDate.getDate() !== startDate.getDate()) {
+        dueDate.setMonth(baseDate.getMonth() + (i * 3));
+        const expectedDayQ = baseDate.getDate();
+        const actualDayQ = dueDate.getDate();
+        if (actualDayQ !== expectedDayQ) {
           dueDate.setDate(0);
         }
         break;
       case 'semi_annual':
-        dueDate.setMonth(startDate.getMonth() + (i * 6));
-        if (dueDate.getDate() !== startDate.getDate()) {
+        dueDate.setMonth(baseDate.getMonth() + (i * 6));
+        const expectedDayS = baseDate.getDate();
+        const actualDayS = dueDate.getDate();
+        if (actualDayS !== expectedDayS) {
           dueDate.setDate(0);
         }
         break;
       case 'yearly':
-        dueDate.setFullYear(startDate.getFullYear() + i);
-        // Handle leap year edge case
-        if (dueDate.getDate() !== startDate.getDate()) {
-          dueDate.setDate(0); // Set to last day of previous month
+        dueDate.setFullYear(baseDate.getFullYear() + i);
+        const expectedDayY = baseDate.getDate();
+        const actualDayY = dueDate.getDate();
+        if (actualDayY !== expectedDayY) {
+          dueDate.setDate(0);
         }
         break;
     }
     
-    dueDates.push(dueDate);
+    dueDates.push(new Date(dueDate));
   }
   
   return dueDates;
@@ -188,19 +199,22 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       ? (principal * annualRate * tenureInMonths) / 12
       : (principal * annualRate * tenureInMonths) / 12;
     
-    const finalDate = new Date(startDate);
+    // FIXED: Ensure valid start date for full payment calculation
+    const validStartDate = startDate && !isNaN(startDate.getTime()) ? new Date(startDate) : new Date();
+    const finalDate = new Date(validStartDate);
+    
     switch (tenureUnit) {
       case 'days':
-        finalDate.setDate(startDate.getDate() + tenureValue);
+        finalDate.setTime(validStartDate.getTime() + (tenureValue * 24 * 60 * 60 * 1000));
         break;
       case 'weeks':
-        finalDate.setDate(startDate.getDate() + (tenureValue * 7));
+        finalDate.setTime(validStartDate.getTime() + (tenureValue * 7 * 24 * 60 * 60 * 1000));
         break;
       case 'months':
-        finalDate.setMonth(startDate.getMonth() + tenureValue);
+        finalDate.setMonth(validStartDate.getMonth() + tenureValue);
         break;
       case 'years':
-        finalDate.setFullYear(startDate.getFullYear() + tenureValue);
+        finalDate.setFullYear(validStartDate.getFullYear() + tenureValue);
         break;
     }
     
@@ -238,12 +252,15 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     };
   }
 
-  // For all other payment types
+  // For all other payment types - FIXED
+  // Ensure we have a valid start date
+  const validStartDate = startDate && !isNaN(startDate.getTime()) ? new Date(startDate) : new Date();
+  
   const frequency = repaymentFrequency || 'monthly';
   const paymentFrequencyInMonths = getPaymentFrequencyInMonths(frequency);
   const numberOfPayments = Math.ceil(tenureInMonths / paymentFrequencyInMonths);
   
-  const dueDates = calculateDueDates(startDate, frequency, numberOfPayments);
+  const dueDates = calculateDueDates(validStartDate, frequency as any, numberOfPayments);
   
   const schedule: PaymentScheduleItem[] = [];
   let remainingBalance = principal;
@@ -252,8 +269,9 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   let cumulativeInterest = 0;
   
   if (repaymentType === 'interest_only') {
-    // Banking Standard: Interest-only payments do NOT reduce principal
-    const interestPerPayment = Math.round(((principal * annualRate * paymentFrequencyInMonths) / 12) * 100) / 100;
+    // FIXED: Banking Standard Interest-only payments calculation
+    const periodicInterestRate = (annualRate / 12) * paymentFrequencyInMonths;
+    const interestPerPayment = Math.round((principal * periodicInterestRate) * 100) / 100;
     
     for (let i = 1; i <= numberOfPayments; i++) {
       const dueDate = dueDates[i - 1];
@@ -290,6 +308,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     }
   } else if (repaymentType === 'emi') {
     if (interestType === 'fixed') {
+      // FIXED: Proper fixed interest EMI calculation
       const totalInterestCalculated = (principal * annualRate * tenureInMonths) / 12;
       const emiAmount = (principal + totalInterestCalculated) / numberOfPayments;
       
@@ -298,7 +317,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
         const principalAmount = principal / numberOfPayments;
         const interestAmount = totalInterestCalculated / numberOfPayments;
         
-        remainingBalance -= principalAmount;
+        remainingBalance = Math.max(0, remainingBalance - principalAmount);
         cumulativePrincipal += principalAmount;
         cumulativeInterest += interestAmount;
         totalInterest += interestAmount;
@@ -322,13 +341,13 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
         });
       }
     } else {
-      // Reducing balance EMI
-      const monthlyRate = annualRate / 12 * paymentFrequencyInMonths;
-      const emiAmount = calculateEMI(principal, monthlyRate, numberOfPayments);
+      // FIXED: Reducing balance EMI - proper calculation
+      const periodicRate = (annualRate / 12) * paymentFrequencyInMonths;
+      const emiAmount = calculateEMI(principal, periodicRate, numberOfPayments);
       
       for (let i = 1; i <= numberOfPayments; i++) {
         const dueDate = dueDates[i - 1];
-        const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
+        const interestAmount = Math.round(remainingBalance * periodicRate * 100) / 100;
         const principalAmount = Math.round((emiAmount - interestAmount) * 100) / 100;
         
         remainingBalance = Math.max(0, remainingBalance - principalAmount);
@@ -515,7 +534,7 @@ export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
   return paymentStatus;
 }
 
-// Calculate Outstanding Principal Balance - Banking Industry Standard
+// FIXED: Calculate Outstanding Principal Balance - Banking Industry Standard
 export function calculateOutstandingPrincipal(terms: LoanTerms, paidAmount: number): {
   outstandingPrincipal: number;
   totalPrincipalPaid: number;

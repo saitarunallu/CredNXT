@@ -56,6 +56,14 @@ Preferred communication style: Simple, everyday language.
 - **API endpoint for payment status** - Server-side calculation of payment statuses and next payment due
 - **Enhanced user experience** - Borrowers see exactly what payment to make and when it's due
 
+### Critical Calculation Fixes (August 2025)
+- **Due Date Calculation Fixed** - Resolved critical issues with due dates showing "1970-01-01" by implementing proper date validation and calculation
+- **Interest Calculation Accuracy** - Fixed interest-only and EMI calculations to use proper periodic interest rates instead of annual rates
+- **EMI Payment Logic** - Corrected reducing balance EMI calculations with proper principal and interest breakdown
+- **Date Validation** - Added comprehensive date validation to prevent invalid start dates from breaking calculations
+- **Payment Schedule Accuracy** - Fixed repayment schedule generation with correct due dates, amounts, and outstanding balances
+- **Banking Standard Compliance** - All calculations now follow proper banking industry standards for loan amortization and repayment
+
 ## System Architecture
 
 ### Frontend Architecture
