@@ -858,8 +858,22 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     ) : (
                       <Button 
                         onClick={() => {
-                          // Calculate EMI amount or use outstanding balance
-                          const paymentAmount = scheduleData?.schedule?.emiAmount || Math.min(outstanding, 10000);
+                          // Calculate correct payment amount based on repayment type
+                          let paymentAmount;
+                          if (scheduleData?.schedule?.emiAmount) {
+                            // For EMI-based repayment types
+                            paymentAmount = scheduleData.schedule.emiAmount;
+                          } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
+                            // For interest-only, use the payment amount from the first unpaid installment
+                            const nextPayment = scheduleData.schedule.schedule.find((p: any) => {
+                              const totalPaidForPayment = Math.min(totalPaid, p.totalAmount);
+                              return (p.totalAmount - totalPaidForPayment) > 0.01;
+                            });
+                            paymentAmount = nextPayment ? nextPayment.totalAmount : outstanding;
+                          } else {
+                            // Fallback for other repayment types
+                            paymentAmount = Math.min(outstanding, 10000);
+                          }
                           handleDirectPayment(paymentAmount);
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
@@ -871,7 +885,22 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             Processing Payment...
                           </div>
                         ) : (
-                          `Pay ₹${(scheduleData?.schedule?.emiAmount || Math.min(outstanding, 10000)).toLocaleString()}`
+                          (() => {
+                            // Calculate display amount using the same logic
+                            let displayAmount;
+                            if (scheduleData?.schedule?.emiAmount) {
+                              displayAmount = scheduleData.schedule.emiAmount;
+                            } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
+                              const nextPayment = scheduleData.schedule.schedule.find((p: any) => {
+                                const totalPaidForPayment = Math.min(totalPaid, p.totalAmount);
+                                return (p.totalAmount - totalPaidForPayment) > 0.01;
+                              });
+                              displayAmount = nextPayment ? nextPayment.totalAmount : outstanding;
+                            } else {
+                              displayAmount = Math.min(outstanding, 10000);
+                            }
+                            return `Pay ₹${displayAmount.toLocaleString()}`;
+                          })()
                         )}
                       </Button>
                     )}
