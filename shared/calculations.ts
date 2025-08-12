@@ -269,9 +269,12 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   let cumulativeInterest = 0;
   
   if (repaymentType === 'interest_only') {
-    // FIXED: Banking Standard Interest-only payments calculation
-    const periodicInterestRate = (annualRate / 12) * paymentFrequencyInMonths;
-    const interestPerPayment = Math.round((principal * periodicInterestRate) * 100) / 100;
+    // CRITICAL FIX: Proper interest-only calculation
+    // For monthly payments: (principal * annual_rate) / 12
+    // For other frequencies: adjust accordingly
+    const monthlyInterestRate = annualRate / 12;
+    const interestPerPayment = principal * monthlyInterestRate;
+    console.log(`Interest-only calculation: Principal=${principal}, Annual Rate=${annualRate}, Monthly Rate=${monthlyInterestRate}, Interest Per Payment=${interestPerPayment}`);
     
     for (let i = 1; i <= numberOfPayments; i++) {
       const dueDate = dueDates[i - 1];
@@ -279,7 +282,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       
       // CRITICAL: Principal payment ONLY on final installment
       const principalAmount = isLastPayment ? principal : 0;
-      const interestAmount = interestPerPayment;
+      const interestAmount = Math.round(interestPerPayment * 100) / 100;
       const totalPayment = principalAmount + interestAmount;
       
       // Only add principal to cumulative on final payment
@@ -308,9 +311,10 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     }
   } else if (repaymentType === 'emi') {
     if (interestType === 'fixed') {
-      // FIXED: Proper fixed interest EMI calculation
+      // CRITICAL FIX: Fixed interest EMI calculation
       const totalInterestCalculated = (principal * annualRate * tenureInMonths) / 12;
       const emiAmount = (principal + totalInterestCalculated) / numberOfPayments;
+      console.log(`Fixed EMI calculation: Principal=${principal}, Total Interest=${totalInterestCalculated}, EMI Amount=${emiAmount}`);
       
       for (let i = 1; i <= numberOfPayments; i++) {
         const dueDate = dueDates[i - 1];
@@ -341,13 +345,15 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
         });
       }
     } else {
-      // FIXED: Reducing balance EMI - proper calculation
-      const periodicRate = (annualRate / 12) * paymentFrequencyInMonths;
-      const emiAmount = calculateEMI(principal, periodicRate, numberOfPayments);
+      // CRITICAL FIX: Reducing balance EMI calculation
+      // Use proper monthly rate for EMI calculation
+      const monthlyInterestRate = annualRate / 12;
+      const emiAmount = calculateEMI(principal, monthlyInterestRate, numberOfPayments);
+      console.log(`EMI calculation: Principal=${principal}, Monthly Rate=${monthlyInterestRate}, Number of Payments=${numberOfPayments}, EMI Amount=${emiAmount}`);
       
       for (let i = 1; i <= numberOfPayments; i++) {
         const dueDate = dueDates[i - 1];
-        const interestAmount = Math.round(remainingBalance * periodicRate * 100) / 100;
+        const interestAmount = Math.round(remainingBalance * monthlyInterestRate * 100) / 100;
         const principalAmount = Math.round((emiAmount - interestAmount) * 100) / 100;
         
         remainingBalance = Math.max(0, remainingBalance - principalAmount);
