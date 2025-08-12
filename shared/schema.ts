@@ -232,7 +232,8 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
     }, "Amount must be between ₹1 and ₹1,00,00,000")
     .refine((val) => {
       const num = parseFloat(val);
-      return Number.isFinite(num) && num.toString().split('.')[1]?.length <= 2;
+      const decimalPart = num.toString().split('.')[1];
+      return Number.isFinite(num) && (!decimalPart || decimalPart.length <= 2);
     }, "Amount can have maximum 2 decimal places"),
   interestRate: z.coerce.string()
     .refine((val) => {
@@ -241,7 +242,8 @@ export const insertOfferSchema = createInsertSchema(offers).omit({
     }, "Interest rate must be between 0% and 50%")
     .refine((val) => {
       const num = parseFloat(val);
-      return Number.isFinite(num) && num.toString().split('.')[1]?.length <= 2;
+      const decimalPart = num.toString().split('.')[1];
+      return Number.isFinite(num) && (!decimalPart || decimalPart.length <= 2);
     }, "Interest rate can have maximum 2 decimal places"),
   tenureValue: z.coerce.number()
     .min(1, "Tenure must be at least 1")
