@@ -545,18 +545,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       // Log error for debugging and audit
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+      
+      console.error('Offer creation failed:', {
+        error: errorMessage,
+        stack: errorStack,
+        userId: req.userId,
+        requestBody: req.body
+      });
+      
       complianceService.createAuditEntry({
         operation: 'OFFER_CREATION_FAILED',
         entityType: 'offer',
         entityId: 'unknown',
-        details: { error: errorMessage, userId: req.userId },
+        details: { error: errorMessage, stack: errorStack, userId: req.userId },
         compliance: {
           ruleId: 'OFFER_CREATION',
           status: 'failed',
           message: `Offer creation failed: ${errorMessage}`
         }
       });
-      res.status(500).json({ message: 'Server error' });
+      res.status(500).json({ message: 'Server error', error: errorMessage });
     }
   });
 

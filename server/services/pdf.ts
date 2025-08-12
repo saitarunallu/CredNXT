@@ -235,6 +235,7 @@ export class PdfService {
         });
 
         // Convert offer to LoanTerms
+        // Note: LoanTerms only supports 'monthly' | 'yearly' for repaymentFrequency
         const loanTerms = {
           principal: parseFloat(offer.amount),
           interestRate: parseFloat(offer.interestRate),
@@ -242,7 +243,7 @@ export class PdfService {
           tenureValue: offer.tenureValue,
           tenureUnit: offer.tenureUnit as 'months' | 'years',
           repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
-          repaymentFrequency: offer.repaymentFrequency as 'weekly' | 'monthly' | 'yearly' | undefined,
+          repaymentFrequency: offer.repaymentFrequency || undefined,
           startDate: new Date(offer.startDate)
         };
 
