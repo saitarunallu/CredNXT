@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
-import { IndianRupee, Plus, Users, FileText, TrendingUp, AlertCircle } from "lucide-react";
+import { IndianRupee, Plus, Users, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
 
@@ -120,33 +120,7 @@ export default function Dashboard() {
             </Card>
           </Link>
 
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">Analytics</h3>
-                  <p className="text-xs text-muted-foreground">View trends</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                  <FileText className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">Reports</h3>
-                  <p className="text-xs text-muted-foreground">View analytics</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Reports and Analytics cards removed */}
         </div>
 
         {/* Main Content */}
