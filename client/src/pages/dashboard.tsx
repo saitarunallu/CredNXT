@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
-import { IndianRupee, Plus, Users, AlertCircle } from "lucide-react";
+import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
 
 export default function Dashboard() {
 
@@ -165,40 +165,7 @@ export default function Dashboard() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Overview</h2>
             
-            <Card className="bg-card border-border shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">Activity Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Offers Sent</span>
-                    <span className="text-sm font-semibold text-foreground">{sentOffers.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Offers Received</span>
-                    <span className="text-sm font-semibold text-foreground">{receivedOffers.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Success Rate</span>
-                    <span className="text-sm font-semibold text-emerald-600">
-                      {sentOffers.length > 0 ? 
-                        Math.round((sentOffers.filter((o: any) => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0
-                      }%
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-foreground">Upcoming</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">No payments due in the next 7 days</p>
-              </CardContent>
-            </Card>
+            {/* Analytics and Reports sidebar cards removed */}
           </div>
         </div>
 
