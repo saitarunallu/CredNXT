@@ -5,12 +5,11 @@ export interface LoanTerms {
   tenureValue: number;
   tenureUnit: 'months' | 'years';
   repaymentType: 'emi' | 'interest_only' | 'full_payment';
-  repaymentFrequency?: 'weekly' | 'monthly' | 'yearly';
+  repaymentFrequency?: 'monthly' | 'yearly';
   startDate: Date;
   gracePeriodDays?: number;
   prepaymentPenalty?: number;
   latePaymentPenalty?: number;
-  compoundingFrequency?: 'daily' | 'monthly' | 'quarterly' | 'annually';
   processingFee?: number; // For APR calculation
   otherCharges?: number; // For APR calculation
 }
@@ -84,28 +83,24 @@ function convertTenureToDays(tenureValue: number, tenureUnit: string): number {
 // Banking standard payment frequency conversion
 function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
-    case 'weekly':
-      return 1/4.345; // 52.18 weeks per year / 12 months
     case 'monthly':
       return 1;
     case 'yearly':
       return 12;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}. Only weekly, monthly, and yearly are supported.`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Only monthly and yearly are supported.`);
   }
 }
 
 // Get number of payments per year for different frequencies
 function getPaymentsPerYear(frequency: string): number {
   switch (frequency) {
-    case 'weekly':
-      return 52.18; // Banking standard
     case 'monthly':
       return 12;
     case 'yearly':
       return 1;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}. Only weekly, monthly, and yearly are supported.`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Only monthly and yearly are supported.`);
   }
 }
 
@@ -271,7 +266,6 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     gracePeriodDays = 0,
     latePaymentPenalty = 0,
     prepaymentPenalty = 0,
-    compoundingFrequency = 'monthly',
     processingFee = 0,
     otherCharges = 0
   } = terms;
@@ -292,10 +286,8 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   const periodicRate = annualRate / paymentsPerYear;
   const totalPayments = Math.ceil(tenureInMonths / getPaymentFrequencyInMonths(repaymentFrequency));
   
-  // Calculate compounding frequency for effective rate calculation
-  const compoundingPerYear = compoundingFrequency === 'daily' ? 365 : 
-                            compoundingFrequency === 'monthly' ? 12 : 
-                            compoundingFrequency === 'quarterly' ? 4 : 1;
+  // Use standard monthly compounding for effective rate calculation
+  const compoundingPerYear = 12; // Standard banking practice
   
   // Calculate due dates
   const dueDates = calculateDueDates(startDate, repaymentFrequency, totalPayments);

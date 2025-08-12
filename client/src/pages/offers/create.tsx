@@ -35,7 +35,6 @@ export default function CreateOffer() {
   const [tenureUnit, setTenureUnit] = useState("");
   const [repaymentFrequency, setRepaymentFrequency] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
-  const [compoundingFrequency, setCompoundingFrequency] = useState("monthly");
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -139,10 +138,6 @@ export default function CreateOffer() {
     const value = parseInt(tenureValue.toString());
     
     switch (tenureUnit) {
-      case 'days':
-        return new Date(start.getTime() + (value * 24 * 60 * 60 * 1000));
-      case 'weeks':
-        return new Date(start.getTime() + (value * 7 * 24 * 60 * 60 * 1000));
       case 'months':
         const monthDate = new Date(start);
         monthDate.setMonth(monthDate.getMonth() + value);
@@ -225,14 +220,13 @@ export default function CreateOffer() {
       interestRate: (parseFloat(data.interestRate) || 0).toString(),
       interestType: interestType as "fixed" | "reducing",
       tenureValue: parseInt(data.tenureValue) || 1,
-      tenureUnit: tenureUnit as "days" | "weeks" | "months" | "years",
-      repaymentType: repaymentType as "emi" | "interest_only" | "full_payment" | "step_up" | "step_down" | "balloon",
-      repaymentFrequency: (repaymentFrequency as "weekly" | "bi_weekly" | "monthly" | "quarterly" | "semi_annual" | "yearly") || null,
+      tenureUnit: tenureUnit as "months" | "years",
+      repaymentType: repaymentType as "emi" | "interest_only" | "full_payment",
+      repaymentFrequency: (repaymentFrequency as "monthly" | "yearly") || null,
       allowPartPayment,
       gracePeriodDays: parseInt(data.gracePeriodDays) || 0,
       prepaymentPenalty: (parseFloat(data.prepaymentPenalty) || 0).toString(),
       latePaymentPenalty: (parseFloat(data.latePaymentPenalty) || 0).toString(),
-      compoundingFrequency: compoundingFrequency as "daily" | "monthly" | "quarterly" | "annually",
       startDate: new Date(startDate),
       dueDate: dueDate,
       purpose: data.purpose || null,
@@ -541,7 +535,6 @@ export default function CreateOffer() {
                           <SelectValue placeholder="Select payment frequency" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="weekly">📅 Weekly</SelectItem>
                           <SelectItem value="monthly">📆 Monthly</SelectItem>
                           <SelectItem value="yearly">🗓️ Yearly</SelectItem>
                         </SelectContent>

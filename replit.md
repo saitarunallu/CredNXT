@@ -22,8 +22,9 @@ Preferred communication style: Simple, everyday language.
 ### Simplified Form Design (August 2025)
 - **Streamlined repayment types** - Removed complex step-up and step-down EMI options, keeping only EMI, interest-only, and full payment
 - **Simplified tenure units** - Removed days and weeks, keeping only months and years for better user experience
-- **Reduced repayment frequency options** - Streamlined to weekly, monthly, and yearly frequencies
-- **Enhanced user experience** - Form is now simpler and more intuitive while maintaining full banking compliance
+- **Reduced repayment frequency options** - Streamlined to monthly and yearly frequencies only
+- **Removed compounding frequency** - Eliminated complex compounding options, using standard monthly compounding for all calculations
+- **Enhanced user experience** - Form is now much simpler and more intuitive while maintaining full banking compliance
 - **Maintained calculation accuracy** - All banking-standard calculations remain accurate with simplified options
 
 ### Functional PDF Contract System (August 2025)
