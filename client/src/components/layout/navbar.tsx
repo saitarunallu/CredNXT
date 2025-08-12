@@ -165,7 +165,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4 space-y-2">
+          <div className="md:hidden border-t border-border py-4 space-y-2">
             <NavLinks />
           </div>
         )}
