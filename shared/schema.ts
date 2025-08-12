@@ -10,7 +10,17 @@ export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['monthly', 
 export const tenureUnitEnum = pgEnum('tenure_unit', ['months', 'years']);
 export const offerStatusEnum = pgEnum('offer_status', ['pending', 'accepted', 'declined', 'completed', 'overdue']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed', 'rejected']);
-export const notificationTypeEnum = pgEnum('notification_type', ['offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected', 'loan_closed']);
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'offer_received', 'offer_accepted', 'offer_declined', 'payment_reminder', 
+  'payment_received', 'payment_submitted', 'payment_approved', 'payment_rejected', 
+  'loan_closed', 'payment_overdue', 'system_maintenance', 'security_alert', 
+  'account_update', 'batch_summary'
+]);
+
+export const notificationPriorityEnum = pgEnum('notification_priority', ['low', 'medium', 'high', 'urgent']);
+export const deliveryChannelEnum = pgEnum('delivery_channel', ['app', 'sms', 'email', 'whatsapp', 'push']);
+export const deliveryStatusEnum = pgEnum('delivery_status', ['pending', 'sent', 'delivered', 'failed', 'read']);
+export const batchTypeEnum = pgEnum('batch_type', ['daily_digest', 'payment_reminders', 'security_alerts', 'promotional']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -68,9 +78,61 @@ export const notifications = pgTable("notifications", {
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   offerId: uuid("offer_id").references(() => offers.id, { onDelete: 'cascade' }),
   type: notificationTypeEnum("type").notNull(),
+  priority: notificationPriorityEnum("priority").default('medium'),
   title: text("title").notNull(),
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  scheduledFor: timestamp("scheduled_for").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  metadata: text("metadata"), // JSON string for flexible data
+  batchId: uuid("batch_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User notification preferences
+export const userNotificationPreferences = pgTable("user_notification_preferences", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: notificationTypeEnum("type").notNull(),
+  channels: text("channels").array().default(sql`ARRAY['app']::text[]`), // ['app', 'sms', 'email']
+  enabled: boolean("enabled").default(true),
+  quietHoursStart: text("quiet_hours_start").default('22:00'),
+  quietHoursEnd: text("quiet_hours_end").default('08:00'),
+  timezone: text("timezone").default('Asia/Kolkata'),
+  batchingEnabled: boolean("batching_enabled").default(true),
+  maxDailyNotifications: integer("max_daily_notifications").default(10),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notification delivery tracking
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  notificationId: uuid("notification_id").notNull().references(() => notifications.id, { onDelete: 'cascade' }),
+  channel: deliveryChannelEnum("channel").notNull(),
+  status: deliveryStatusEnum("status").default('pending'),
+  attempts: integer("attempts").default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  deliveredAt: timestamp("delivered_at"),
+  failureReason: text("failure_reason"),
+  externalId: text("external_id"), // ID from SMS/email provider
+  cost: decimal("cost", { precision: 10, scale: 4 }).default('0'), // Track delivery costs
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notification batches for grouping related notifications
+export const notificationBatches = pgTable("notification_batches", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  batchType: batchTypeEnum("batch_type").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  notificationCount: integer("notification_count").default(0),
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  sentAt: timestamp("sent_at"),
+  status: deliveryStatusEnum("status").default('pending'),
+  metadata: text("metadata"), // JSON string for additional data
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -113,7 +175,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
-export const notificationsRelations = relations(notifications, ({ one }) => ({
+export const notificationsRelations = relations(notifications, ({ one, many }) => ({
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
@@ -122,6 +184,33 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.offerId],
     references: [offers.id],
   }),
+  deliveries: many(notificationDeliveries),
+  batch: one(notificationBatches, {
+    fields: [notifications.batchId],
+    references: [notificationBatches.id],
+  }),
+}));
+
+export const userNotificationPreferencesRelations = relations(userNotificationPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [userNotificationPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const notificationDeliveriesRelations = relations(notificationDeliveries, ({ one }) => ({
+  notification: one(notifications, {
+    fields: [notificationDeliveries.notificationId],
+    references: [notifications.id],
+  }),
+}));
+
+export const notificationBatchesRelations = relations(notificationBatches, ({ one, many }) => ({
+  user: one(users, {
+    fields: [notificationBatches.userId],
+    references: [users.id],
+  }),
+  notifications: many(notifications),
 }));
 
 // Insert schemas
@@ -216,6 +305,22 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserNotificationPreferencesSchema = createInsertSchema(userNotificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationDeliverySchema = createInsertSchema(notificationDeliveries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationBatchSchema = createInsertSchema(notificationBatches).omit({
   id: true,
   createdAt: true,
 });

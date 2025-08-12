@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { authService } from "./services/auth";
 import { notificationService } from "./services/notification";
+import { advancedNotificationService } from "./services/advanced-notification";
 import { pdfService } from "./services/pdf";
 import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
@@ -896,6 +897,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Advanced Notification System - Smart notification with intelligent batching
+  app.post('/api/notifications/smart', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const notificationId = await advancedNotificationService.createSmartNotification({
+        userId: req.userId!,
+        type: req.body.type || 'account_update',
+        priority: req.body.priority || 'medium',
+        title: req.body.title,
+        message: req.body.message,
+        offerId: req.body.offerId,
+        metadata: req.body.metadata
+      });
+      
+      res.json({ success: true, notificationId });
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Smart notification failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get notification analytics for performance insights  
+  app.get('/api/notifications/analytics', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const analytics = await advancedNotificationService.getNotificationAnalytics(req.userId!, days);
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch analytics' });
     }
   });
 

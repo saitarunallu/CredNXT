@@ -1,5 +1,6 @@
 import { 
   users, offers, payments, notifications, otpCodes,
+  userNotificationPreferences, notificationDeliveries, notificationBatches,
   type User, type InsertUser, 
   type Offer, type InsertOffer, type Payment, type InsertPayment,
   type Notification, type InsertNotification 
@@ -36,6 +37,19 @@ export interface IStorage {
   getUserNotifications(userId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<void>;
+  updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification>;
+  
+  // Advanced Notification Features
+  getUserNotificationPreferences(userId: string, type: string): Promise<any>;
+  createUserNotificationPreferences(preferences: any): Promise<any>;
+  getTodayNotificationCount(userId: string, date: Date): Promise<number>;
+  getPendingBatchNotifications(userId: string, batchType: string): Promise<any[]>;
+  createNotificationBatch(batch: any): Promise<any>;
+  createNotificationDelivery(delivery: any): Promise<any>;
+  updateNotificationDelivery(id: string, updates: any): Promise<any>;
+  getScheduledNotifications(beforeDate: Date): Promise<any[]>;
+  getNotificationAnalytics(userId: string, days: number): Promise<any>;
+  getPayment(id: string): Promise<Payment | undefined>;
 
   // OTP
   createOtp(phone: string, code: string, expiresAt: Date): Promise<void>;
@@ -215,8 +229,138 @@ export class DatabaseStorage implements IStorage {
   async markNotificationAsRead(id: string): Promise<void> {
     await db
       .update(notifications)
-      .set({ isRead: true })
+      .set({ isRead: true, readAt: sql`now()` })
       .where(eq(notifications.id, id));
+  }
+
+  async updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification> {
+    const [notification] = await db
+      .update(notifications)
+      .set(updates)
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification;
+  }
+
+  async getUserNotificationPreferences(userId: string, type: string): Promise<any> {
+    const [preferences] = await db
+      .select()
+      .from(userNotificationPreferences)
+      .where(and(
+        eq(userNotificationPreferences.userId, userId),
+        eq(userNotificationPreferences.type, type as any)
+      ));
+    return preferences;
+  }
+
+  async createUserNotificationPreferences(preferences: any): Promise<any> {
+    const [created] = await db
+      .insert(userNotificationPreferences)
+      .values(preferences)
+      .returning();
+    return created;
+  }
+
+  async getTodayNotificationCount(userId: string, date: Date): Promise<number> {
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1);
+    
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        gte(notifications.createdAt, date),
+        lte(notifications.createdAt, endDate)
+      ));
+    
+    return result?.count || 0;
+  }
+
+  async getPendingBatchNotifications(userId: string, batchType: string): Promise<any[]> {
+    return db
+      .select()
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        sql`${notifications.batchId} IS NULL`,
+        sql`${notifications.scheduledFor} <= now()`
+      ));
+  }
+
+  async createNotificationBatch(batch: any): Promise<any> {
+    const [created] = await db
+      .insert(notificationBatches)
+      .values(batch)
+      .returning();
+    return created;
+  }
+
+  async createNotificationDelivery(delivery: any): Promise<any> {
+    const [created] = await db
+      .insert(notificationDeliveries)
+      .values(delivery)
+      .returning();
+    return created;
+  }
+
+  async updateNotificationDelivery(id: string, updates: any): Promise<any> {
+    const [updated] = await db
+      .update(notificationDeliveries)
+      .set(updates)
+      .where(eq(notificationDeliveries.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getScheduledNotifications(beforeDate: Date): Promise<any[]> {
+    return db
+      .select()
+      .from(notifications)
+      .where(and(
+        lte(notifications.scheduledFor, beforeDate),
+        sql`${notifications.batchId} IS NULL`,
+        sql`(${notifications.expiresAt} IS NULL OR ${notifications.expiresAt} > now())`
+      ));
+  }
+
+  async getNotificationAnalytics(userId: string, days: number): Promise<any> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // This is a simplified version - in production you'd want more complex analytics
+    const [totalSent] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        gte(notifications.createdAt, startDate)
+      ));
+
+    const [totalRead] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        gte(notifications.createdAt, startDate),
+        eq(notifications.isRead, true)
+      ));
+
+    const readRate = totalSent.count > 0 ? totalRead.count / totalSent.count : 0;
+
+    return {
+      totalSent: totalSent.count,
+      deliveryRate: 0.95, // Mock value - would come from delivery tracking
+      readRate,
+      channelPerformance: {},
+      costAnalysis: {},
+      batchEfficiency: 0.7 // Mock value
+    };
+  }
+
+  async getPayment(id: string): Promise<Payment | undefined> {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
+    return payment || undefined;
   }
 
   // OTP
