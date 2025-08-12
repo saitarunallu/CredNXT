@@ -270,11 +270,9 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   
   if (repaymentType === 'interest_only') {
     // CRITICAL FIX: Proper interest-only calculation
-    // For monthly payments: (principal * annual_rate) / 12
-    // For other frequencies: adjust accordingly
-    const monthlyInterestRate = annualRate / 12;
-    const interestPerPayment = principal * monthlyInterestRate;
-    console.log(`Interest-only calculation: Principal=${principal}, Annual Rate=${annualRate}, Monthly Rate=${monthlyInterestRate}, Interest Per Payment=${interestPerPayment}`);
+    // Formula: (principal * annual_rate) / 12 for monthly payments
+    const interestPerPayment = (principal * annualRate) / 12;
+    console.log(`Interest-only calculation: Principal=${principal}, Annual Rate=${annualRate}, Interest Per Payment=${interestPerPayment}`);
     
     for (let i = 1; i <= numberOfPayments; i++) {
       const dueDate = dueDates[i - 1];
@@ -282,6 +280,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
       
       // CRITICAL: Principal payment ONLY on final installment
       const principalAmount = isLastPayment ? principal : 0;
+      // FIX: Proper rounding - round to 2 decimal places properly
       const interestAmount = Math.round(interestPerPayment * 100) / 100;
       const totalPayment = principalAmount + interestAmount;
       
