@@ -36,6 +36,16 @@ export default function Navbar() {
     }
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('PATCH', '/api/notifications/mark-all-read', {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    }
+  });
+
   const handleLogout = () => {
     authService.logout();
     setLocation('/');
@@ -85,7 +95,17 @@ export default function Navbar() {
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => {
+                    // Mark all notifications as read when notification button is clicked
+                    if (unreadCount > 0) {
+                      markAllAsReadMutation.mutate();
+                    }
+                  }}
+                >
                   <Bell className="w-4 h-4" />
                   {unreadCount > 0 && (
                     <Badge 
@@ -97,37 +117,54 @@ export default function Navbar() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                {(notifications as any)?.notifications?.slice(0, 5).map((notification: any) => (
-                  <DropdownMenuItem 
-                    key={notification.id} 
-                    className={`flex flex-col items-start p-4 cursor-pointer hover:bg-accent ${!notification.isRead ? 'bg-accent/50 border-l-4 border-primary' : ''}`}
-                    onClick={() => {
-                      if (!notification.isRead) {
-                        markAsReadMutation.mutate(notification.id);
-                      }
-                      // Navigate to offer if it's an offer notification
-                      if (notification.offerId) {
-                        setLocation(`/offers/${notification.offerId}`);
-                      }
-                    }}
-                  >
-                    <div className={`font-medium ${!notification.isRead ? 'text-primary' : 'text-foreground'}`}>
-                      {notification.title}
-                    </div>
-                    <div className={`text-sm ${!notification.isRead ? 'text-primary/80' : 'text-muted-foreground'}`}>
-                      {notification.message}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 flex justify-between w-full">
-                      <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
-                      {!notification.isRead && (
-                        <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
-                          New
-                        </Badge>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                )) || (
+              <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+                {(notifications as any)?.notifications?.length > 0 ? (
+                  <>
+                    {unreadCount > 0 && (
+                      <div className="p-2 border-b">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAllAsReadMutation.mutate();
+                          }}
+                          disabled={markAllAsReadMutation.isPending}
+                          className="w-full text-xs"
+                        >
+                          {markAllAsReadMutation.isPending ? 'Marking all as read...' : 'Mark all as read'}
+                        </Button>
+                      </div>
+                    )}
+                    {(notifications as any)?.notifications?.map((notification: any) => (
+                      <DropdownMenuItem 
+                        key={notification.id} 
+                        className={`flex flex-col items-start p-4 cursor-pointer hover:bg-accent ${!notification.isRead ? 'bg-accent/50 border-l-4 border-primary' : ''}`}
+                        onClick={() => {
+                          // Navigate to offer if it's an offer notification
+                          if (notification.offerId) {
+                            setLocation(`/offers/${notification.offerId}`);
+                          }
+                        }}
+                      >
+                        <div className={`font-medium ${!notification.isRead ? 'text-primary' : 'text-foreground'}`}>
+                          {notification.title}
+                        </div>
+                        <div className={`text-sm ${!notification.isRead ? 'text-primary/80' : 'text-muted-foreground'}`}>
+                          {notification.message}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 flex justify-between w-full">
+                          <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
+                          {!notification.isRead && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                ) : (
                   <DropdownMenuItem>No notifications</DropdownMenuItem>
                 )}
               </DropdownMenuContent>

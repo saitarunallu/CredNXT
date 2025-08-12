@@ -909,6 +909,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/notifications/mark-all-read', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.userId!);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // Advanced Notification System - Smart notification with intelligent batching
   app.post('/api/notifications/smart', authenticate, async (req: AuthenticatedRequest, res) => {
     try {

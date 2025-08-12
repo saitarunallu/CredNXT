@@ -186,12 +186,12 @@ export class DatabaseStorage implements IStorage {
     return newPayment;
   }
 
-  async getPayment(id: string): Promise<Payment | null> {
+  async getPayment(id: string): Promise<Payment | undefined> {
     const [payment] = await db
       .select()
       .from(payments)
       .where(eq(payments.id, id));
-    return payment || null;
+    return payment || undefined;
   }
 
   async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> {
@@ -231,6 +231,13 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ isRead: true, readAt: sql`now()` })
       .where(eq(notifications.id, id));
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true, readAt: sql`now()` })
+      .where(eq(notifications.userId, userId));
   }
 
   async updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification> {
@@ -358,10 +365,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getPayment(id: string): Promise<Payment | undefined> {
-    const [payment] = await db.select().from(payments).where(eq(payments.id, id));
-    return payment || undefined;
-  }
+
 
   // OTP
   async createOtp(phone: string, code: string, expiresAt: Date): Promise<void> {
