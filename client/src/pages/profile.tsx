@@ -6,16 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { authService } from "@/lib/auth";
-import { useTheme } from "@/contexts/theme-context";
-import { User, Phone, Mail, LogOut, Shield, Bell, HelpCircle, Sun, Moon, Monitor } from "lucide-react";
+import { User, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
   const user = authService.getUser();
   const [isEditing, setIsEditing] = useState(false);
-  const { theme, setTheme } = useTheme();
+  // Theme functionality removed - light theme only
 
   const handleLogout = () => {
     authService.logout();
@@ -100,58 +98,7 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Theme Settings Card */}
-        <Card className="shadow-sm mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center">
-                <Monitor className="w-6 h-6 text-secondary-foreground" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
-                <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="theme">Theme</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">
-                      <div className="flex items-center space-x-2">
-                        <Sun className="w-4 h-4" />
-                        <span>Light</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="dark">
-                      <div className="flex items-center space-x-2">
-                        <Moon className="w-4 h-4" />
-                        <span>Dark</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="system">
-                      <div className="flex items-center space-x-2">
-                        <Monitor className="w-4 h-4" />
-                        <span>System Default</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {theme === 'system' 
-                    ? 'Theme will match your device settings'
-                    : `Using ${theme} theme`
-                  }
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Appearance card removed - light theme only */}
 
         {/* Settings */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -179,21 +126,21 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Bell className="w-5 h-5 text-blue-600" />
-                <span>Notifications</span>
+                <span className="text-foreground">Notifications</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Payment Reminders</span>
+                  <span className="text-sm text-muted-foreground">Payment Reminders</span>
                   <span className="text-sm font-medium text-green-600">On</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">New Offers</span>
+                  <span className="text-sm text-muted-foreground">New Offers</span>
                   <span className="text-sm font-medium text-green-600">On</span>
                 </div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
@@ -205,29 +152,29 @@ export default function Profile() {
         </div>
 
         {/* Support & Help */}
-        <Card className="bg-white border-0 shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <HelpCircle className="w-5 h-5 text-purple-600" />
-              <span>Support & Help</span>
+              <span className="text-foreground">Support & Help</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <Button variant="outline" className="h-auto py-4 flex-col">
-                <span className="font-medium">Help Center</span>
-                <span className="text-sm text-gray-500">FAQs & Guides</span>
+                <span className="font-medium text-foreground">Help Center</span>
+                <span className="text-sm text-muted-foreground">FAQs & Guides</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex-col">
-                <span className="font-medium">Contact Support</span>
-                <span className="text-sm text-gray-500">Get Help</span>
+                <span className="font-medium text-foreground">Contact Support</span>
+                <span className="text-sm text-muted-foreground">Get Help</span>
               </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Logout */}
-        <Card className="bg-white border-0 shadow-sm">
+        <Card className="shadow-sm">
           <CardContent className="p-6">
             <Button 
               variant="destructive" 
