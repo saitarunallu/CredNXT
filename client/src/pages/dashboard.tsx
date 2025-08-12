@@ -167,7 +167,6 @@ export default function Dashboard() {
                   <OfferCard
                     key={item.offer.id}
                     offer={item.offer}
-                    contact={item.contact}
                     fromUser={item.fromUser}
                     totalPaid={item.totalPaid}
                     isReceived={!!item.fromUser}
