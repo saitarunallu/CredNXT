@@ -24,7 +24,7 @@ export default function Navbar() {
     enabled: !!user,
   });
 
-  const unreadCount = notifications?.notifications?.filter((n: any) => !n.isRead).length || 0;
+  const unreadCount = (notifications as any)?.notifications?.filter((n: any) => !n.isRead).length || 0;
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -63,7 +63,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+    <nav className="bg-background shadow-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/dashboard">
@@ -72,7 +72,7 @@ export default function Navbar() {
                 <Shield className="w-6 h-6 text-white" />
                 <IndianRupee className="w-3 h-3 text-white absolute" />
               </div>
-              <span className="text-xl font-bold text-navy-900 dark:text-navy-100">CredNXT</span>
+              <span className="text-xl font-bold text-foreground">CredNXT</span>
             </div>
           </Link>
           
@@ -98,10 +98,10 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                {notifications?.notifications?.slice(0, 5).map((notification: any) => (
+                {(notifications as any)?.notifications?.slice(0, 5).map((notification: any) => (
                   <DropdownMenuItem 
                     key={notification.id} 
-                    className={`flex flex-col items-start p-4 cursor-pointer hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                    className={`flex flex-col items-start p-4 cursor-pointer hover:bg-accent ${!notification.isRead ? 'bg-accent/50 border-l-4 border-primary' : ''}`}
                     onClick={() => {
                       if (!notification.isRead) {
                         markAsReadMutation.mutate(notification.id);
@@ -112,13 +112,13 @@ export default function Navbar() {
                       }
                     }}
                   >
-                    <div className={`font-medium ${!notification.isRead ? 'text-blue-900' : 'text-gray-900'}`}>
+                    <div className={`font-medium ${!notification.isRead ? 'text-primary' : 'text-foreground'}`}>
                       {notification.title}
                     </div>
-                    <div className={`text-sm ${!notification.isRead ? 'text-blue-700' : 'text-gray-600'}`}>
+                    <div className={`text-sm ${!notification.isRead ? 'text-primary/80' : 'text-muted-foreground'}`}>
                       {notification.message}
                     </div>
-                    <div className="text-xs text-gray-400 mt-1 flex justify-between w-full">
+                    <div className="text-xs text-muted-foreground mt-1 flex justify-between w-full">
                       <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
                       {!notification.isRead && (
                         <Badge variant="secondary" className="text-xs px-1 py-0 h-4">

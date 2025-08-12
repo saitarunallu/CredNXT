@@ -28,26 +28,26 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <Navbar />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Profile</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Profile</h1>
+          <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
 
         {/* Profile Card */}
-        <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Personal Information</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Update your personal details</p>
+                <h2 className="text-xl font-semibold text-foreground">Personal Information</h2>
+                <p className="text-sm text-muted-foreground">Update your personal details</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -101,15 +101,15 @@ export default function Profile() {
         </Card>
 
         {/* Theme Settings Card */}
-        <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm mb-6">
+        <Card className="shadow-sm mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                <Monitor className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="w-12 h-12 bg-secondary/30 rounded-full flex items-center justify-center">
+                <Monitor className="w-6 h-6 text-secondary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Choose your preferred theme</p>
+                <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
+                <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
               </div>
             </CardTitle>
           </CardHeader>
@@ -142,7 +142,7 @@ export default function Profile() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   {theme === 'system' 
                     ? 'Theme will match your device settings'
                     : `Using ${theme} theme`
@@ -155,22 +155,22 @@ export default function Profile() {
 
         {/* Settings */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+          <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <span className="text-gray-900 dark:text-gray-100">Security</span>
+                <Shield className="w-5 h-5 text-green-600" />
+                <span className="text-foreground">Security</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Two-Factor Authentication</span>
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Enabled</span>
+                  <span className="text-sm text-muted-foreground">Two-Factor Authentication</span>
+                  <span className="text-sm font-medium text-green-600">Enabled</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Phone Verification</span>
-                  <span className="text-sm font-medium text-green-600 dark:text-green-400">Verified</span>
+                  <span className="text-sm text-muted-foreground">Phone Verification</span>
+                  <span className="text-sm font-medium text-green-600">Verified</span>
                 </div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   Manage Security
