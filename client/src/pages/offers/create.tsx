@@ -96,7 +96,6 @@ export default function CreateOffer() {
         }
       } catch (error) {
         // User not registered - allow manual name entry
-        console.log('User not found or error checking:', error);
       } finally {
         setIsCheckingContact(false);
       }
@@ -105,14 +104,10 @@ export default function CreateOffer() {
 
   const createOfferMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('API request starting with data:', data);
       const response = await apiRequest('POST', '/api/offers', data);
-      const result = await response.json();
-      console.log('API response received:', result);
-      return result;
+      return await response.json();
     },
-    onSuccess: (data) => {
-      console.log('Mutation success with data:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       setLocation('/dashboard');
       toast({
@@ -120,8 +115,7 @@ export default function CreateOffer() {
         description: "Your offer has been sent successfully.",
       });
     },
-    onError: (error) => {
-      console.error('Mutation error:', error);
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to create offer. Please try again.",
@@ -270,16 +264,7 @@ export default function CreateOffer() {
           </CardHeader>
           
           <CardContent className="p-6">
-            <form onSubmit={(e) => {
-                    console.log('Form submit event triggered', e);
-                    console.log('Form data before submit:', {
-                      contactName,
-                      contactPhone,
-                      offerType,
-                      formValues: watch()
-                    });
-                    handleSubmit(onSubmit)(e);
-                  }} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Basic Information Section */}
               <div className="bg-gray-50 rounded-xl p-5 space-y-5">
                 <div className="flex items-center mb-3">
@@ -606,19 +591,16 @@ export default function CreateOffer() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-gray-700 font-medium text-sm">Compounding Frequency</Label>
-                      <Select value={compoundingFrequency} onValueChange={setCompoundingFrequency}>
-                        <SelectTrigger className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm">
-                          <SelectValue placeholder="Select compounding" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">📅 Daily</SelectItem>
-                          <SelectItem value="monthly">📆 Monthly</SelectItem>
-                          <SelectItem value="quarterly">📊 Quarterly</SelectItem>
-                          <SelectItem value="annually">🗓️ Annually</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500">How often interest compounds (for reducing balance)</p>
+                      <Label className="text-gray-700 font-medium text-sm">Grace Period (Days)</Label>
+                      <Input
+                        type="number"
+                        {...register("gracePeriodDays", { valueAsNumber: true })}
+                        placeholder="0"
+                        min="0"
+                        max="30"
+                        className="bg-white border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 h-11 rounded-lg shadow-sm"
+                      />
+                      <p className="text-xs text-gray-500">Grace period for late payments</p>
                     </div>
                   </div>
 

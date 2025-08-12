@@ -46,7 +46,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) {
-        console.log(`SECURITY_ALERT: Authentication attempt without token from ${clientIp} [${requestId}]`);
+        securityService.createAlert({
+          level: 'high',
+          type: 'AUTHENTICATION_FAILURE',
+          description: 'Authentication attempt without token',
+          clientIp,
+          details: { requestId }
+        });
         return res.status(401).json({ 
           message: 'Authentication required',
           code: 'AUTH_TOKEN_MISSING'
@@ -57,7 +63,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Additional security checks
       if (!payload.userId) {
-        console.log(`SECURITY_ALERT: Invalid token payload from ${clientIp} [${requestId}]`);
+        securityService.createAlert({
+          level: 'high',
+          type: 'AUTHENTICATION_FAILURE',
+          description: 'Invalid token payload',
+          clientIp,
+          details: { requestId, userId: payload.userId }
+        });
         return res.status(401).json({ 
           message: 'Invalid authentication credentials',
           code: 'AUTH_INVALID_PAYLOAD'
@@ -67,7 +79,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify user still exists and is active
       const user = await storage.getUser(payload.userId);
       if (!user) {
-        console.log(`SECURITY_ALERT: Token for non-existent user ${payload.userId} from ${clientIp} [${requestId}]`);
+        securityService.createAlert({
+          level: 'high',
+          type: 'AUTHENTICATION_FAILURE',
+          description: 'Token for non-existent user',
+          clientIp,
+          details: { requestId, userId: payload.userId }
+        });
         return res.status(401).json({ 
           message: 'User account not found',
           code: 'AUTH_USER_NOT_FOUND'
@@ -77,7 +95,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate user compliance
       const compliance = await complianceService.validateCompliance('user', user);
       if (!compliance.isCompliant) {
-        console.log(`COMPLIANCE_ALERT: User ${payload.userId} failed compliance check:`, compliance.violations);
+        securityService.createAlert({
+          level: 'medium',
+          type: 'COMPLIANCE_VIOLATION',
+          description: 'User failed compliance check',
+          clientIp,
+          details: { requestId, userId: payload.userId, violations: compliance.violations }
+        });
         return res.status(403).json({ 
           message: 'Account does not meet security requirements',
           code: 'COMPLIANCE_VIOLATION',
@@ -89,7 +113,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown authentication error';
-      console.log(`SECURITY_ALERT: Authentication failed from ${clientIp}: ${errorMessage} [${requestId}]`);
+      securityService.createAlert({
+        level: 'medium',
+        type: 'AUTHENTICATION_FAILURE',
+        description: `Authentication failed: ${errorMessage}`,
+        clientIp,
+        details: { requestId }
+      });
       
       if (errorMessage.includes('expired')) {
         return res.status(401).json({ 
@@ -124,10 +154,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       const requestId = (req as any).requestId;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`AUDIT: Demo request failed [${requestId}]:`, {
-        error: errorMessage,
-        body: req.body,
-        ip: req.ip
+      // Log security audit for demo request failure
+      complianceService.createAuditEntry({
+        operation: 'DEMO_REQUEST_FAILED',
+        entityType: 'user',
+        entityId: 'demo_requests',
+        details: { error: errorMessage, ip: req.ip, requestId },
+        compliance: {
+          ruleId: 'DEMO_REQUEST_SECURITY',
+          status: 'failed',
+          message: `Demo request failed: ${errorMessage}`
+        }
       });
       
       if (error instanceof z.ZodError) {
@@ -205,10 +242,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`AUDIT: Login failed [${requestId}]:`, {
-        error: errorMessage,
-        phone: req.body.phone?.substring(0, 3) + '***',
-        ip: clientIp
+      // Log security audit for login failure
+      complianceService.createAuditEntry({
+        operation: 'LOGIN_FAILED',
+        entityType: 'user',
+        entityId: req.body.phone?.substring(0, 3) + '***',
+        details: { error: errorMessage, ip: clientIp, requestId },
+        compliance: {
+          ruleId: 'AUTHENTICATION',
+          status: 'failed',
+          message: `Login failed: ${errorMessage}`
+        }
       });
       
       if (error instanceof z.ZodError) {
@@ -498,7 +542,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ offer });
     } catch (error) {
-      console.error('Create offer error:', error);
+      // Log error for debugging and audit
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      complianceService.createAuditEntry({
+        operation: 'OFFER_CREATION_FAILED',
+        entityType: 'offer',
+        entityId: 'unknown',
+        details: { error: errorMessage, userId: req.userId },
+        compliance: {
+          ruleId: 'OFFER_CREATION',
+          status: 'failed',
+          message: `Offer creation failed: ${errorMessage}`
+        }
+      });
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -644,7 +700,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ payment });
     } catch (error) {
-      console.error('Create payment error:', error);
+      // Log error for debugging and audit
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      complianceService.createAuditEntry({
+        operation: 'PAYMENT_CREATION_FAILED',
+        entityType: 'payment',
+        entityId: 'unknown',
+        details: { error: errorMessage, userId: req.userId },
+        compliance: {
+          ruleId: 'PAYMENT_PROCESSING',
+          status: 'failed',
+          message: `Payment creation failed: ${errorMessage}`
+        }
+      });
       res.status(400).json({ message: 'Invalid payment data' });
     }
   });
@@ -703,7 +771,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ payment: updatedPayment });
     } catch (error) {
-      console.error('Approve payment error:', error);
+      // Log error for debugging and audit
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      complianceService.createAuditEntry({
+        operation: 'PAYMENT_APPROVAL_FAILED',
+        entityType: 'payment',
+        entityId: req.params.id,
+        details: { error: errorMessage, userId: req.userId },
+        compliance: {
+          ruleId: 'PAYMENT_PROCESSING',
+          status: 'failed',
+          message: `Payment approval failed: ${errorMessage}`
+        }
+      });
       res.status(500).json({ message: 'Failed to approve payment' });
     }
   });

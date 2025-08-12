@@ -24,25 +24,12 @@ export class PdfService {
     const filePath = path.join(this.contractsDir, fileName);
     
     try {
-      console.log(`Creating PDF contract at: ${filePath}`);
-      console.log(`Directory exists: ${fs.existsSync(this.contractsDir)}`);
-      
       const pdfBuffer = await this.createPdfContract(offer, fromUser);
       fs.writeFileSync(filePath, pdfBuffer);
-      
-      console.log(`Generated PDF contract: ${contractKey}, file size: ${pdfBuffer.length} bytes`);
-      console.log(`File exists after write: ${fs.existsSync(filePath)}`);
-      
       return contractKey;
     } catch (error) {
-      console.error('PDF generation failed:', error);
-      console.error('Error details:', {
-        contractsDir: this.contractsDir,
-        filePath,
-        dirExists: fs.existsSync(this.contractsDir),
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw new Error('Failed to generate contract PDF');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to generate contract PDF: ${errorMessage}`);
     }
   }
 
@@ -226,7 +213,7 @@ export class PdfService {
       
       return fs.readFileSync(filePath);
     } catch (error) {
-      console.error('KFS download failed:', error);
+      // Log error through proper error handling
       throw new Error('Failed to download KFS document');
     }
   }
@@ -253,7 +240,7 @@ export class PdfService {
           interestRate: parseFloat(offer.interestRate),
           interestType: offer.interestType as 'fixed' | 'reducing',
           tenureValue: offer.tenureValue,
-          tenureUnit: offer.tenureUnit as 'days' | 'weeks' | 'months' | 'years',
+          tenureUnit: offer.tenureUnit as 'months' | 'years',
           repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
           repaymentFrequency: offer.repaymentFrequency as 'weekly' | 'monthly' | 'yearly' | undefined,
           startDate: new Date(offer.startDate)

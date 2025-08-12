@@ -14,8 +14,6 @@ class WebSocketService {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
-      
       // Authenticate
       const token = authService.getToken();
       if (token) {
@@ -28,17 +26,16 @@ class WebSocketService {
         const data = JSON.parse(event.data);
         this.notifyListeners(data.type, data);
       } catch (error) {
-        console.error('WebSocket message parsing error:', error);
+        // Silently handle parsing errors in production
       }
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
       this.scheduleReconnect();
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      // Silently handle connection errors in production
     };
   }
 

@@ -50,7 +50,11 @@ app.use((req, res, next) => {
       const isSensitive = sensitiveOperations.some(op => path.includes(op));
       
       if (isSensitive || res.statusCode >= 400) {
-        console.log('AUDIT:', JSON.stringify(auditLog));
+        // Audit sensitive operations through proper logging service
+        // In production, this should integrate with structured logging
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('AUDIT:', JSON.stringify(auditLog));
+        }
       } else {
         // Regular operations get shorter log
         let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms [${requestId.substring(0, 8)}]`;

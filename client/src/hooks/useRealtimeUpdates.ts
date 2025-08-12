@@ -8,7 +8,7 @@ export function useRealtimeUpdates() {
   useEffect(() => {
     // Handle offer-related updates
     const handleOfferUpdate = (data: any) => {
-      console.log('Offer update received:', data);
+      // Real-time offer update received
       
       // Immediately invalidate and refetch all related data
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
@@ -30,7 +30,7 @@ export function useRealtimeUpdates() {
 
     // Handle payment updates
     const handlePaymentUpdate = (data: any) => {
-      console.log('Payment update received:', data);
+      // Real-time payment update received
       
       // Invalidate payment-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
@@ -51,7 +51,7 @@ export function useRealtimeUpdates() {
 
     // Handle notification updates
     const handleNotificationUpdate = (data: any) => {
-      console.log('Notification update received:', data);
+      // Real-time notification update received
       
       // Invalidate notifications and related data
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
