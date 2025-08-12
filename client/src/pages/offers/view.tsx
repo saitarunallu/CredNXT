@@ -48,18 +48,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const { data: offerData, isLoading } = useQuery({
     queryKey: ['/api/offers', offerId],
-  });
+  }) as { data: any, isLoading: boolean };
 
   const { data: scheduleData } = useQuery({
     queryKey: ['/api/offers', offerId, 'schedule'],
     enabled: !!offerData?.offer,
-  });
+  }) as { data: any };
 
   // Get payment status with repayment schedule
   const { data: paymentStatusData } = useQuery({
     queryKey: ['/api/offers', offerId, 'payment-status'],
     enabled: !!offerData?.offer && offerData?.offer.status === 'accepted',
-  });
+  }) as { data: any };
 
   const {
     register,
@@ -322,6 +322,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
   
   const amount = parseFloat(offer.amount);
+  const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
   
   // Calculate outstanding based on what's actually due vs future payments
   let outstanding = 0;
@@ -355,7 +356,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   } else {
     // Fallback calculation
-    const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
     outstanding = totalAmountDue - totalPaid;
   }
   
