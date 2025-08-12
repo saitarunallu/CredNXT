@@ -52,8 +52,8 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Lent</p>
                   <p className="text-2xl font-bold text-foreground mt-1">₹{stats.totalLent.toLocaleString()}</p>
                 </div>
-                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 rounded-full flex items-center justify-center">
-                  <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <IndianRupee className="h-5 w-5 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
@@ -66,8 +66,8 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Borrowed</p>
                   <p className="text-2xl font-bold text-foreground mt-1">₹{stats.totalBorrowed.toLocaleString()}</p>
                 </div>
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950 rounded-full flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -80,8 +80,8 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active</p>
                   <p className="text-2xl font-bold text-foreground mt-1">{stats.activeOffers}</p>
                 </div>
-                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-950 rounded-full flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-purple-600" />
                 </div>
               </div>
             </CardContent>
@@ -94,8 +94,8 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending</p>
                   <p className="text-2xl font-bold text-foreground mt-1">{stats.pendingOffers}</p>
                 </div>
-                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-950 rounded-full flex items-center justify-center">
-                  <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
                 </div>
               </div>
             </CardContent>
@@ -108,8 +108,8 @@ export default function Dashboard() {
             <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950 rounded-full flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900 transition-colors">
-                    <Plus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Plus className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">Create Offer</h3>
@@ -123,8 +123,8 @@ export default function Dashboard() {
           <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 rounded-full flex items-center justify-center group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900 transition-colors">
-                  <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground text-sm">Analytics</h3>
@@ -137,8 +137,8 @@ export default function Dashboard() {
           <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-950 rounded-full flex items-center justify-center group-hover:bg-purple-200 dark:group-hover:bg-purple-900 transition-colors">
-                  <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                  <FileText className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground text-sm">Reports</h3>
@@ -207,7 +207,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Success Rate</span>
-                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-sm font-semibold text-emerald-600">
                       {sentOffers.length > 0 ? 
                         Math.round((sentOffers.filter((o: any) => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0
                       }%

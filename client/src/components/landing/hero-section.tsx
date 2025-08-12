@@ -8,9 +8,9 @@ export default function HeroSection() {
           <div className="animate-slide-up">
             <h1 className="text-4xl lg:text-6xl font-bold leading-tight mb-6">
               Lend & Borrow with
-              <span className="text-blue-200 dark:text-blue-300"> People You Know</span>
+              <span className="text-blue-200"> People You Know</span>
             </h1>
-            <p className="text-xl lg:text-2xl text-blue-50 dark:text-blue-100 mb-8 leading-relaxed">
+            <p className="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed">
               CredNXT revolutionizes peer-to-known-person lending with secure, transparent, and legally-backed financial agreements between friends, family, and trusted contacts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -33,16 +33,16 @@ export default function HeroSection() {
             
             <div className="mt-12 grid grid-cols-3 gap-8 text-center">
               <div>
-                <div className="text-3xl font-bold text-blue-200 dark:text-blue-300">100%</div>
-                <div className="text-blue-50 dark:text-blue-100">Secure</div>
+                <div className="text-3xl font-bold text-blue-200">100%</div>
+                <div className="text-blue-100">Secure</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-blue-200 dark:text-blue-300">Legal</div>
-                <div className="text-blue-50 dark:text-blue-100">Contracts</div>
+                <div className="text-3xl font-bold text-blue-200">Legal</div>
+                <div className="text-blue-100">Contracts</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-blue-200 dark:text-blue-300">24/7</div>
-                <div className="text-blue-50 dark:text-blue-100">Support</div>
+                <div className="text-3xl font-bold text-blue-200">24/7</div>
+                <div className="text-blue-100">Support</div>
               </div>
             </div>
           </div>
@@ -52,16 +52,16 @@ export default function HeroSection() {
               <div className="bg-accent/50 rounded-xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">Dashboard Overview</h3>
-                  <span className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 px-3 py-1 rounded-full text-sm font-medium">Active</span>
+                  <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">Active</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-background p-3 rounded-lg">
-                    <div className="text-lg font-bold text-primary break-words">₹2,45,000</div>
-                    <div className="text-muted-foreground text-xs">Amount Lent</div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="text-lg font-bold text-blue-600 break-words">₹2,45,000</div>
+                    <div className="text-gray-600 text-xs">Amount Lent</div>
                   </div>
-                  <div className="bg-background p-3 rounded-lg">
-                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 break-words">₹45,000</div>
-                    <div className="text-muted-foreground text-xs">Amount Borrowed</div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="text-lg font-bold text-emerald-600 break-words">₹45,000</div>
+                    <div className="text-gray-600 text-xs">Amount Borrowed</div>
                   </div>
                 </div>
               </div>

@@ -18,7 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Routing**: Wouter
 - **Forms**: React Hook Form with Zod validation
 - **Authentication**: JWT-based (localStorage persistence)
-- **UI/UX Decisions**: Professional dark theme with industry-standard color palette, semantic CSS variables, enhanced visual hierarchy (WCAG compliant), modernized gradients/effects, smooth transitions, and unified component styling. Streamlined form design for repayment types (EMI, interest-only, full payment), simplified tenure (months, years), reduced repayment frequencies (monthly, yearly), and standardized monthly compounding.
+- **UI/UX Decisions**: Clean, professional light theme with optimized readability and modern design standards. Removed dark mode functionality completely for simplified user experience. Enhanced visual hierarchy (WCAG compliant), refined gradients and animations, smooth transitions, and consistent component styling. Streamlined form design for repayment types (EMI, interest-only, full payment), simplified tenure (months, years), reduced repayment frequencies (monthly, yearly), and standardized monthly compounding.
 
 ### Backend Architecture
 - **Runtime**: Node.js with TypeScript (ES modules)

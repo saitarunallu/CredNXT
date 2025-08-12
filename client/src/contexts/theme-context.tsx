@@ -1,55 +1,24 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 
-type Theme = "light" | "dark" | "system";
+// Light theme only - dark mode removed
+type Theme = "light";
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  actualTheme: "light" | "dark";
+  actualTheme: "light";
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("theme");
-    return (stored as Theme) || "system";
-  });
-
-  const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const updateActualTheme = () => {
-      if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        setActualTheme(systemTheme);
-      } else {
-        setActualTheme(theme);
-      }
-    };
-
-    updateActualTheme();
-
-    if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleChange = () => updateActualTheme();
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (actualTheme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [actualTheme]);
+  // Always use light theme
+  const theme: Theme = "light";
+  const actualTheme: "light" = "light";
 
   const handleSetTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
+    // Force light theme only
+    console.log("Theme locked to light mode");
   };
 
   return (
