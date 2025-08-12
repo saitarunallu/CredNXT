@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import calculation functions
-      const { calculateRepaymentSchedule, getPaymentStatus, getNextPaymentInfo } = await import('@shared/calculations');
+      const { calculateRepaymentSchedule, getPaymentStatus, getNextPaymentInfo, calculateOutstandingPrincipal } = await import('@shared/calculations');
       
       // Get all payments for this offer
       const payments = await storage.getOfferPayments(id);
@@ -843,13 +843,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentStatus = getPaymentStatus(loanTerms, totalPaid);
       const nextPayment = getNextPaymentInfo(loanTerms, totalPaid);
       const schedule = calculateRepaymentSchedule(loanTerms);
+      
+      // Calculate outstanding principal using banking industry standards
+      const principalInfo = calculateOutstandingPrincipal(loanTerms, totalPaid);
 
       res.json({
         paymentStatus,
         nextPayment,
         totalPaid,
         totalAmount: schedule.totalAmount,
-        remainingAmount: schedule.totalAmount - totalPaid
+        remainingAmount: schedule.totalAmount - totalPaid,
+        outstandingPrincipal: principalInfo.outstandingPrincipal,
+        totalPrincipalPaid: principalInfo.totalPrincipalPaid,
+        totalInterestPaid: principalInfo.totalInterestPaid,
+        dueAmount: principalInfo.dueAmount,
+        overDueAmount: principalInfo.overDueAmount
       });
     } catch (error) {
       console.error('Payment status error:', error);

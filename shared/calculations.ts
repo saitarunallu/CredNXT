@@ -474,7 +474,7 @@ export function getNextPaymentInfo(terms: LoanTerms, paidAmount: number) {
   return null; // All payments completed
 }
 
-// Get payment status for each installment  
+// Get payment status for each installment - Banking Industry Standard
 export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
   const schedule = calculateRepaymentSchedule(terms);
   let totalPaid = paidAmount;
@@ -508,6 +508,64 @@ export function getPaymentStatus(terms: LoanTerms, paidAmount: number) {
   }
   
   return paymentStatus;
+}
+
+// Calculate Outstanding Principal Balance - Banking Industry Standard
+export function calculateOutstandingPrincipal(terms: LoanTerms, paidAmount: number): {
+  outstandingPrincipal: number;
+  totalPrincipalPaid: number;
+  totalInterestPaid: number;
+  dueAmount: number;
+  overDueAmount: number;
+} {
+  const schedule = calculateRepaymentSchedule(terms);
+  let remainingPaid = paidAmount;
+  let totalPrincipalPaid = 0;
+  let totalInterestPaid = 0;
+  let dueAmount = 0;
+  let overDueAmount = 0;
+  const today = new Date();
+  
+  // Process payments in chronological order
+  for (const payment of schedule.schedule) {
+    const paymentDueDate = new Date(payment.dueDate);
+    const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
+    const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
+    
+    if (paidForThisPayment > 0) {
+      // Allocate payment between interest and principal
+      const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
+      const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
+      
+      totalInterestPaid += interestPaidForThis;
+      totalPrincipalPaid += principalPaidForThis;
+    }
+    
+    // Calculate due and overdue amounts
+    if (remainingForThisPayment > 0.01) {
+      if (paymentDueDate <= today) {
+        // Payment is due or overdue
+        if (paymentDueDate < today) {
+          overDueAmount += remainingForThisPayment;
+        } else {
+          dueAmount += remainingForThisPayment;
+        }
+      }
+    }
+    
+    remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
+    if (remainingPaid <= 0) break;
+  }
+  
+  const outstandingPrincipal = terms.principal - totalPrincipalPaid;
+  
+  return {
+    outstandingPrincipal: Math.round(outstandingPrincipal * 100) / 100,
+    totalPrincipalPaid: Math.round(totalPrincipalPaid * 100) / 100,
+    totalInterestPaid: Math.round(totalInterestPaid * 100) / 100,
+    dueAmount: Math.round(dueAmount * 100) / 100,
+    overDueAmount: Math.round(overDueAmount * 100) / 100
+  };
 }
 
 // Enhanced payment validation with support for new repayment types

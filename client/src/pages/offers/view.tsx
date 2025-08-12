@@ -324,39 +324,71 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const amount = parseFloat(offer.amount);
   const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
   
-  // Calculate outstanding based on what's actually due vs future payments
+  // Calculate outstanding principal balance using banking industry standards
   let outstanding = 0;
+  let dueAmount = 0;
+  let overDueAmount = 0;
+  let outstandingPrincipal = amount; // Default to original principal
+  
+  // Use proper calculation based on repayment type and schedule
   if (scheduleData?.schedule?.schedule) {
     const today = new Date();
     const paymentStatus = scheduleData.schedule.schedule;
     let remainingPaid = totalPaid;
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
+    dueAmount = 0;
+    overDueAmount = 0;
     
+    // Process payments in chronological order - Banking Industry Standard
     for (const payment of paymentStatus) {
+      const paymentDueDate = new Date(payment.dueDate);
       const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
       const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
       
-      // For interest-only loans, only count as outstanding if:
-      // 1. Payment is due (past due date) OR
-      // 2. Payment is partially paid
-      if (offer.repaymentType === 'interest_only') {
-        const paymentDueDate = new Date(payment.dueDate);
-        const isDue = paymentDueDate <= today;
-        const isPartiallyPaid = paidForThisPayment > 0.01;
+      if (paidForThisPayment > 0) {
+        // Allocate payment between interest and principal
+        const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
+        const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
         
-        if ((isDue || isPartiallyPaid) && remainingForThisPayment > 0.01) {
-          outstanding += remainingForThisPayment;
+        totalInterestPaid += interestPaidForThis;
+        totalPrincipalPaid += principalPaidForThis;
+      }
+      
+      // Calculate due and overdue amounts
+      if (remainingForThisPayment > 0.01) {
+        if (paymentDueDate <= today) {
+          // Payment is due or overdue
+          if (paymentDueDate < today) {
+            overDueAmount += remainingForThisPayment;
+          } else {
+            dueAmount += remainingForThisPayment;
+          }
         }
-      } else {
-        // For other repayment types, count all unpaid amounts
-        outstanding += remainingForThisPayment;
       }
       
       remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
       if (remainingPaid <= 0) break;
     }
+    
+    // Outstanding Principal = Original Principal - Principal Paid
+    outstandingPrincipal = Math.max(0, amount - totalPrincipalPaid);
+    
+    // Outstanding amount = due + overdue (not entire principal)
+    outstanding = dueAmount + overDueAmount;
   } else {
-    // Fallback calculation
-    outstanding = totalAmountDue - totalPaid;
+    // Fallback calculation - for interest-only, principal doesn't reduce
+    if (offer.repaymentType === 'interest_only') {
+      outstandingPrincipal = amount;
+      // Only show due amount, not entire principal
+      const today = new Date();
+      const monthlyInterest = (amount * parseFloat(offer.interestRate)) / (12 * 100);
+      // Simple check if any payment is due (this is fallback, should use proper schedule)
+      outstanding = totalPaid < monthlyInterest ? monthlyInterest : 0;
+    } else {
+      outstandingPrincipal = Math.max(0, amount - totalPaid);
+      outstanding = outstandingPrincipal;
+    }
   }
   
   const isReceiver = offer.toUserId === currentUser?.id;
@@ -863,12 +895,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} Payment
                         </div>
                         <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
-                          Outstanding Balance
+                          {overDueAmount > 0 ? 'Overdue + Due Amount' : 'Current Due Amount'}
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-blue-900 dark:text-blue-100 text-3xl">
                           ₹{outstanding.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          Principal Outstanding: ₹{outstandingPrincipal.toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -1037,8 +1072,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Principal Amount</span>
+                  <span className="text-gray-600">Original Principal</span>
                   <span className="font-semibold">₹{amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Outstanding Principal</span>
+                  <span className="font-semibold text-red-600">₹{outstandingPrincipal.toLocaleString()}</span>
                 </div>
                 {scheduleData?.schedule && (
                   <div className="flex justify-between">
@@ -1047,9 +1086,21 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   </div>
                 )}
                 <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-600">Total Amount Due</span>
+                  <span className="text-gray-600">Total Loan Amount</span>
                   <span className="font-semibold">₹{totalAmountDue.toLocaleString()}</span>
                 </div>
+                {dueAmount > 0 && (
+                  <div className="flex justify-between text-blue-600">
+                    <span>Current Due</span>
+                    <span className="font-semibold">₹{dueAmount.toLocaleString()}</span>
+                  </div>
+                )}
+                {overDueAmount > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Overdue Amount</span>
+                    <span className="font-semibold">₹{overDueAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Paid Amount</span>
                   <span className="font-semibold text-green-600">₹{totalPaid.toLocaleString()}</span>
