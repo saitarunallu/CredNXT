@@ -653,54 +653,73 @@ export class PdfService {
   }
 
   private addRepaymentSchedule(doc: PDFKit.PDFDocument, schedule: PaymentScheduleItem[]) {
+    // Add new page for the schedule table
     doc.addPage();
     
-    // Header again
-    this.addKFSHeader(doc);
-    
-    doc.fontSize(14).font('Helvetica-Bold');
-    doc.text('Repayment schedule', 40, doc.y + 20);
-    doc.moveDown(1);
+    // Schedule header
+    doc.fontSize(16).font('Helvetica-Bold').fillColor('#2563eb');
+    doc.text('Payment Schedule Details', { align: 'center' });
+    doc.moveDown(1.5);
 
-    const startY = doc.y + 10;
+    // Table setup
+    const startY = doc.y;
     let y = startY;
     const leftCol = 40;
-    const col2 = 140;
-    const col3 = 240;
-    const col4 = 340;
-    const col5 = 440;
+    const col2 = 120;
+    const col3 = 200;
+    const col4 = 280;
+    const col5 = 360;
+    const col6 = 460;
 
-    // Table headers
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('DUE DATE', leftCol, y);
-    doc.text('PRINCIPAL', col2, y);
-    doc.text('INTEREST', col3, y);
-    doc.text('AMOUNT', col4, y);
-    doc.text('PRINCIPAL REMAINING', col5, y);
-    y += 20;
+    // Table headers with background
+    doc.rect(leftCol, y - 5, 515, 20).fillAndStroke('#f3f4f6', '#e5e7eb');
+    
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#374151');
+    doc.text('#', leftCol + 5, y);
+    doc.text('DUE DATE', col2, y);
+    doc.text('PRINCIPAL', col3, y);
+    doc.text('INTEREST', col4, y);
+    doc.text('EMI/AMOUNT', col5, y);
+    doc.text('BALANCE', col6, y);
+    y += 25;
 
     // Table data
-    doc.fontSize(9).font('Helvetica');
+    doc.fontSize(8).font('Helvetica');
     
     schedule.forEach((payment, index) => {
-      if (y > 700) { // Start new page if needed
+      if (y > 720) { // Start new page if needed
         doc.addPage();
-        this.addKFSHeader(doc);
-        y = doc.y + 20;
+        doc.fontSize(16).font('Helvetica-Bold').fillColor('#2563eb');
+        doc.text('Payment Schedule Details (Continued)', { align: 'center' });
+        doc.moveDown(1);
+        y = doc.y;
+        
+        // Repeat headers
+        doc.rect(leftCol, y - 5, 515, 20).fillAndStroke('#f3f4f6', '#e5e7eb');
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#374151');
+        doc.text('#', leftCol + 5, y);
+        doc.text('DUE DATE', col2, y);
+        doc.text('PRINCIPAL', col3, y);
+        doc.text('INTEREST', col4, y);
+        doc.text('EMI/AMOUNT', col5, y);
+        doc.text('BALANCE', col6, y);
+        y += 25;
+        doc.fontSize(8).font('Helvetica');
       }
 
-      const dueDate = payment.dueDate;
-      const principal = payment.principalAmount;
-      const interest = payment.interestAmount;
-      const amount = payment.totalAmount;
-      const remainingBalance = payment.remainingBalance;
+      // Add row background for alternating colors
+      if (index % 2 === 0) {
+        doc.rect(leftCol, y - 3, 515, 18).fill('#fafafa');
+      }
 
-      doc.text(dueDate.toLocaleDateString('en-GB'), leftCol, y);
-      doc.text(`₹${principal.toFixed(2)}`, col2, y);
-      doc.text(`₹${interest.toFixed(2)}`, col3, y);
-      doc.text(`₹${amount.toFixed(2)}`, col4, y);
-      doc.text(`₹${remainingBalance.toFixed(2)}`, col5, y);
-      y += 15;
+      doc.fillColor('#374151');
+      doc.text((index + 1).toString(), leftCol + 5, y);
+      doc.text(payment.dueDate.toLocaleDateString('en-GB'), col2, y);
+      doc.text(`₹${payment.principalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, col3, y);
+      doc.text(`₹${payment.interestAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, col4, y);
+      doc.text(`₹${payment.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, col5, y);
+      doc.text(`₹${payment.remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, col6, y);
+      y += 18;
     });
 
     doc.y = y + 20;

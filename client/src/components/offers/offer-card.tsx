@@ -63,22 +63,37 @@ export default function OfferCard({
       
       if (response.ok) {
         const blob = await response.blob();
+        console.log('PDF Blob size:', blob.size, 'bytes');
+        console.log('PDF Blob type:', blob.type);
+        
+        if (blob.size === 0) {
+          throw new Error('Downloaded file is empty');
+        }
+        
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `repayment-schedule-${offer.id}.pdf`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        
+        // Add delay before cleanup to ensure download starts
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        }, 100);
+        
         toast({
           title: "Success",
-          description: "Repayment schedule downloaded successfully.",
+          description: `Repayment schedule downloaded successfully (${blob.size} bytes).`,
         });
       } else {
-        throw new Error('Failed to download');
+        const errorText = await response.text();
+        console.error('Download failed:', response.status, errorText);
+        throw new Error(`Download failed: ${response.status}`);
       }
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Error",
         description: "Failed to download repayment schedule. Please try again.",
