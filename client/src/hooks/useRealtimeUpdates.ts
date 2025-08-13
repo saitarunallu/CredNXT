@@ -23,11 +23,13 @@ export function useRealtimeUpdates() {
       }
       
       // Force immediate refetch with no delay - track timeout for cleanup
-      const timeout = setTimeout(() => {
+      const timeout = setTimeout(async () => {
         try {
-          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
-          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+          await Promise.allSettled([
+            queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/notifications'] })
+          ]);
         } catch (error) {
           console.error('Error refetching queries:', error);
         }
@@ -49,11 +51,13 @@ export function useRealtimeUpdates() {
       }
       
       // Force immediate refetch - track timeout for cleanup
-      const timeout = setTimeout(() => {
+      const timeout = setTimeout(async () => {
         try {
-          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
-          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+          await Promise.allSettled([
+            queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/notifications'] })
+          ]);
         } catch (error) {
           console.error('Error refetching queries:', error);
         }
@@ -71,11 +75,13 @@ export function useRealtimeUpdates() {
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
       // Force immediate refetch - track timeout for cleanup
-      const timeout = setTimeout(() => {
+      const timeout = setTimeout(async () => {
         try {
-          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
-          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+          await Promise.allSettled([
+            queryClient.refetchQueries({ queryKey: ['/api/notifications'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
+            queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] })
+          ]);
         } catch (error) {
           console.error('Error refetching queries:', error);
         }

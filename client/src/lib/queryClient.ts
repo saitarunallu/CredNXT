@@ -84,12 +84,14 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: false,
-      onSuccess: () => {
+      onSuccess: async () => {
         try {
           // Immediately invalidate all related data after mutations
-          queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+          await Promise.allSettled([
+            queryClient.invalidateQueries({ queryKey: ['/api/offers'] }),
+            queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] }),
+            queryClient.invalidateQueries({ queryKey: ['/api/notifications'] })
+          ]);
         } catch (error) {
           console.error('Error invalidating queries after mutation:', error);
         }
