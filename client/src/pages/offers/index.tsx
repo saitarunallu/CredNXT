@@ -214,22 +214,6 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Pending filter clicked');
-                  navigateToFilter('pending');
-                }}
-                className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
-                  activeFilter === 'pending'
-                    ? 'border-orange-500 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Pending ({pendingOffers.length})
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
                   console.log('Lent filter clicked');
                   navigateToFilter('lent');
                 }}
@@ -256,6 +240,38 @@ export default function OffersPage() {
                 }`}
               >
                 Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Pending filter clicked');
+                  navigateToFilter('pending');
+                }}
+                className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
+                  activeFilter === 'pending'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Pending ({pendingOffers.length})
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Active filter clicked');
+                  navigateToFilter('active');
+                }}
+                className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
+                  activeFilter === 'active'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Active ({[...sentOffers, ...receivedOffers].filter((item: any) => item.offer.status === 'accepted' || item.offer.status === 'active').length})
               </button>
               <button
                 type="button"
@@ -315,6 +331,7 @@ export default function OffersPage() {
                   {activeFilter === 'lent' && 'You haven\'t lent any money yet'}
                   {activeFilter === 'borrowed' && 'You haven\'t borrowed any money yet'}
                   {activeFilter === 'active' && 'No active offers at the moment'}
+                  {activeFilter === 'completed' && 'No completed offers found'}
                 </p>
                 <Button variant="outline" onClick={clearFilter}>
                   View All Offers
