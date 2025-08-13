@@ -45,6 +45,33 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 - **Full Payment**: Due date Aug 13, 2026 (₹1,12,009 lump sum)
 - **EMI (Quarterly)**: First payment due Nov 13, 2025 (quarterly payments)
 
+### August 13, 2025 - Filter Navigation & Dashboard Integration
+
+#### 1. Fixed Filter Navigation Issues
+**Issue**: Filter buttons (Pending, Lent, Borrowed) were not clickable on offers page
+**Solution**:
+- Fixed click event handling with proper preventDefault() and stopPropagation()
+- Added horizontal-only scrolling with CSS constraints to prevent 360-degree movement
+- Enhanced responsive design with overflow-x-auto for mobile devices
+- Added "Completed" filter option for finished/closed offers
+
+#### 2. Dashboard to Offers Navigation
+**Enhancement**: Direct navigation from dashboard stat cards to filtered offers
+**Implementation**:
+- Total Lent card → `/offers?filter=lent`
+- Total Borrowed card → `/offers?filter=borrowed`
+- Active Offers card → `/offers?filter=active`
+- Pending Offers card → `/offers?filter=pending`
+- Maintained clean dashboard layout with only essential navigation elements
+
+#### 3. Filter System Enhancements
+**Added**: Complete filter system with 5 categories:
+- All offers (default view)
+- Pending (awaiting approval)
+- Lent (money given out)
+- Borrowed (money received)
+- Completed (finished agreements)
+
 ### August 13, 2025 - Enhanced Payment System & Schedule Management
 
 #### 1. Payment Restriction & Schedule Compliance

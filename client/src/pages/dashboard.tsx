@@ -45,10 +45,6 @@ export default function Dashboard() {
     setLocation('/offers?filter=pending');
   };
 
-  const handleCompletedClick = () => {
-    setLocation('/offers?filter=completed');
-  };
-
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
 
@@ -143,7 +139,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
           <Link href="/offers/create">
             <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group">
               <CardContent className="p-4">
@@ -160,33 +156,7 @@ export default function Dashboard() {
             </Card>
           </Link>
 
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => setLocation('/offers')}>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                  <FileText className="w-5 h-5 text-gray-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">View All Offers</h3>
-                  <p className="text-xs text-muted-foreground">All agreements</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={handleCompletedClick}>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                  <Users className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground text-sm">Completed</h3>
-                  <p className="text-xs text-muted-foreground">Finished deals</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Reports and Analytics cards removed */}
         </div>
 
         {/* Main Content */}
@@ -198,12 +168,7 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-foreground">Recent Activity</h2>
                 <p className="text-sm text-muted-foreground">Your latest loans and lending offers</p>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-xs">{recentOffers.length} offers</Badge>
-                <Link href="/offers">
-                  <Button variant="outline" size="sm">View All</Button>
-                </Link>
-              </div>
+              <Badge variant="outline" className="text-xs">{recentOffers.length} offers</Badge>
             </div>
             
             {recentOffers.length > 0 ? (
