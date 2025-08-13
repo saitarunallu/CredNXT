@@ -123,6 +123,50 @@ export default function OffersPage() {
             )}
           </div>
           
+          {/* Filter Buttons */}
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Button
+              variant={!activeFilter ? "default" : "outline"}
+              onClick={clearFilter}
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              All Offers
+            </Button>
+            <Button
+              variant={activeFilter === 'lent' ? "default" : "outline"}
+              onClick={() => navigate('/offers?filter=lent')}
+              className="flex items-center gap-2"
+            >
+              <IndianRupee className="w-4 h-4" />
+              Lent
+            </Button>
+            <Button
+              variant={activeFilter === 'borrowed' ? "default" : "outline"}
+              onClick={() => navigate('/offers?filter=borrowed')}
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Borrowed
+            </Button>
+            <Button
+              variant={activeFilter === 'active' ? "default" : "outline"}
+              onClick={() => navigate('/offers?filter=active')}
+              className="flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Active
+            </Button>
+            <Button
+              variant={activeFilter === 'pending' ? "default" : "outline"}
+              onClick={() => navigate('/offers?filter=pending')}
+              className="flex items-center gap-2"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Pending
+            </Button>
+          </div>
+          
           {activeFilter && (
             <div className="mt-4">
               <Badge variant="outline" className={`text-${filterInfo?.color}-600 border-${filterInfo?.color}-200 bg-${filterInfo?.color}-50`}>
@@ -133,35 +177,47 @@ export default function OffersPage() {
           )}
         </div>
 
-        {/* Stats Cards */}
+        {/* Interactive Stats Cards */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <Card className="bg-white border-0 shadow-sm">
+          <Card 
+            className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => navigate('/offers')}
+          >
             <CardContent className="p-4 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors">
                 <Send className="w-5 h-5 text-blue-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900">{sentOffers.length}</p>
+              <p className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{sentOffers.length}</p>
               <p className="text-sm text-gray-500">Sent</p>
+              <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view all</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border-0 shadow-sm">
+          <Card 
+            className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => navigate('/offers')}
+          >
             <CardContent className="p-4 text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors">
                 <Inbox className="w-5 h-5 text-green-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900">{receivedOffers.length}</p>
+              <p className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">{receivedOffers.length}</p>
               <p className="text-sm text-gray-500">Received</p>
+              <p className="text-xs text-green-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view all</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border-0 shadow-sm">
+          <Card 
+            className="bg-white border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => navigate('/offers?filter=pending')}
+          >
             <CardContent className="p-4 text-center">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors">
                 <Clock className="w-5 h-5 text-orange-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900">{pendingOffers.length}</p>
+              <p className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{pendingOffers.length}</p>
               <p className="text-sm text-gray-500">Pending</p>
+              <p className="text-xs text-orange-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view pending</p>
             </CardContent>
           </Card>
         </div>
