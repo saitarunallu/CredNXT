@@ -6,7 +6,7 @@ import { z } from "zod";
 export const offerTypeEnum = pgEnum('offer_type', ['lend', 'borrow']);
 export const interestTypeEnum = pgEnum('interest_type', ['fixed', 'reducing']);
 export const repaymentTypeEnum = pgEnum('repayment_type', ['emi', 'interest_only', 'full_payment']);
-export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['monthly', 'yearly']);
+export const repaymentFrequencyEnum = pgEnum('repayment_frequency', ['weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', 'yearly']);
 export const tenureUnitEnum = pgEnum('tenure_unit', ['months', 'years']);
 export const offerStatusEnum = pgEnum('offer_status', ['pending', 'accepted', 'declined', 'completed', 'overdue']);
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'partial_paid', 'paid', 'completed', 'rejected']);

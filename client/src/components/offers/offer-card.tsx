@@ -233,10 +233,13 @@ export default function OfferCard({
           <div>
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <Calendar className="w-4 h-4" />
-              <span>Due Date</span>
+              <span>{offer.status === 'accepted' && offer.nextPaymentDueDate ? 'Next Payment Due' : 'Due Date'}</span>
             </div>
             <div className="font-medium">
-              {new Date(offer.dueDate).toLocaleDateString()}
+              {offer.status === 'accepted' && offer.nextPaymentDueDate 
+                ? new Date(offer.nextPaymentDueDate).toLocaleDateString()
+                : new Date(offer.dueDate).toLocaleDateString()
+              }
             </div>
           </div>
         </div>

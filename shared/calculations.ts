@@ -5,7 +5,7 @@ export interface LoanTerms {
   tenureValue: number;
   tenureUnit: 'months' | 'years';
   repaymentType: 'emi' | 'interest_only' | 'full_payment';
-  repaymentFrequency?: 'monthly' | 'yearly';
+  repaymentFrequency?: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly';
   startDate: Date;
   gracePeriodDays?: number;
   prepaymentPenalty?: number;
@@ -83,24 +83,40 @@ function convertTenureToDays(tenureValue: number, tenureUnit: string): number {
 // Banking standard payment frequency conversion
 function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
+    case 'weekly':
+      return 1 / 4.33; // Approximately 0.23 months
+    case 'bi_weekly':
+      return 1 / 2.17; // Approximately 0.46 months
     case 'monthly':
       return 1;
+    case 'quarterly':
+      return 3;
+    case 'semi_annual':
+      return 6;
     case 'yearly':
       return 12;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}. Only monthly and yearly are supported.`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Supported frequencies: weekly, bi_weekly, monthly, quarterly, semi_annual, yearly.`);
   }
 }
 
 // Get number of payments per year for different frequencies
 function getPaymentsPerYear(frequency: string): number {
   switch (frequency) {
+    case 'weekly':
+      return 52;
+    case 'bi_weekly':
+      return 26;
     case 'monthly':
       return 12;
+    case 'quarterly':
+      return 4;
+    case 'semi_annual':
+      return 2;
     case 'yearly':
       return 1;
     default:
-      throw new Error(`Invalid payment frequency: ${frequency}. Only monthly and yearly are supported.`);
+      throw new Error(`Invalid payment frequency: ${frequency}. Supported frequencies: weekly, bi_weekly, monthly, quarterly, semi_annual, yearly.`);
   }
 }
 

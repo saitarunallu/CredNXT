@@ -124,25 +124,83 @@ export default function CreateOffer() {
     }
   });
 
-  // Calculate due date based on start date and tenure
+  // Calculate due date based on repayment frequency for first payment
   const calculateDueDate = () => {
-    if (!tenureValue || !tenureUnit) return new Date();
+    if (!tenureValue || !tenureUnit || !repaymentFrequency) {
+      // For full payment, use tenure end date
+      if (repaymentType === 'full_payment') {
+        const start = new Date(startDate);
+        const value = parseInt(tenureValue.toString());
+        
+        switch (tenureUnit) {
+          case 'months':
+            const monthDate = new Date(start);
+            monthDate.setMonth(monthDate.getMonth() + value);
+            return monthDate;
+          case 'years':
+            const yearDate = new Date(start);
+            yearDate.setFullYear(yearDate.getFullYear() + value);
+            return yearDate;
+          default:
+            return start;
+        }
+      }
+      return new Date(startDate);
+    }
     
     const start = new Date(startDate);
-    const value = parseInt(tenureValue.toString());
     
-    switch (tenureUnit) {
-      case 'months':
-        const monthDate = new Date(start);
-        monthDate.setMonth(monthDate.getMonth() + value);
-        return monthDate;
-      case 'years':
-        const yearDate = new Date(start);
-        yearDate.setFullYear(yearDate.getFullYear() + value);
-        return yearDate;
-      default:
-        return start;
+    // For EMI and interest_only repayment types, calculate first payment due date based on frequency
+    if (repaymentType === 'emi' || repaymentType === 'interest_only') {
+      switch (repaymentFrequency) {
+        case 'weekly':
+          const weeklyDate = new Date(start);
+          weeklyDate.setDate(weeklyDate.getDate() + 7);
+          return weeklyDate;
+        case 'bi_weekly':
+          const biWeeklyDate = new Date(start);
+          biWeeklyDate.setDate(biWeeklyDate.getDate() + 14);
+          return biWeeklyDate;
+        case 'monthly':
+          const monthlyDate = new Date(start);
+          monthlyDate.setMonth(monthlyDate.getMonth() + 1);
+          return monthlyDate;
+        case 'quarterly':
+          const quarterlyDate = new Date(start);
+          quarterlyDate.setMonth(quarterlyDate.getMonth() + 3);
+          return quarterlyDate;
+        case 'semi_annual':
+          const semiAnnualDate = new Date(start);
+          semiAnnualDate.setMonth(semiAnnualDate.getMonth() + 6);
+          return semiAnnualDate;
+        case 'yearly':
+          const yearlyDate = new Date(start);
+          yearlyDate.setFullYear(yearlyDate.getFullYear() + 1);
+          return yearlyDate;
+        default:
+          return start;
+      }
     }
+    
+    // For full payment, use tenure end date
+    if (repaymentType === 'full_payment') {
+      const value = parseInt(tenureValue.toString());
+      
+      switch (tenureUnit) {
+        case 'months':
+          const monthDate = new Date(start);
+          monthDate.setMonth(monthDate.getMonth() + value);
+          return monthDate;
+        case 'years':
+          const yearDate = new Date(start);
+          yearDate.setFullYear(yearDate.getFullYear() + value);
+          return yearDate;
+        default:
+          return start;
+      }
+    }
+    
+    return start;
   };
 
   const onSubmit = async (data: any) => {
@@ -520,7 +578,11 @@ export default function CreateOffer() {
                           <SelectValue placeholder="Select payment frequency" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="weekly">📅 Weekly</SelectItem>
+                          <SelectItem value="bi_weekly">📅 Bi-Weekly</SelectItem>
                           <SelectItem value="monthly">📆 Monthly</SelectItem>
+                          <SelectItem value="quarterly">📊 Quarterly</SelectItem>
+                          <SelectItem value="semi_annual">📈 Semi-Annual</SelectItem>
                           <SelectItem value="yearly">🗓️ Yearly</SelectItem>
                         </SelectContent>
                       </Select>
