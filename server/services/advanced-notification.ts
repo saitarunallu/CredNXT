@@ -109,11 +109,12 @@ export class AdvancedNotificationService {
 
       // Create smart defaults based on notification type
       const smartDefaults = this.getSmartDefaults(type);
-      await storage.createUserNotificationPreferences({
+      const newPreferences = {
         userId,
         type,
         ...smartDefaults
-      });
+      };
+      await storage.createUserNotificationPreferences(newPreferences);
 
       return smartDefaults;
     } catch (error) {
@@ -335,7 +336,7 @@ export class AdvancedNotificationService {
     });
 
     const summaryParts = [];
-    for (const [type, count] of types) {
+    for (const [type, count] of Array.from(types.entries())) {
       const readableType = this.getReadableNotificationType(type);
       summaryParts.push(`${count} ${readableType}${count > 1 ? 's' : ''}`);
     }
@@ -527,7 +528,7 @@ export class AdvancedNotificationService {
 
     let message = `${batch.summary}\n\n`;
     
-    for (const [notificationType, typeNotifications] of typeGroups) {
+    for (const [notificationType, typeNotifications] of Array.from(typeGroups.entries())) {
       const readableType = this.getReadableNotificationType(notificationType);
       message += `📋 ${typeNotifications.length} ${readableType}${typeNotifications.length > 1 ? 's' : ''}\n`;
       

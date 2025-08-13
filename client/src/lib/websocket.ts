@@ -26,7 +26,7 @@ class WebSocketService {
         const data = JSON.parse(event.data);
         this.notifyListeners(data.type, data);
       } catch (error) {
-        // Silently handle parsing errors in production
+        console.error('WebSocket message parsing error:', error);
       }
     };
 
@@ -35,7 +35,7 @@ class WebSocketService {
     };
 
     this.ws.onerror = (error) => {
-      // Silently handle connection errors in production
+      console.error('WebSocket connection error:', error);
     };
   }
 
@@ -77,7 +77,13 @@ class WebSocketService {
   private notifyListeners(event: string, data: any) {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
-      eventListeners.forEach(callback => callback(data));
+      eventListeners.forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in WebSocket listener for event ${event}:`, error);
+        }
+      });
     }
   }
 

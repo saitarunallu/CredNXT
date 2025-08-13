@@ -43,14 +43,16 @@ export class AuthService {
       
       return payload;
     } catch (error) {
+      console.error('Token verification error:', error);
       if (error instanceof jwt.JsonWebTokenError) {
         throw new Error('Invalid token');
       } else if (error instanceof jwt.TokenExpiredError) {
         throw new Error('Token expired');
       } else if (error instanceof jwt.NotBeforeError) {
         throw new Error('Token not active');
+      } else {
+        throw new Error('Token verification failed');
       }
-      throw error;
     }
   }
 

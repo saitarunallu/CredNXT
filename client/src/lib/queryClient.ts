@@ -13,23 +13,28 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: { headers?: Record<string, string> }
 ): Promise<Response> {
-  const token = localStorage.getItem('auth_token');
-  
-  const headers = {
-    ...(data ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-    ...(options?.headers || {})
-  };
+  try {
+    const token = localStorage.getItem('auth_token');
+    
+    const headers = {
+      ...(data ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      ...(options?.headers || {})
+    };
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`API request failed for ${method} ${url}:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -38,27 +43,32 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = localStorage.getItem('auth_token');
-    
-    const res = await fetch(queryKey.join("/") as string, {
-      headers: {
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-      },
-      credentials: "include",
-    });
-
-    if (res.status === 401) {
-      // Clear auth data on 401 and handle appropriately
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
+    try {
+      const token = localStorage.getItem('auth_token');
       
-      if (unauthorizedBehavior === "returnNull") {
-        return null;
-      }
-    }
+      const res = await fetch(queryKey.join("/") as string, {
+        headers: {
+          ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
 
-    await throwIfResNotOk(res);
-    return await res.json();
+      if (res.status === 401) {
+        // Clear auth data on 401 and handle appropriately
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        
+        if (unauthorizedBehavior === "returnNull") {
+          return null;
+        }
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error(`Query failed for ${queryKey.join("/")}:`, error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({

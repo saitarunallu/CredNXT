@@ -71,6 +71,7 @@ class AuthService {
       
       return result.user;
     } catch (error) {
+      console.error('getCurrentUser error:', error);
       // Only logout if it's a 401 error, not network issues
       if (error instanceof Error && error.message.includes('401')) {
         this.logout();
