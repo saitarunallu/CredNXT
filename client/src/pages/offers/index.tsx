@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 
 export default function OffersPage() {
-  const [location, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
   const { data: offersData } = useQuery({
@@ -73,7 +73,7 @@ export default function OffersPage() {
 
   // Clear filter
   const clearFilter = () => {
-    navigate('/offers');
+    setLocation('/offers');
   };
 
   // Get filter display info
@@ -136,7 +136,7 @@ export default function OffersPage() {
                 All Offers ({sentOffers.length + receivedOffers.length})
               </button>
               <button
-                onClick={() => navigate('/offers?filter=pending')}
+                onClick={() => setLocation('/offers?filter=pending')}
                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                   activeFilter === 'pending'
                     ? 'border-orange-500 text-orange-600'
@@ -146,24 +146,24 @@ export default function OffersPage() {
                 Pending ({pendingOffers.length})
               </button>
               <button
-                onClick={() => navigate('/offers?filter=lent')}
+                onClick={() => setLocation('/offers?filter=lent')}
                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                   activeFilter === 'lent'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Lent ({filteredOffers.filter(() => activeFilter === 'lent').length || sentOffers.filter((item: any) => item.offer.offerType === 'lend').length})
+                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lend').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
               </button>
               <button
-                onClick={() => navigate('/offers?filter=borrowed')}
+                onClick={() => setLocation('/offers?filter=borrowed')}
                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                   activeFilter === 'borrowed'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Borrowed ({filteredOffers.filter(() => activeFilter === 'borrowed').length || sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
+                Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
               </button>
             </nav>
           </div>

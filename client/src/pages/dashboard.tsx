@@ -9,7 +9,7 @@ import OfferCard from "@/components/offers/offer-card";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
 
 export default function Dashboard() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -30,19 +30,19 @@ export default function Dashboard() {
 
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {
-    navigate('/offers?filter=lent');
+    setLocation('/offers?filter=lent');
   };
 
   const handleBorrowedClick = () => {
-    navigate('/offers?filter=borrowed');
+    setLocation('/offers?filter=borrowed');
   };
 
   const handleActiveClick = () => {
-    navigate('/offers?filter=active');
+    setLocation('/offers?filter=active');
   };
 
   const handlePendingClick = () => {
-    navigate('/offers?filter=pending');
+    setLocation('/offers?filter=pending');
   };
 
   const sentOffers = (offersData as any)?.sentOffers || [];
