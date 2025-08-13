@@ -1043,34 +1043,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getReceivedOffers(req.userId!)
       ]);
 
-      // Calculate stats based on the perspective of the current user
-      let totalLent = 0;
-      let totalBorrowed = 0;
+      // Calculate stats based on actual money flow perspective
+      let totalLent = 0;  // Money I have given out to others
+      let totalBorrowed = 0;  // Money I have received from others
       
-      // For sent offers: 
-      // - If offerType is 'lend', user is lending money
-      // - If offerType is 'borrow', user is borrowing money
+      // For sent offers (offers I created):
+      // - If I created a 'lend' offer and it's accepted, I am lending money (money goes out)
+      // - If I created a 'borrow' offer and it's accepted, I am borrowing money (money comes in)
       sentOffers.forEach(item => {
         const amount = parseFloat(item.offer.amount || '0');
         if (item.offer.status === 'accepted') {
           if (item.offer.offerType === 'lend') {
-            totalLent += amount;
-          } else {
-            totalBorrowed += amount;
+            totalLent += amount;  // I lent money to someone
+          } else if (item.offer.offerType === 'borrow') {
+            totalBorrowed += amount;  // I borrowed money from someone
           }
         }
       });
       
-      // For received offers:
-      // - If offerType is 'lend', someone wants to lend to user (user borrows)
-      // - If offerType is 'borrow', someone wants to borrow from user (user lends)
+      // For received offers (offers others created for me):
+      // - If someone created a 'lend' offer for me and it's accepted, they are lending to me (I borrow)
+      // - If someone created a 'borrow' offer from me and it's accepted, they are borrowing from me (I lend)
       receivedOffers.forEach(item => {
         const amount = parseFloat(item.offer.amount || '0');
         if (item.offer.status === 'accepted') {
           if (item.offer.offerType === 'lend') {
-            totalBorrowed += amount;
-          } else {
-            totalLent += amount;
+            totalBorrowed += amount;  // Someone lent money to me
+          } else if (item.offer.offerType === 'borrow') {
+            totalLent += amount;  // Someone borrowed money from me
           }
         }
       });
