@@ -31,32 +31,27 @@ export default function Dashboard() {
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {
     console.log('Navigating to lent filter');
-    // Update URL with query parameter and navigate
-    window.history.pushState({}, '', '/offers?filter=lent');
+    // Store the filter in sessionStorage before navigation
+    sessionStorage.setItem('pendingFilter', 'lent');
     setLocation('/offers');
-    // Force a custom event to notify offers page of URL change
-    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handleBorrowedClick = () => {
     console.log('Navigating to borrowed filter');
-    window.history.pushState({}, '', '/offers?filter=borrowed');
+    sessionStorage.setItem('pendingFilter', 'borrowed');
     setLocation('/offers');
-    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handleActiveClick = () => {
     console.log('Navigating to active filter');
-    window.history.pushState({}, '', '/offers?filter=active');
+    sessionStorage.setItem('pendingFilter', 'active');
     setLocation('/offers');
-    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handlePendingClick = () => {
     console.log('Navigating to pending filter');
-    window.history.pushState({}, '', '/offers?filter=pending');
+    sessionStorage.setItem('pendingFilter', 'pending');
     setLocation('/offers');
-    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const sentOffers = (offersData as any)?.sentOffers || [];

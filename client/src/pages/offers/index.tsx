@@ -23,10 +23,22 @@ export default function OffersPage() {
   // Debug: Log offers data to understand structure
   console.log('Offers Debug:', { sentOffers, receivedOffers, location, activeFilter });
 
-  // Parse filter from URL query parameters
+  // Parse filter from URL query parameters and sessionStorage
   useEffect(() => {
     const updateFilterFromUrl = () => {
-      // Get the current URL from window.location
+      // First check if there's a pending filter from navigation
+      const pendingFilter = sessionStorage.getItem('pendingFilter');
+      if (pendingFilter) {
+        console.log('Found pending filter from sessionStorage:', pendingFilter);
+        setActiveFilter(pendingFilter);
+        // Update URL to match the filter
+        window.history.replaceState({}, '', `/offers?filter=${pendingFilter}`);
+        // Clear the pending filter
+        sessionStorage.removeItem('pendingFilter');
+        return;
+      }
+
+      // Otherwise, parse from URL
       const currentUrl = window.location.href;
       const urlObj = new URL(currentUrl);
       const filter = urlObj.searchParams.get('filter');
@@ -39,7 +51,7 @@ export default function OffersPage() {
       setActiveFilter(filter);
     };
 
-    // Initial load
+    // Initial load and on location change
     updateFilterFromUrl();
 
     // Listen for browser back/forward navigation
@@ -47,17 +59,10 @@ export default function OffersPage() {
       updateFilterFromUrl();
     };
 
-    // Listen for custom URL change events from dashboard navigation
-    const handleUrlChange = () => {
-      updateFilterFromUrl();
-    };
-
     window.addEventListener('popstate', handlePopState);
-    window.addEventListener('urlChange', handleUrlChange);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener('urlChange', handleUrlChange);
     };
   }, [location]);
 
