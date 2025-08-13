@@ -26,9 +26,13 @@ export default function OffersPage() {
   // Parse filter from URL query parameters
   useEffect(() => {
     console.log('Current location:', location);
-    const params = new URLSearchParams(location.split('?')[1] || '');
+    console.log('Location parts:', location.split('?'));
+    const queryString = location.split('?')[1] || '';
+    console.log('Query string:', queryString);
+    const params = new URLSearchParams(queryString);
     const filter = params.get('filter');
     console.log('Parsed filter from URL:', filter);
+    console.log('All URL params:', Object.fromEntries(params.entries()));
     setActiveFilter(filter);
   }, [location]);
 
@@ -36,40 +40,56 @@ export default function OffersPage() {
   const filteredOffers = useMemo(() => {
     const allOffers = [...sentOffers, ...receivedOffers];
     
-    if (!activeFilter) return allOffers;
+    console.log('Filtering with activeFilter:', activeFilter);
+    console.log('All offers count:', allOffers.length);
     
+    if (!activeFilter) {
+      console.log('No active filter, returning all offers');
+      return allOffers;
+    }
+    
+    let filtered = [];
     switch (activeFilter) {
       case 'lent':
         // Money I gave out: sent lend offers + received borrow offers
-        return [
-          ...sentOffers.filter((item: any) => item.offer.offerType === 'lend'),
-          ...receivedOffers.filter((item: any) => item.offer.offerType === 'borrow')
-        ];
+        const sentLendOffers = sentOffers.filter((item: any) => item.offer.offerType === 'lend');
+        const receivedBorrowOffers = receivedOffers.filter((item: any) => item.offer.offerType === 'borrow');
+        filtered = [...sentLendOffers, ...receivedBorrowOffers];
+        console.log('Lent filter - sent lend:', sentLendOffers.length, 'received borrow:', receivedBorrowOffers.length, 'total:', filtered.length);
+        return filtered;
       
       case 'borrowed':
         // Money I received: sent borrow offers + received lend offers
-        return [
-          ...sentOffers.filter((item: any) => item.offer.offerType === 'borrow'),
-          ...receivedOffers.filter((item: any) => item.offer.offerType === 'lend')
-        ];
+        const sentBorrowOffers = sentOffers.filter((item: any) => item.offer.offerType === 'borrow');
+        const receivedLendOffers = receivedOffers.filter((item: any) => item.offer.offerType === 'lend');
+        filtered = [...sentBorrowOffers, ...receivedLendOffers];
+        console.log('Borrowed filter - sent borrow:', sentBorrowOffers.length, 'received lend:', receivedLendOffers.length, 'total:', filtered.length);
+        return filtered;
       
       case 'active':
         // All accepted offers
-        return allOffers.filter((item: any) => 
+        filtered = allOffers.filter((item: any) => 
           item.offer.status && item.offer.status !== 'pending' && item.offer.status !== 'rejected'
         );
+        console.log('Active filter - total:', filtered.length);
+        return filtered;
       
       case 'pending':
-        return allOffers.filter((item: any) => 
+        filtered = allOffers.filter((item: any) => 
           !item.offer.status || item.offer.status === 'pending'
         );
+        console.log('Pending filter - total:', filtered.length);
+        return filtered;
       
       case 'completed':
-        return allOffers.filter((item: any) => 
+        filtered = allOffers.filter((item: any) => 
           item.offer.status === 'completed' || item.offer.status === 'closed'
         );
+        console.log('Completed filter - total:', filtered.length);
+        return filtered;
       
       default:
+        console.log('Unknown filter:', activeFilter, 'returning all offers');
         return allOffers;
     }
   }, [sentOffers, receivedOffers, activeFilter]);
