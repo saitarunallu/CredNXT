@@ -25,8 +25,10 @@ export default function OffersPage() {
 
   // Parse filter from URL query parameters
   useEffect(() => {
+    console.log('Current location:', location);
     const params = new URLSearchParams(location.split('?')[1] || '');
     const filter = params.get('filter');
+    console.log('Parsed filter from URL:', filter);
     setActiveFilter(filter);
   }, [location]);
 

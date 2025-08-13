@@ -30,18 +30,22 @@ export default function Dashboard() {
 
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {
+    console.log('Navigating to lent filter');
     setLocation('/offers?filter=lent');
   };
 
   const handleBorrowedClick = () => {
+    console.log('Navigating to borrowed filter');
     setLocation('/offers?filter=borrowed');
   };
 
   const handleActiveClick = () => {
+    console.log('Navigating to active filter');
     setLocation('/offers?filter=active');
   };
 
   const handlePendingClick = () => {
+    console.log('Navigating to pending filter');
     setLocation('/offers?filter=pending');
   };
 
