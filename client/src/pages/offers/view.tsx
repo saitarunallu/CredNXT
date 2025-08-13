@@ -370,80 +370,78 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const amount = parseFloat(offer.amount);
   const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
   
-  // Calculate outstanding principal balance using banking industry standards
-  let outstanding = 0;
-  let dueAmount = 0;
-  let overDueAmount = 0;
-  let outstandingPrincipal = amount; // Default to original principal
+  // Calculate outstanding amounts using proper banking standards
+  let outstanding = 0; // Total remaining loan balance
+  let dueAmount = 0; // Amount currently due
+  let overDueAmount = 0; // Amount past due
+  let outstandingPrincipal = amount; // Remaining principal balance
   
-  // Use proper calculation based on repayment type and schedule
+  // Use repayment schedule if available for accurate calculations
   if (scheduleData?.schedule?.schedule) {
     const today = new Date();
-    const paymentStatus = scheduleData.schedule.schedule;
+    const schedule = scheduleData.schedule.schedule;
     let remainingPaid = totalPaid;
     let totalPrincipalPaid = 0;
-    let totalInterestPaid = 0;
-    dueAmount = 0;
-    overDueAmount = 0;
     
-    // Process payments in chronological order - Banking Industry Standard
-    for (const payment of paymentStatus) {
-      const paymentDueDate = new Date(payment.dueDate);
-      const paidForThisPayment = Math.min(remainingPaid, payment.totalAmount);
-      const remainingForThisPayment = payment.totalAmount - paidForThisPayment;
+    // Process payments in chronological order
+    for (const installment of schedule) {
+      const paymentDueDate = new Date(installment.dueDate);
+      const paidForThisInstallment = Math.min(remainingPaid, installment.totalAmount);
+      const remainingForThisInstallment = installment.totalAmount - paidForThisInstallment;
       
-      if (paidForThisPayment > 0) {
-        // Banking Standard: Interest is paid first, then principal
-        const interestPaidForThis = Math.min(paidForThisPayment, payment.interestAmount);
-        const principalPaidForThis = Math.max(0, paidForThisPayment - payment.interestAmount);
-        
-        totalInterestPaid += interestPaidForThis;
-        
-        // CRITICAL: For interest-only loans, principal payment only applies to final installment
+      // Track principal payments based on repayment type
+      if (paidForThisInstallment > 0) {
         if (offer.repaymentType === 'interest_only') {
-          // Only count principal payment if this is the final payment and it has principal component
-          if (payment.principalAmount > 0 && principalPaidForThis > 0) {
-            totalPrincipalPaid += principalPaidForThis;
+          // For interest-only: only final payment reduces principal
+          if (installment.principalAmount > 0) {
+            const principalPaid = Math.min(
+              Math.max(0, paidForThisInstallment - installment.interestAmount),
+              installment.principalAmount
+            );
+            totalPrincipalPaid += principalPaid;
           }
         } else {
-          // For EMI and other repayment types
-          totalPrincipalPaid += principalPaidForThis;
+          // For EMI/other types: each payment reduces principal
+          const principalPaid = Math.min(
+            Math.max(0, paidForThisInstallment - installment.interestAmount),
+            installment.principalAmount
+          );
+          totalPrincipalPaid += principalPaid;
         }
       }
       
-      // Calculate due and overdue amounts - only count unpaid portions
-      if (remainingForThisPayment > 0.01) {
+      // Calculate due and overdue amounts
+      if (remainingForThisInstallment > 0.01) {
         if (paymentDueDate <= today) {
-          // Payment is due or overdue
           if (paymentDueDate < today) {
-            overDueAmount += remainingForThisPayment;
+            overDueAmount += remainingForThisInstallment;
           } else {
-            dueAmount += remainingForThisPayment;
+            dueAmount += remainingForThisInstallment;
           }
         }
       }
       
-      remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
-      if (remainingPaid <= 0) break;
+      remainingPaid = Math.max(0, remainingPaid - paidForThisInstallment);
     }
     
-    // Outstanding Principal = Original Principal - Principal Actually Paid
+    // Outstanding Principal = Original Principal - Actual Principal Paid
     outstandingPrincipal = Math.max(0, amount - totalPrincipalPaid);
     
-    // Current Due Amount = due + overdue (NOT entire principal balance)
-    outstanding = dueAmount + overDueAmount;
+    // Outstanding = Total loan amount - Total paid (simple and correct)
+    outstanding = Math.max(0, totalAmountDue - totalPaid);
+    
   } else {
-    // Fallback calculation - Banking Industry Standard
-    if (offer.repaymentType === 'interest_only') {
-      // For interest-only: Principal NEVER reduces from interest payments
-      outstandingPrincipal = amount;
-      // Only show interest payment amount as due
-      const monthlyInterest = Math.round(((amount * parseFloat(offer.interestRate)) / (12 * 100)) * 100) / 100;
-      outstanding = monthlyInterest;
-    } else {
-      // For EMI and other types: Outstanding principal reduces with payments
-      outstandingPrincipal = Math.max(0, amount - totalPaid);
-      outstanding = outstandingPrincipal;
+    // Fallback: simple calculation without schedule
+    outstandingPrincipal = Math.max(0, amount - totalPaid);
+    outstanding = Math.max(0, totalAmountDue - totalPaid);
+    
+    // For active loans, show minimum payment due
+    if (offer.status === 'accepted' && outstanding > 0) {
+      if (offer.repaymentType === 'interest_only') {
+        dueAmount = Math.round(((amount * parseFloat(offer.interestRate)) / (12 * 100)) * 100) / 100;
+      } else {
+        dueAmount = Math.min(outstanding, Math.round((outstanding / 12) * 100) / 100);
+      }
     }
   }
   
@@ -1156,7 +1154,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   <span className="font-semibold text-green-600">₹{totalPaid.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg border-t pt-2">
-                  <span className="text-gray-600">Outstanding</span>
+                  <span className="text-gray-600">Total Outstanding</span>
                   <span className="font-bold text-red-600">₹{outstanding.toLocaleString()}</span>
                 </div>
                 
