@@ -639,21 +639,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import calculation functions (dynamic import for server compatibility)
       const { validatePaymentAmount, calculateRepaymentSchedule, getNextPaymentDue } = await import('@shared/calculations');
       
-      // Get existing payments to calculate total paid
+      // Get existing payments to calculate total paid and check pending payments
       const existingPayments = await storage.getOfferPayments(paymentData.offerId);
       const totalPaid = existingPayments
         .filter(p => p.status === 'paid')
         .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+      // Check if there's already a pending payment for this installment (if not allowing part payments)
+      const pendingPayments = existingPayments.filter(p => p.status === 'pending');
+      if (pendingPayments.length > 0 && !offer.allowPartPayment) {
+        return res.status(400).json({ 
+          message: "There is already a pending payment awaiting approval. Only one payment is allowed per repayment schedule unless part payments are enabled."
+        });
+      }
 
       // Calculate loan start date (should be from acceptance date, not creation date)
       const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
         ? new Date(offer.updatedAt)  // Use acceptance date
         : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
 
-      // Skip strict validation for direct payments - allow any reasonable amount
+      // Calculate repayment schedule to validate payment
+      const loanTerms = {
+        principal: parseFloat(offer.amount),
+        interestRate: parseFloat(offer.interestRate),
+        interestType: offer.interestType as 'fixed' | 'reducing',
+        tenureValue: offer.tenureValue,
+        tenureUnit: offer.tenureUnit as 'months' | 'years',
+        repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
+        repaymentFrequency: offer.repaymentFrequency || 'monthly',
+        startDate: loanStartDate
+      };
+      
+      const schedule = calculateRepaymentSchedule(loanTerms);
+      const currentInstallmentNumber = offer.currentInstallmentNumber || 1;
       const paymentAmount = parseFloat(paymentData.amount);
       const remainingBalance = parseFloat(offer.amount) - totalPaid;
       
+      // Basic validations
       if (paymentAmount <= 0) {
         return res.status(400).json({ 
           message: "Payment amount must be greater than zero"
@@ -666,8 +688,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Advanced payment validation based on repayment schedule
+      if (!offer.allowPartPayment) {
+        // Find the current installment in the schedule
+        const currentInstallment = schedule.schedule.find(item => item.installmentNumber === currentInstallmentNumber);
+        
+        if (!currentInstallment) {
+          return res.status(400).json({ 
+            message: "Invalid installment number. All payments may have been completed."
+          });
+        }
+
+        // For EMI and structured payments, validate against expected amount
+        if (offer.repaymentType === 'emi' && schedule.emiAmount) {
+          const expectedAmount = schedule.emiAmount;
+          const tolerance = 1.0; // Allow ₹1 tolerance for rounding
+          
+          if (Math.abs(paymentAmount - expectedAmount) > tolerance) {
+            return res.status(400).json({ 
+              message: `Payment amount ₹${paymentAmount.toLocaleString()} does not match expected EMI amount ₹${expectedAmount.toLocaleString()}. Part payments are not allowed for this loan.`
+            });
+          }
+        }
+
+        // Check if payment is made according to schedule timing
+        const today = new Date();
+        const dueDate = new Date(currentInstallment.dueDate);
+        const gracePeriodDays = offer.gracePeriodDays || 0;
+        const gracePeriodEnd = new Date(dueDate);
+        gracePeriodEnd.setDate(gracePeriodEnd.getDate() + gracePeriodDays);
+        
+        // Allow payments from 7 days before due date to grace period end
+        const earliestPaymentDate = new Date(dueDate);
+        earliestPaymentDate.setDate(earliestPaymentDate.getDate() - 7);
+        
+        if (today < earliestPaymentDate) {
+          return res.status(400).json({ 
+            message: `Payment can only be made from ${earliestPaymentDate.toLocaleDateString()} onwards (7 days before due date).`
+          });
+        }
+      }
+
       const payment = await storage.createPayment({
         ...paymentData,
+        installmentNumber: currentInstallmentNumber,
         status: 'pending'
       });
       
@@ -759,12 +823,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paidAt: new Date()
       });
 
-      // Advance to next installment if payment meets criteria
+      // Advance to next installment (update due dates monthly as per repayment schedule)
       try {
-        const paymentInfo = await repaymentService.getCurrentPaymentInfo(payment.offerId);
-        if (paymentInfo && parseFloat(payment.amount) >= paymentInfo.expectedAmount) {
-          await repaymentService.advanceToNextInstallment(payment.offerId, payment.installmentNumber!);
-        }
+        const currentInstallmentNumber = payment.installmentNumber || offer.currentInstallmentNumber || 1;
+        await repaymentService.advanceToNextInstallment(payment.offerId, currentInstallmentNumber);
+        console.log(`Successfully advanced to next installment for offer ${payment.offerId}`);
       } catch (installmentError) {
         // Log but don't fail payment approval if installment advancement fails
         console.warn('Installment advancement failed:', installmentError);

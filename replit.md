@@ -13,35 +13,53 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 
 ## Recent Changes
 
-### August 13, 2025 - Payment System Fixes
+### August 13, 2025 - Enhanced Payment System & Schedule Management
 
-#### 1. Payment Acceptance Workflow Fix
-**Issue**: Payments were automatically approved bypassing lender review
+#### 1. Payment Restriction & Schedule Compliance
+**Issue**: Multiple payments allowed without schedule validation
 **Solution**: 
-- Removed auto-approval logic from submit-payment endpoint
-- All payments now require explicit lender approval
-- Proper notification system for payment submissions
-- Installment advancement only happens after approval
+- Implemented payment restriction: Only 1 payment per repayment schedule unless `allowPartPayment` is enabled
+- Added pending payment validation - prevents multiple pending payments
+- Enhanced payment amount validation against expected EMI/installment amounts
+- Added payment timing validation (7 days before due date to grace period end)
 
-#### 2. Outstanding Calculations Fix
-**Issue**: Complex and incorrect outstanding amount calculations
+#### 2. Monthly Due Date Updates
+**Issue**: Due dates not advancing according to repayment schedule
 **Solution**:
-- Simplified outstanding calculation: `Total Loan Amount - Total Paid`
-- Clear separation of Outstanding Principal vs Total Outstanding
-- Proper handling of different repayment types (EMI, interest-only, full payment)
-- Accurate due/overdue amount tracking
+- Automatic due date advancement when payments are approved
+- Proper installment number tracking with each payment
+- Monthly schedule updates based on repayment frequency
+- Integration with existing `advanceToNextInstallment` service
 
-#### 3. Code Quality Improvements
-- Fixed duplicate function declarations
-- Corrected variable naming inconsistencies
-- Improved error handling and user feedback
+#### 3. Enhanced Payment Validation
+**Issue**: Insufficient payment validation against repayment terms
+**Solution**:
+- Payment amount validation against EMI/installment amounts
+- Repayment schedule compliance checks
+- Part payment restrictions based on loan terms
+- Improved error messages for payment validation failures
 
-## Payment Workflow (Current)
-1. **Submit Payment**: Borrower submits → Status: "Pending"
-2. **Notification**: Lender receives notification
-3. **Review**: Lender sees approve/reject buttons
-4. **Decision**: Lender approves/rejects → Status: "Paid"/"Rejected"
-5. **Advancement**: System advances installment only after approval
+#### 4. UI Enhancements
+- Enhanced repayment schedule styling with stronger borders
+- Improved Next Payment Due section with blue gradient styling
+- Better visual hierarchy and contrast for payment sections
+- Enhanced pending payment notifications with yellow gradients
+
+#### 5. Code Quality & Error Handling
+- Fixed TypeScript errors in advanced notification service  
+- Improved error handling for promise rejections
+- Enhanced payment approval workflow with proper error logging
+
+## Payment Workflow (Enhanced)
+1. **Validation**: System validates payment against repayment schedule and restrictions
+   - Checks for existing pending payments (if part payments not allowed)
+   - Validates payment amount against expected EMI/installment amount
+   - Confirms payment timing (7 days before due date minimum)
+2. **Submit Payment**: Borrower submits → Status: "Pending" (with installment number)
+3. **Notification**: Lender receives notification with payment details
+4. **Review**: Lender sees approve/reject buttons with payment context
+5. **Decision**: Lender approves/rejects → Status: "Paid"/"Rejected"
+6. **Advancement**: System advances installment and updates due dates monthly per schedule
 
 ## User Preferences
 - **Communication**: Simple, everyday language for non-technical users
