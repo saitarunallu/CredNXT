@@ -756,8 +756,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update payment status to paid
       const updatedPayment = await storage.updatePayment(id, {
         status: 'paid',
-        // Payment approved at this time
+        paidAt: new Date()
       });
+
+      // Advance to next installment if payment meets criteria
+      try {
+        const paymentInfo = await repaymentService.getCurrentPaymentInfo(payment.offerId);
+        if (paymentInfo && parseFloat(payment.amount) >= paymentInfo.expectedAmount) {
+          await repaymentService.advanceToNextInstallment(payment.offerId, payment.installmentNumber!);
+        }
+      } catch (installmentError) {
+        // Log but don't fail payment approval if installment advancement fails
+        console.warn('Installment advancement failed:', installmentError);
+      }
 
       // Notify both users
       await storage.createNotification({
@@ -1134,7 +1145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Offer not found' });
       }
       
-      // Create payment record
+      // Create payment record - always as pending for lender approval
       const payment = await storage.createPayment({
         offerId: id,
         amount: amount.toString(),
@@ -1144,14 +1155,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'pending'
       });
       
-      // Advance to next installment if payment is for full amount
-      const paymentInfo = await repaymentService.getCurrentPaymentInfo(id);
-      if (paymentInfo && parseFloat(amount) >= paymentInfo.expectedAmount) {
-        await repaymentService.advanceToNextInstallment(id, payment.installmentNumber!);
-        await storage.updatePayment(payment.id, { status: 'paid', paidAt: new Date() });
+      // Notify the lender about the payment submission
+      await storage.createNotification({
+        userId: offer.fromUserId,
+        offerId: offer.id,
+        type: 'payment_submitted',
+        title: 'Payment Submitted',
+        message: `Payment of ₹${payment.amount} submitted for approval`
+      });
+
+      // Send WebSocket notification to lender
+      const lenderClient = clients.get(offer.fromUserId);
+      if (lenderClient && lenderClient.readyState === WebSocket.OPEN) {
+        lenderClient.send(JSON.stringify({
+          type: 'payment_submitted',
+          offerId: offer.id,
+          paymentId: payment.id,
+          amount: payment.amount,
+          message: `Payment of ₹${payment.amount} submitted for approval`
+        }));
       }
       
-      res.json({ payment, message: 'Payment submitted successfully' });
+      res.json({ payment, message: 'Payment submitted successfully and awaiting approval' });
     } catch (error) {
       console.error('Submit payment error:', error);
       res.status(500).json({ message: 'Failed to submit payment' });
