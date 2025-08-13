@@ -81,14 +81,14 @@ export default function OffersPage() {
   // Clear filter
   const clearFilter = () => {
     console.log('Clear filter called');
-    window.history.pushState({}, '', '/offers');
+    setLocation('/offers');
     setActiveFilter(null);
   };
 
   // Navigate to filter
   const navigateToFilter = (filter: string) => {
     console.log(`Navigating to filter: ${filter}`);
-    window.history.pushState({}, '', `/offers?filter=${filter}`);
+    setLocation(`/offers?filter=${filter}`);
     setActiveFilter(filter);
   };
 
@@ -189,7 +189,7 @@ export default function OffersPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lent').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
+                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lend').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
               </button>
               <button
                 type="button"
