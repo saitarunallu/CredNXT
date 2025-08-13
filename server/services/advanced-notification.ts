@@ -111,7 +111,6 @@ export class AdvancedNotificationService {
       const smartDefaults = this.getSmartDefaults(type);
       const newPreferences = {
         userId,
-        type,
         ...smartDefaults
       };
       await storage.createUserNotificationPreferences(newPreferences);

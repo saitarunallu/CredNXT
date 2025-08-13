@@ -647,34 +647,34 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
             {/* Repayment Schedule */}
             {offer.status === 'accepted' && scheduleData?.schedule && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calculator className="w-5 h-5 mr-2" />
+              <Card className="border-2 border-gray-200 shadow-md">
+                <CardHeader className="bg-gray-50 border-b border-gray-200">
+                  <CardTitle className="flex items-center text-gray-900">
+                    <Calculator className="w-5 h-5 mr-2 text-blue-600" />
                     Repayment Schedule
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-6">
+                  <div className="space-y-6">
                     {/* Summary */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg">
-                      <div>
-                        <div className="text-sm text-gray-600">Total Amount</div>
-                        <div className="font-semibold text-lg">₹{scheduleData.schedule.totalAmount.toLocaleString()}</div>
+                    <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
+                      <div className="border-r border-blue-200 pr-4">
+                        <div className="text-sm text-gray-600 font-medium mb-1">Total Amount</div>
+                        <div className="font-bold text-xl text-gray-900">₹{scheduleData.schedule.totalAmount.toLocaleString()}</div>
                       </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Total Interest</div>
-                        <div className="font-semibold text-lg text-green-600">₹{scheduleData.schedule.totalInterest.toLocaleString()}</div>
+                      <div className="pl-4">
+                        <div className="text-sm text-gray-600 font-medium mb-1">Total Interest</div>
+                        <div className="font-bold text-xl text-green-700">₹{scheduleData.schedule.totalInterest.toLocaleString()}</div>
                       </div>
                       {scheduleData.schedule.emiAmount && (
                         <>
-                          <div>
-                            <div className="text-sm text-gray-600">EMI Amount</div>
-                            <div className="font-semibold text-lg text-blue-600">₹{scheduleData.schedule.emiAmount.toLocaleString()}</div>
+                          <div className="border-r border-blue-200 pr-4 pt-4 border-t border-blue-200">
+                            <div className="text-sm text-gray-600 font-medium mb-1">EMI Amount</div>
+                            <div className="font-bold text-xl text-blue-700">₹{scheduleData.schedule.emiAmount.toLocaleString()}</div>
                           </div>
-                          <div>
-                            <div className="text-sm text-gray-600">Number of EMIs</div>
-                            <div className="font-semibold text-lg">{scheduleData.schedule.numberOfPayments}</div>
+                          <div className="pl-4 pt-4 border-t border-blue-200">
+                            <div className="text-sm text-gray-600 font-medium mb-1">Number of EMIs</div>
+                            <div className="font-bold text-xl text-gray-900">{scheduleData.schedule.numberOfPayments}</div>
                           </div>
                         </>
                       )}
@@ -682,21 +682,21 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
                     {/* Schedule Details for EMI */}
                     {offer.repaymentType === 'emi' && scheduleData.schedule.schedule.length <= 12 && (
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Payment Schedule</h4>
-                        <div className="max-h-60 overflow-y-auto">
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800 text-lg">Payment Schedule</h4>
+                        <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
                           {scheduleData.schedule.schedule.map((installment: any, index: number) => (
-                            <div key={index} className="flex justify-between items-center p-2 border-b border-gray-100">
+                            <div key={index} className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                               <div>
-                                <div className="font-medium">EMI #{installment.installmentNumber}</div>
-                                <div className="text-sm text-gray-600">
+                                <div className="font-semibold text-gray-800">EMI #{installment.installmentNumber}</div>
+                                <div className="text-sm text-gray-600 mt-1">
                                   Due: {new Date(installment.dueDate).toLocaleDateString()}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-semibold">₹{installment.totalAmount.toLocaleString()}</div>
-                                <div className="text-xs text-gray-500">
-                                  P: ₹{installment.principalAmount.toLocaleString()} | I: ₹{installment.interestAmount.toLocaleString()}
+                                <div className="font-bold text-lg text-gray-900">₹{installment.totalAmount.toLocaleString()}</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Principal: ₹{installment.principalAmount.toLocaleString()} | Interest: ₹{installment.interestAmount.toLocaleString()}
                                 </div>
                               </div>
                             </div>
@@ -707,9 +707,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
                     {/* Simple message for large schedules */}
                     {offer.repaymentType === 'emi' && scheduleData.schedule.schedule.length > 12 && (
-                      <div className="text-center p-4 bg-gray-50 rounded-lg">
-                        <TrendingUp className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                        <p className="text-gray-600">
+                      <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                        <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
+                        <p className="text-gray-800 font-semibold text-lg">
                           {scheduleData.schedule.numberOfPayments} EMI payments of ₹{scheduleData.schedule.emiAmount?.toLocaleString()} each
                         </p>
                       </div>
@@ -923,33 +923,33 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
             {/* Next Payment Due Section - Only show when payment is actually due */}
             {offer.status === 'accepted' && (dueAmount > 0.01 || overDueAmount > 0.01) && isReceiver && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="w-5 h-5 mr-2" />
+              <Card className="border-2 border-blue-300 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
+                  <CardTitle className="flex items-center text-blue-900">
+                    <Calendar className="w-6 h-6 mr-2 text-blue-700" />
                     Next Payment Due
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="flex justify-between items-start mb-4">
+                <CardContent className="p-0">
+                  <div className="bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 p-6 border-2 border-blue-300 rounded-lg m-4 shadow-sm">
+                    <div className="flex justify-between items-start mb-6">
                       <div>
-                        <div className="font-semibold text-blue-900 dark:text-blue-100 text-lg">
+                        <div className="font-bold text-blue-900 text-xl mb-2">
                           {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} Payment
                         </div>
-                        <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
+                        <p className="text-blue-700 font-medium">
                           {overDueAmount > 0 ? 'Overdue + Due Amount' : 'Current Due Amount'}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-blue-900 dark:text-blue-100 text-3xl">
+                      <div className="text-right bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+                        <div className="font-black text-blue-900 text-3xl">
                           ₹{outstanding.toLocaleString()}
                         </div>
-                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        <div className="text-sm text-blue-700 mt-1 font-medium">
                           Principal Outstanding: ₹{outstandingPrincipal.toLocaleString()}
                         </div>
                         {overDueAmount > 0 && (
-                          <div className="text-xs text-red-600 dark:text-red-400 mt-1 font-semibold">
+                          <div className="text-sm text-red-700 mt-2 font-bold bg-red-50 px-2 py-1 rounded border border-red-200">
                             Overdue: ₹{overDueAmount.toLocaleString()}
                           </div>
                         )}
@@ -958,16 +958,16 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     
                     {/* Check if there's already a pending payment */}
                     {payments.some((p: any) => p.status === 'pending') ? (
-                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800">
+                      <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-5 rounded-xl border-2 border-yellow-300 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-yellow-800 dark:text-yellow-200 font-medium">Payment Pending Approval</p>
-                            <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+                            <p className="text-yellow-900 font-bold text-lg mb-2">Payment Pending Approval</p>
+                            <p className="text-yellow-800 font-medium">
                               Your payment is awaiting lender approval. It will be auto-removed if not approved within 24 hours.
                             </p>
                           </div>
-                          <div className="text-yellow-600 dark:text-yellow-400">
-                            <Clock className="w-6 h-6" />
+                          <div className="text-yellow-700 bg-white p-3 rounded-full border border-yellow-300">
+                            <Clock className="w-7 h-7" />
                           </div>
                         </div>
                       </div>
