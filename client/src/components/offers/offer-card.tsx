@@ -54,7 +54,7 @@ export default function OfferCard({
 
   const downloadRepaymentSchedule = async () => {
     try {
-      const response = await fetch(`/api/offers/${offer.id}/schedule`, {
+      const response = await fetch(`/api/offers/${offer.id}/schedule/download`, {
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${authService.getToken()}`

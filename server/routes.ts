@@ -1096,8 +1096,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Download repayment schedule
-  app.get('/api/offers/:id/schedule', authenticate, async (req: AuthenticatedRequest, res) => {
+  // Download repayment schedule PDF
+  app.get('/api/offers/:id/schedule/download', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
       const offer = await storage.getOffer(id);

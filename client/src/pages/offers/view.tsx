@@ -275,7 +275,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadRepaymentSchedule = async () => {
     try {
-      const response = await fetch(`/api/offers/${offerId}/schedule`, {
+      const response = await fetch(`/api/offers/${offerId}/schedule/download`, {
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${authService.getToken()}`
