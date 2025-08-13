@@ -13,6 +13,38 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 
 ## Recent Changes
 
+### August 13, 2025 - Due Date & Repayment Frequency Enhancement
+
+#### 1. Fixed Due Date Calculation Logic
+**Issue**: Due dates were showing tenure end dates instead of repayment frequency-based due dates
+**Solution**: 
+- Updated `calculateDueDate()` in offer creation to use repayment frequency for first payment due date
+- EMI/Interest-only offers now calculate first payment based on frequency (weekly, monthly, etc.)
+- Full payment offers correctly show tenure end date
+- Added support for 6 repayment frequencies: weekly, bi-weekly, monthly, quarterly, semi-annual, yearly
+
+#### 2. Enhanced Repayment Frequency Support
+**Issue**: Limited repayment frequency options (only monthly/yearly)
+**Solution**:
+- Extended `repaymentFrequencyEnum` to support all major frequencies
+- Updated `LoanTerms` interface and calculation functions to handle all frequencies
+- Enhanced payment frequency calculations in `shared/calculations.ts`
+- Applied database schema changes via `npm run db:push`
+
+#### 3. UI Display Updates
+**Issue**: Inconsistent due date display between pending and accepted offers
+**Solution**:
+- Offer cards now show "Next Payment Due" for accepted offers with `nextPaymentDueDate`
+- View offer pages display correct due dates based on offer status
+- Pending offers show final due date, accepted offers show next payment due date
+
+#### 4. Comprehensive Testing Results
+**Test Cases Created** (₹1,00,000 @ 12% interest, 12 months):
+- **Interest Only (Monthly)**: First payment due Sept 13, 2025 (₹1,000/month)
+- **EMI (Weekly)**: First payment due Aug 20, 2025 (₹2,043/week, 52 payments)
+- **Full Payment**: Due date Aug 13, 2026 (₹1,12,009 lump sum)
+- **EMI (Quarterly)**: First payment due Nov 13, 2025 (quarterly payments)
+
 ### August 13, 2025 - Enhanced Payment System & Schedule Management
 
 #### 1. Payment Restriction & Schedule Compliance
