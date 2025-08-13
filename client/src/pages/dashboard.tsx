@@ -34,24 +34,29 @@ export default function Dashboard() {
     // Update URL with query parameter and navigate
     window.history.pushState({}, '', '/offers?filter=lent');
     setLocation('/offers');
+    // Force a custom event to notify offers page of URL change
+    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handleBorrowedClick = () => {
     console.log('Navigating to borrowed filter');
     window.history.pushState({}, '', '/offers?filter=borrowed');
     setLocation('/offers');
+    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handleActiveClick = () => {
     console.log('Navigating to active filter');
     window.history.pushState({}, '', '/offers?filter=active');
     setLocation('/offers');
+    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const handlePendingClick = () => {
     console.log('Navigating to pending filter');
     window.history.pushState({}, '', '/offers?filter=pending');
     setLocation('/offers');
+    window.dispatchEvent(new CustomEvent('urlChange'));
   };
 
   const sentOffers = (offersData as any)?.sentOffers || [];

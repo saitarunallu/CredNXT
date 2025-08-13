@@ -47,10 +47,17 @@ export default function OffersPage() {
       updateFilterFromUrl();
     };
 
+    // Listen for custom URL change events from dashboard navigation
+    const handleUrlChange = () => {
+      updateFilterFromUrl();
+    };
+
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('urlChange', handleUrlChange);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('urlChange', handleUrlChange);
     };
   }, [location]);
 
