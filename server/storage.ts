@@ -2,7 +2,7 @@ import {
   users, offers, payments, notifications, otpCodes,
   userNotificationPreferences, notificationDeliveries, notificationBatches,
   type User, type InsertUser, 
-  type Offer, type InsertOffer, type Payment, type InsertPayment,
+  type Offer, type InsertOffer, type Payment, type InsertPayment, type UpdatePayment,
   type Notification, type InsertNotification 
 } from "@shared/schema";
 import { db } from "./db";
@@ -25,11 +25,12 @@ export interface IStorage {
   createOffer(offer: InsertOffer): Promise<Offer>;
   updateOffer(id: string, updates: Partial<InsertOffer>): Promise<Offer>;
   getUpcomingDueOffers(days: number): Promise<any[]>;
+  getOffersWithOverduePayments(): Promise<Offer[]>;
 
   // Payments
   getOfferPayments(offerId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment): Promise<Payment>;
-  updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment>;
+  updatePayment(id: string, updates: UpdatePayment): Promise<Payment>;
   getPayments(): Promise<Payment[]>;
   deletePayment(paymentId: string): Promise<void>;
 
@@ -172,6 +173,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(offers.dueDate));
   }
 
+  async getOffersWithOverduePayments(): Promise<Offer[]> {
+    const today = new Date();
+    return await db
+      .select()
+      .from(offers)
+      .where(
+        and(
+          eq(offers.status, 'accepted'),
+          lte(offers.nextPaymentDueDate, today)
+        )
+      );
+  }
+
   // Payments
   async getOfferPayments(offerId: string): Promise<Payment[]> {
     return await db
@@ -194,7 +208,7 @@ export class DatabaseStorage implements IStorage {
     return payment || undefined;
   }
 
-  async updatePayment(id: string, updates: Partial<InsertPayment>): Promise<Payment> {
+  async updatePayment(id: string, updates: UpdatePayment): Promise<Payment> {
     const [payment] = await db
       .update(payments)
       .set(updates)

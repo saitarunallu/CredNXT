@@ -9,6 +9,7 @@ import { pdfService } from "./services/pdf";
 import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
 import { securityService } from "./services/security";
+import { repaymentService } from "./services/repayment";
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
@@ -576,6 +577,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const offer = await storage.updateOffer(id, { status });
       
+      // Initialize repayment schedule when offer is accepted
+      if (status === 'accepted') {
+        try {
+          await repaymentService.initializeRepaymentSchedule(offer);
+        } catch (error) {
+          console.error('Failed to initialize repayment schedule:', error);
+        }
+      }
+      
       // Send notification to offer creator
       if (status === 'accepted' || status === 'declined') {
         await storage.createNotification({
@@ -1093,6 +1103,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('KFS download error:', error);
       res.status(500).json({ message: 'Failed to generate or download KFS document' });
+    }
+  });
+
+  // Get current payment information for an offer
+  app.get('/api/offers/:id/payment-info', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const paymentInfo = await repaymentService.getCurrentPaymentInfo(id);
+      
+      if (!paymentInfo) {
+        return res.status(404).json({ message: 'Payment information not available' });
+      }
+      
+      res.json(paymentInfo);
+    } catch (error) {
+      console.error('Get payment info error:', error);
+      res.status(500).json({ message: 'Failed to get payment information' });
+    }
+  });
+
+  // Submit payment for current installment
+  app.post('/api/offers/:id/submit-payment', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { amount, paymentMode, refString } = req.body;
+      
+      const offer = await storage.getOffer(id);
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+      
+      // Create payment record
+      const payment = await storage.createPayment({
+        offerId: id,
+        amount: amount.toString(),
+        installmentNumber: offer.currentInstallmentNumber || 1,
+        paymentMode,
+        refString,
+        status: 'pending'
+      });
+      
+      // Advance to next installment if payment is for full amount
+      const paymentInfo = await repaymentService.getCurrentPaymentInfo(id);
+      if (paymentInfo && parseFloat(amount) >= paymentInfo.expectedAmount) {
+        await repaymentService.advanceToNextInstallment(id, payment.installmentNumber!);
+        await storage.updatePayment(payment.id, { status: 'paid', paidAt: new Date() });
+      }
+      
+      res.json({ payment, message: 'Payment submitted successfully' });
+    } catch (error) {
+      console.error('Submit payment error:', error);
+      res.status(500).json({ message: 'Failed to submit payment' });
     }
   });
 

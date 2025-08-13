@@ -53,6 +53,9 @@ export const offers = pgTable("offers", {
   purpose: text("purpose"),
   startDate: timestamp("start_date").defaultNow().notNull(),
   dueDate: timestamp("due_date").notNull(),
+  nextPaymentDueDate: timestamp("next_payment_due_date"),
+  currentInstallmentNumber: integer("current_installment_number").default(1),
+  totalInstallments: integer("total_installments"),
   note: text("note"),
   status: offerStatusEnum("status").default('pending'),
   contractPdfKey: text("contract_pdf_key"),
@@ -371,6 +374,7 @@ export type Offer = typeof offers.$inferSelect;
 export type InsertOffer = z.infer<typeof insertOfferSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type UpdatePayment = Partial<Omit<Payment, 'id' | 'createdAt'>>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type LoginRequest = z.infer<typeof loginSchema>;

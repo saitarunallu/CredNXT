@@ -55,9 +55,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     enabled: !!offerData?.offer,
   }) as { data: any };
 
-  // Get payment status with repayment schedule
-  const { data: paymentStatusData } = useQuery({
-    queryKey: ['/api/offers', offerId, 'payment-status'],
+  // Get current payment information
+  const { data: paymentInfoData } = useQuery({
+    queryKey: ['/api/offers', offerId, 'payment-info'],
     enabled: !!offerData?.offer && offerData?.offer.status === 'accepted',
   }) as { data: any };
 
@@ -92,21 +92,19 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   });
 
-  const addPaymentMutation = useMutation({
+  const submitPaymentMutation = useMutation({
     mutationFn: async (data: Omit<InsertPayment, 'offerId'>) => {
-      const response = await apiRequest('POST', '/api/payments', {
-        ...data,
-        offerId
-      });
+      const response = await apiRequest('POST', `/api/offers/${offerId}/submit-payment`, data);
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', offerId, 'payment-info'] });
       toast({
         title: "Payment Submitted",
-        description: "Payment submitted successfully. It will be auto-approved within 24 hours or you can try again if declined.",
+        description: "Payment submitted successfully and installment advanced.",
       });
+      reset(); // Reset form after successful submission
     },
     onError: () => {
       toast({
@@ -206,6 +204,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       });
     }
   });
+
+  // Form submission handlers
+  const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
+    submitPaymentMutation.mutate(data);
+  };
 
   const downloadContract = async () => {
     try {
@@ -725,112 +728,101 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
-            {/* Payment Schedule Status */}
-            {offer.status === 'accepted' && paymentStatusData?.paymentStatus && (
+            {/* Current Payment Information */}
+            {offer.status === 'accepted' && paymentInfoData && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2" />
-                    Payment Schedule Status
+                    Current Payment Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {paymentStatusData.paymentStatus.map((payment: any, index: number) => (
-                      <div 
-                        key={index}
-                        className={`flex items-center justify-between p-3 rounded-lg border ${
-                          payment.status === 'paid' ? 'bg-green-50 border-green-200' :
-                          payment.status === 'partial' ? 'bg-yellow-50 border-yellow-200' :
-                          payment.status === 'overdue' ? 'bg-red-50 border-red-200' :
-                          'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                            payment.status === 'paid' ? 'bg-green-100 text-green-700' :
-                            payment.status === 'partial' ? 'bg-yellow-100 text-yellow-700' :
-                            payment.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {payment.installmentNumber}
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">
-                              {offer.repaymentType === 'emi' ? 'EMI' :
-                               offer.repaymentType === 'step_up' ? 'Step-Up' :
-                               offer.repaymentType === 'step_down' ? 'Step-Down' :
-                               offer.repaymentType === 'balloon' ? 'Balloon' :
-                               offer.repaymentType === 'interest_only' ? 'Interest' : 'Payment'} #{payment.installmentNumber}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              Due: {new Date(payment.dueDate).toLocaleDateString()}
-                              {payment.gracePeriodEndDate && (
-                                <span className="ml-2 text-blue-600">
-                                  (Grace: {new Date(payment.gracePeriodEndDate).toLocaleDateString()})
-                                </span>
-                              )}
-                            </div>
-                            {(payment.principalAmount || payment.interestAmount) && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Principal: ₹{payment.principalAmount?.toLocaleString() || '0'} | 
-                                Interest: ₹{payment.interestAmount?.toLocaleString() || '0'}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">
-                            ₹{payment.totalAmount.toLocaleString()}
-                          </div>
-                          {payment.status === 'partial' && (
-                            <div className="text-xs text-yellow-700">
-                              Paid: ₹{payment.paidAmount.toLocaleString()}
-                            </div>
-                          )}
-                          {payment.latePaymentFee && payment.status === 'overdue' && (
-                            <div className="text-xs text-red-600">
-                              Late Fee: ₹{payment.latePaymentFee.toLocaleString()}
-                            </div>
-                          )}
-                          <div className={`text-xs font-medium ${
-                            payment.status === 'paid' ? 'text-green-600' :
-                            payment.status === 'partial' ? 'text-yellow-600' :
-                            payment.status === 'overdue' ? 'text-red-600' :
-                            'text-gray-600'
-                          }`}>
-                            {payment.status === 'paid' ? 'Paid' :
-                             payment.status === 'partial' ? 'Partial' :
-                             payment.status === 'overdue' ? 'Overdue' :
-                             'Pending'}
-                          </div>
-                        </div>
+                  <div className="space-y-4">
+                    {/* Current Installment Info */}
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-800">Current Installment #{paymentInfoData.installmentNumber}</span>
+                        <Badge variant={paymentInfoData.isOverdue ? "destructive" : "default"}>
+                          {paymentInfoData.isOverdue ? "Overdue" : "Due"}
+                        </Badge>
                       </div>
-                    ))}
-                  </div>
-                  
-                  {/* Payment Summary */}
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <div className="text-sm text-gray-600">Total Paid</div>
-                        <div className="font-semibold text-green-600">
-                          ₹{paymentStatusData.totalPaid.toLocaleString()}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Amount Due:</span>
+                          <p className="font-semibold">₹{paymentInfoData.expectedAmount?.toLocaleString()}</p>
                         </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Remaining</div>
-                        <div className="font-semibold text-orange-600">
-                          ₹{paymentStatusData.remainingAmount.toLocaleString()}
+                        <div>
+                          <span className="text-gray-600">Due Date:</span>
+                          <p className="font-semibold">{new Date(paymentInfoData.dueDate).toLocaleDateString()}</p>
                         </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Total Amount</div>
-                        <div className="font-semibold text-gray-900">
-                          ₹{paymentStatusData.totalAmount.toLocaleString()}
+                        <div>
+                          <span className="text-gray-600">Days {paymentInfoData.isOverdue ? 'Overdue' : 'Remaining'}:</span>
+                          <p className={`font-semibold ${paymentInfoData.isOverdue ? 'text-red-600' : 'text-green-600'}`}>
+                            {Math.abs(paymentInfoData.daysOverdue || paymentInfoData.daysRemaining)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Remaining Balance:</span>
+                          <p className="font-semibold">₹{paymentInfoData.remainingBalance?.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
+
+                    {/* Payment submission form for borrower */}
+                    {currentUser?.id === offer.toUserId && (
+                      <div className="p-4 border rounded-lg">
+                        <h4 className="font-medium mb-3">Submit Payment</h4>
+                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label htmlFor="amount">Amount *</Label>
+                              <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                placeholder={paymentInfoData.expectedAmount?.toString()}
+                                {...register("amount")}
+                                data-testid="input-payment-amount"
+                              />
+                              {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+                            </div>
+                            <div>
+                              <Label htmlFor="paymentMode">Payment Mode</Label>
+                              <Select onValueChange={(value) => setValue("paymentMode", value)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="upi">UPI</SelectItem>
+                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="cheque">Cheque</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="refString">Reference/Transaction ID</Label>
+                            <Input
+                              id="refString"
+                              placeholder="Enter transaction ID or reference"
+                              {...register("refString")}
+                              data-testid="input-payment-ref"
+                            />
+                            {errors.refString && <p className="text-red-500 text-xs mt-1">{errors.refString.message}</p>}
+                          </div>
+                          <Button 
+                            type="submit" 
+                            className="w-full"
+                            disabled={submitPaymentMutation.isPending}
+                            data-testid="button-submit-payment"
+                          >
+                            {submitPaymentMutation.isPending ? "Submitting..." : "Submit Payment"}
+                          </Button>
+                        </form>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
