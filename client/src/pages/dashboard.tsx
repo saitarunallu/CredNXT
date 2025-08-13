@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import OfferCard from "@/components/offers/offer-card";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
 
 export default function Dashboard() {
+  const [, navigate] = useLocation();
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -26,6 +27,23 @@ export default function Dashboard() {
   };
 
   console.log('Dashboard Stats Debug:', { statsData, stats, statsLoading });
+
+  // Click handlers for navigating to filtered offers
+  const handleLentClick = () => {
+    navigate('/offers?filter=lent');
+  };
+
+  const handleBorrowedClick = () => {
+    navigate('/offers?filter=borrowed');
+  };
+
+  const handleActiveClick = () => {
+    navigate('/offers?filter=active');
+  };
+
+  const handlePendingClick = () => {
+    navigate('/offers?filter=pending');
+  };
 
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
@@ -45,58 +63,74 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Manage your lending and borrowing activities</p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Interactive Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all">
+          <Card 
+            className="bg-card border-border shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+            onClick={handleLentClick}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Lent</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">₹{stats.totalLent.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1 group-hover:text-emerald-600 transition-colors">₹{stats.totalLent.toLocaleString()}</p>
+                  <p className="text-xs text-emerald-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view lent offers</p>
                 </div>
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-emerald-100 group-hover:bg-emerald-200 rounded-full flex items-center justify-center transition-colors">
                   <IndianRupee className="h-5 w-5 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all">
+          <Card 
+            className="bg-card border-border shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+            onClick={handleBorrowedClick}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Borrowed</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">₹{stats.totalBorrowed.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1 group-hover:text-blue-600 transition-colors">₹{stats.totalBorrowed.toLocaleString()}</p>
+                  <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view borrowed offers</p>
                 </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center transition-colors">
                   <TrendingUp className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all">
+          <Card 
+            className="bg-card border-border shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+            onClick={handleActiveClick}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Active</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{stats.activeOffers}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1 group-hover:text-purple-600 transition-colors">{stats.activeOffers}</p>
+                  <p className="text-xs text-purple-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view active offers</p>
                 </div>
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-full flex items-center justify-center transition-colors">
                   <FileText className="h-5 w-5 text-purple-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all">
+          <Card 
+            className="bg-card border-border shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+            onClick={handlePendingClick}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{stats.pendingOffers}</p>
+                  <p className="text-2xl font-bold text-foreground mt-1 group-hover:text-orange-600 transition-colors">{stats.pendingOffers}</p>
+                  <p className="text-xs text-orange-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view pending offers</p>
                 </div>
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-full flex items-center justify-center transition-colors">
                   <AlertCircle className="h-5 w-5 text-orange-600" />
                 </div>
               </div>
@@ -173,19 +207,19 @@ export default function Dashboard() {
                 <CardTitle className="text-base">Financial Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center cursor-pointer hover:bg-emerald-50 p-2 rounded transition-colors" onClick={handleLentClick}>
                   <span className="text-sm text-muted-foreground">Total Lent</span>
                   <span className="font-semibold text-emerald-600">₹{stats.totalLent.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors" onClick={handleBorrowedClick}>
                   <span className="text-sm text-muted-foreground">Total Borrowed</span>
                   <span className="font-semibold text-blue-600">₹{stats.totalBorrowed.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center cursor-pointer hover:bg-purple-50 p-2 rounded transition-colors" onClick={handleActiveClick}>
                   <span className="text-sm text-muted-foreground">Active Offers</span>
                   <span className="font-semibold text-purple-600">{stats.activeOffers}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center cursor-pointer hover:bg-orange-50 p-2 rounded transition-colors" onClick={handlePendingClick}>
                   <span className="text-sm text-muted-foreground">Pending Offers</span>
                   <span className="font-semibold text-orange-600">{stats.pendingOffers}</span>
                 </div>
