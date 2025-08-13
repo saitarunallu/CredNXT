@@ -330,17 +330,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   // Direct payment function for simplified flow
   const handleDirectPayment = (amount: number) => {
-    addPaymentMutation.mutate({
+    submitPaymentMutation.mutate({
       amount: amount.toString(),
       paymentMode: "upi", // Default payment mode for direct payments
       refString: undefined
-    });
-  };
-
-  const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
-    addPaymentMutation.mutate({
-      ...data,
-      paymentMode: "upi"
     });
   };
 
@@ -1014,9 +1007,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           handleDirectPayment(paymentAmount);
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
-                        disabled={addPaymentMutation.isPending}
+                        disabled={submitPaymentMutation.isPending}
                       >
-                        {addPaymentMutation.isPending ? (
+                        {submitPaymentMutation.isPending ? (
                           <div className="flex items-center">
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                             Processing Payment...
