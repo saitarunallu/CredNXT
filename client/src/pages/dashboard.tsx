@@ -31,22 +31,27 @@ export default function Dashboard() {
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {
     console.log('Navigating to lent filter');
-    window.location.href = '/offers?filter=lent';
+    // Update URL with query parameter and navigate
+    window.history.pushState({}, '', '/offers?filter=lent');
+    setLocation('/offers');
   };
 
   const handleBorrowedClick = () => {
     console.log('Navigating to borrowed filter');
-    window.location.href = '/offers?filter=borrowed';
+    window.history.pushState({}, '', '/offers?filter=borrowed');
+    setLocation('/offers');
   };
 
   const handleActiveClick = () => {
     console.log('Navigating to active filter');
-    window.location.href = '/offers?filter=active';
+    window.history.pushState({}, '', '/offers?filter=active');
+    setLocation('/offers');
   };
 
   const handlePendingClick = () => {
     console.log('Navigating to pending filter');
-    window.location.href = '/offers?filter=pending';
+    window.history.pushState({}, '', '/offers?filter=pending');
+    setLocation('/offers');
   };
 
   const sentOffers = (offersData as any)?.sentOffers || [];

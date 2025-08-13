@@ -25,17 +25,33 @@ export default function OffersPage() {
 
   // Parse filter from URL query parameters
   useEffect(() => {
-    // Get the current URL from window.location
-    const currentUrl = window.location.href;
-    const urlObj = new URL(currentUrl);
-    const filter = urlObj.searchParams.get('filter');
-    
-    console.log('Current URL:', currentUrl);
-    console.log('Current location (wouter):', location);
-    console.log('Parsed filter from URL:', filter);
-    console.log('All URL params:', Object.fromEntries(urlObj.searchParams.entries()));
-    
-    setActiveFilter(filter);
+    const updateFilterFromUrl = () => {
+      // Get the current URL from window.location
+      const currentUrl = window.location.href;
+      const urlObj = new URL(currentUrl);
+      const filter = urlObj.searchParams.get('filter');
+      
+      console.log('Current URL:', currentUrl);
+      console.log('Current location (wouter):', location);
+      console.log('Parsed filter from URL:', filter);
+      console.log('All URL params:', Object.fromEntries(urlObj.searchParams.entries()));
+      
+      setActiveFilter(filter);
+    };
+
+    // Initial load
+    updateFilterFromUrl();
+
+    // Listen for browser back/forward navigation
+    const handlePopState = () => {
+      updateFilterFromUrl();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [location]);
 
   // Calculate filtered offers based on actual offer status (likely 'pending' not 'accepted')
@@ -103,13 +119,15 @@ export default function OffersPage() {
   // Clear filter
   const clearFilter = () => {
     console.log('Clear filter called');
-    window.location.href = '/offers';
+    window.history.pushState({}, '', '/offers');
+    setActiveFilter(null);
   };
 
   // Navigate to filter
   const navigateToFilter = (filter: string) => {
     console.log(`Navigating to filter: ${filter}`);
-    window.location.href = `/offers?filter=${filter}`;
+    window.history.pushState({}, '', `/offers?filter=${filter}`);
+    setActiveFilter(filter);
   };
 
   // Get filter display info
