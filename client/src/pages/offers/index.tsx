@@ -124,7 +124,7 @@ export default function OffersPage() {
           
           {/* Simplified Filter Tabs */}
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <nav className="-mb-px flex space-x-8 relative z-10" aria-label="Tabs">
               <button
                 onClick={clearFilter}
                 className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
@@ -136,32 +136,44 @@ export default function OffersPage() {
                 All Offers ({sentOffers.length + receivedOffers.length})
               </button>
               <button
-                onClick={() => setLocation('/offers?filter=pending')}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                onClick={() => {
+                  console.log('Pending filter clicked');
+                  setLocation('/offers?filter=pending');
+                }}
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeFilter === 'pending'
                     ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ pointerEvents: 'auto' }}
               >
                 Pending ({pendingOffers.length})
               </button>
               <button
-                onClick={() => setLocation('/offers?filter=lent')}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                onClick={() => {
+                  console.log('Lent filter clicked');
+                  setLocation('/offers?filter=lent');
+                }}
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeFilter === 'lent'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ pointerEvents: 'auto' }}
               >
                 Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lend').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
               </button>
               <button
-                onClick={() => setLocation('/offers?filter=borrowed')}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                onClick={() => {
+                  console.log('Borrowed filter clicked');
+                  setLocation('/offers?filter=borrowed');
+                }}
+                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   activeFilter === 'borrowed'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ pointerEvents: 'auto' }}
               >
                 Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
               </button>

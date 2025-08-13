@@ -21,8 +21,8 @@ window.addEventListener('unhandledrejection', (event) => {
     });
   }
   
-  // Prevent the default browser behavior of logging to console
-  event.preventDefault();
+  // Don't prevent default to see more details in console
+  // event.preventDefault();
 });
 
 // Global error handling for uncaught errors
