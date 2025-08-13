@@ -273,6 +273,41 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
+  const downloadRepaymentSchedule = async () => {
+    try {
+      const response = await fetch(`/api/offers/${offerId}/schedule`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `repayment-schedule-${offerId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast({
+          title: "Success",
+          description: "Repayment schedule downloaded successfully.",
+        });
+      } else {
+        throw new Error('Failed to download');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download repayment schedule. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Removed auto-fill effect - no longer needed for direct payment
 
   // Direct payment function for simplified flow
@@ -1181,6 +1216,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   variant="outline" 
                   className="w-full"
                   onClick={downloadContract}
+                  data-testid="button-download-contract"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download Contract
@@ -1189,9 +1225,19 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   variant="outline" 
                   className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
                   onClick={downloadKFS}
+                  data-testid="button-download-kfs"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download KFS
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-green-50 border-green-200 hover:bg-green-100 text-green-700"
+                  onClick={downloadRepaymentSchedule}
+                  data-testid="button-download-schedule"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Schedule
                 </Button>
 
                 {/* Lender Controls */}

@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Major Updates (January 2025)
 
+### Repayment Schedule Download Feature
+- **Status**: ✅ COMPLETED - January 13, 2025
+- **Key Achievement**: Added comprehensive repayment schedule download functionality to all offers
+- **Features**: PDF generation for detailed repayment schedules, download buttons in offer cards and detailed view, automatic generation with loan calculations
+- **Database**: Added `schedulePdfKey` field to offers table for tracking generated schedule documents
+- **API**: New `/api/offers/:id/schedule` endpoint for downloading repayment schedule PDFs
+- **UI/UX**: Green-themed download buttons with consistent styling across offer cards and detailed view
+
 ### Advanced Notification System Implementation
 - **Status**: ✅ COMPLETED - Fully operational and tested
 - **Key Achievement**: Built notification system that is more efficient and better than market practices

@@ -7,6 +7,7 @@ import { calculateRepaymentSchedule, PaymentScheduleItem } from "@shared/calcula
 export class PdfService {
   private contractsDir = path.join(process.cwd(), 'contracts');
   private kfsDir = path.join(process.cwd(), 'kfs');
+  private schedulesDir = path.join(process.cwd(), 'schedules');
 
   constructor() {
     // Ensure directories exist
@@ -15,6 +16,9 @@ export class PdfService {
     }
     if (!fs.existsSync(this.kfsDir)) {
       fs.mkdirSync(this.kfsDir, { recursive: true });
+    }
+    if (!fs.existsSync(this.schedulesDir)) {
+      fs.mkdirSync(this.schedulesDir, { recursive: true });
     }
   }
 
@@ -216,6 +220,154 @@ export class PdfService {
       // Log error through proper error handling
       throw new Error('Failed to download KFS document');
     }
+  }
+
+  async generateRepaymentSchedule(offer: Offer, fromUser: User): Promise<string> {
+    const fileName = `schedule-${offer.id}-${Date.now()}.pdf`;
+    const scheduleKey = `schedules/${fileName}`;
+    const filePath = path.join(this.schedulesDir, fileName);
+    
+    try {
+      console.log(`Creating repayment schedule document at: ${filePath}`);
+      
+      const pdfBuffer = await this.createRepaymentScheduleDocument(offer, fromUser);
+      fs.writeFileSync(filePath, pdfBuffer);
+      
+      console.log(`Generated repayment schedule document: ${scheduleKey}, file size: ${pdfBuffer.length} bytes`);
+      
+      return scheduleKey;
+    } catch (error) {
+      console.error('Repayment schedule generation failed:', error);
+      throw new Error('Failed to generate repayment schedule document');
+    }
+  }
+
+  async scheduleExists(scheduleKey: string): Promise<boolean> {
+    try {
+      const filePath = path.join(process.cwd(), scheduleKey);
+      return fs.existsSync(filePath);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async downloadRepaymentSchedule(scheduleKey: string): Promise<Buffer> {
+    try {
+      const filePath = path.join(process.cwd(), scheduleKey);
+      
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Repayment schedule file not found');
+      }
+      
+      return fs.readFileSync(filePath);
+    } catch (error) {
+      throw new Error('Failed to download repayment schedule document');
+    }
+  }
+
+  private async createRepaymentScheduleDocument(offer: Offer, fromUser: User): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ 
+          margin: 40,
+          size: 'A4',
+          layout: 'portrait'
+        });
+        const buffers: Buffer[] = [];
+
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+          const pdfBuffer = Buffer.concat(buffers);
+          resolve(pdfBuffer);
+        });
+
+        // Convert offer to LoanTerms
+        const loanTerms = {
+          principal: parseFloat(offer.amount),
+          interestRate: parseFloat(offer.interestRate),
+          interestType: offer.interestType as 'fixed' | 'reducing',
+          tenureValue: offer.tenureValue,
+          tenureUnit: offer.tenureUnit as 'months' | 'years',
+          repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
+          repaymentFrequency: offer.repaymentFrequency || undefined,
+          startDate: new Date(offer.startDate)
+        };
+
+        // Calculate repayment schedule
+        const schedule = calculateRepaymentSchedule(loanTerms);
+        const principal = parseFloat(offer.amount);
+
+        // Header
+        doc.fontSize(20).font('Helvetica-Bold').fillColor('#2563eb');
+        doc.text('REPAYMENT SCHEDULE', { align: 'center' });
+        doc.moveDown(1);
+
+        // Loan Summary Box
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#374151');
+        doc.rect(40, doc.y, 515, 120).stroke('#e5e7eb');
+        
+        const boxY = doc.y;
+        doc.y = boxY + 10;
+        doc.fontSize(14).font('Helvetica-Bold');
+        doc.text('Loan Summary', 50, doc.y);
+        doc.moveDown(0.5);
+
+        doc.fontSize(10).font('Helvetica');
+        const col1X = 50;
+        const col2X = 200;
+        const col3X = 350;
+        const rowHeight = 15;
+        let currentY = doc.y;
+
+        // Row 1
+        doc.text(`Borrower: ${offer.offerType === 'lend' ? offer.toUserName : fromUser.name}`, col1X, currentY);
+        doc.text(`Principal: ₹${principal.toLocaleString()}`, col2X, currentY);
+        doc.text(`Interest Rate: ${offer.interestRate}%`, col3X, currentY);
+        currentY += rowHeight;
+
+        // Row 2
+        doc.text(`Lender: ${offer.offerType === 'lend' ? fromUser.name : offer.toUserName}`, col1X, currentY);
+        doc.text(`Total Amount: ₹${schedule.totalAmount.toLocaleString()}`, col2X, currentY);
+        doc.text(`Interest Type: ${offer.interestType}`, col3X, currentY);
+        currentY += rowHeight;
+
+        // Row 3
+        doc.text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`, col1X, currentY);
+        doc.text(`Total Interest: ₹${schedule.totalInterest.toLocaleString()}`, col2X, currentY);
+        doc.text(`Repayment Type: ${offer.repaymentType.replace('_', ' ')}`, col3X, currentY);
+        currentY += rowHeight;
+
+        // Row 4
+        if (schedule.emiAmount) {
+          doc.text(`Start Date: ${new Date(offer.startDate).toLocaleDateString()}`, col1X, currentY);
+          doc.text(`EMI Amount: ₹${schedule.emiAmount.toLocaleString()}`, col2X, currentY);
+          doc.text(`Payment Frequency: ${offer.repaymentFrequency || 'monthly'}`, col3X, currentY);
+        } else {
+          doc.text(`Start Date: ${new Date(offer.startDate).toLocaleDateString()}`, col1X, currentY);
+          doc.text(`Due Date: ${new Date(offer.dueDate).toLocaleDateString()}`, col2X, currentY);
+          doc.text(`Payment Frequency: ${offer.repaymentFrequency || 'monthly'}`, col3X, currentY);
+        }
+
+        doc.y = boxY + 130;
+        doc.moveDown(1);
+
+        // Repayment Schedule Table
+        this.addRepaymentSchedule(doc, schedule.schedule);
+
+        // Footer
+        doc.fontSize(8).fillColor('#666');
+        doc.text('This repayment schedule is generated electronically and is for reference purposes.', {
+          align: 'center'
+        });
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} | Document ID: ${offer.id}`, {
+          align: 'center'
+        });
+
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   private async createKFSDocument(offer: Offer, fromUser: User): Promise<Buffer> {

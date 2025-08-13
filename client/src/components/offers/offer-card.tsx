@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Calendar, IndianRupee, User, CheckCircle, XCircle, ArrowDownLeft, ArrowUpRight, HandCoins, Wallet } from "lucide-react";
+import { Calendar, IndianRupee, User, CheckCircle, XCircle, ArrowDownLeft, ArrowUpRight, HandCoins, Wallet, Download } from "lucide-react";
 import { Offer, User as UserType } from "@shared/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -51,6 +51,41 @@ export default function OfferCard({
       });
     }
   });
+
+  const downloadRepaymentSchedule = async () => {
+    try {
+      const response = await fetch(`/api/offers/${offer.id}/schedule`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `repayment-schedule-${offer.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast({
+          title: "Success",
+          description: "Repayment schedule downloaded successfully.",
+        });
+      } else {
+        throw new Error('Failed to download');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download repayment schedule. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -227,6 +262,7 @@ export default function OfferCard({
                 disabled={updateOfferMutation.isPending}
                 className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-2 h-9"
                 size="sm"
+                data-testid="button-accept-offer"
               >
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Accept
@@ -237,23 +273,47 @@ export default function OfferCard({
                 disabled={updateOfferMutation.isPending}
                 className="text-xs px-2 py-2 h-9"
                 size="sm"
+                data-testid="button-decline-offer"
               >
                 <XCircle className="w-3 h-3 mr-1" />
                 Decline
               </Button>
             </div>
-            <Link href={`/offers/${offer.id}`} className="w-full block">
-              <Button variant="outline" className="w-full text-xs h-9 border-gray-300" size="sm">
+            <div className="grid grid-cols-2 gap-3">
+              <Link href={`/offers/${offer.id}`} className="w-full block">
+                <Button variant="outline" className="w-full text-xs h-9 border-gray-300" size="sm" data-testid="button-view-details">
+                  View Details
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full text-xs h-9 border-green-300 bg-green-50 hover:bg-green-100 text-green-700"
+                size="sm"
+                onClick={downloadRepaymentSchedule}
+                data-testid="button-download-schedule-card"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                Schedule
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full space-y-3">
+            <Link href={`/offers/${offer.id}`} className="w-full">
+              <Button variant="outline" className="w-full" data-testid="button-view-details">
                 View Details
               </Button>
             </Link>
-          </div>
-        ) : (
-          <Link href={`/offers/${offer.id}`} className="w-full">
-            <Button variant="outline" className="w-full">
-              View Details
+            <Button 
+              variant="outline" 
+              className="w-full bg-green-50 border-green-200 hover:bg-green-100 text-green-700 text-sm"
+              onClick={downloadRepaymentSchedule}
+              data-testid="button-download-schedule-card"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Schedule
             </Button>
-          </Link>
+          </div>
         )}
       </CardFooter>
     </Card>
