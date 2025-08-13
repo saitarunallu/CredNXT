@@ -10,11 +10,11 @@ import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "luc
 
 export default function Dashboard() {
 
-  const { data: statsData } = useQuery({
+  const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
 
-  const { data: offersData } = useQuery({
+  const { data: offersData, isLoading: offersLoading } = useQuery({
     queryKey: ['/api/offers'],
   });
 
@@ -24,6 +24,8 @@ export default function Dashboard() {
     activeOffers: 0,
     pendingOffers: 0
   };
+
+  console.log('Dashboard Stats Debug:', { statsData, stats, statsLoading });
 
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
@@ -165,7 +167,50 @@ export default function Dashboard() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Overview</h2>
             
-            {/* Analytics and Reports sidebar cards removed */}
+            {/* Overview Summary Cards */}
+            <Card className="bg-card border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Financial Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Lent</span>
+                  <span className="font-semibold text-emerald-600">₹{stats.totalLent.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Total Borrowed</span>
+                  <span className="font-semibold text-blue-600">₹{stats.totalBorrowed.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Active Offers</span>
+                  <span className="font-semibold text-purple-600">{stats.activeOffers}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Pending Offers</span>
+                  <span className="font-semibold text-orange-600">{stats.pendingOffers}</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Link href="/offers/create">
+                  <Button variant="outline" className="w-full justify-start" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Offer
+                  </Button>
+                </Link>
+                <Link href="/analytics">
+                  <Button variant="outline" className="w-full justify-start" size="sm">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View Analytics
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
