@@ -123,57 +123,69 @@ export default function OffersPage() {
           </div>
           
           {/* Simplified Filter Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 relative z-10" aria-label="Tabs">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <nav className="-mb-px flex space-x-4 md:space-x-8 relative z-10 min-w-max" aria-label="Tabs">
               <button
-                onClick={clearFilter}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('All filter clicked');
+                  clearFilter();
+                }}
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
                   !activeFilter
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                All Offers ({sentOffers.length + receivedOffers.length})
+                All ({sentOffers.length + receivedOffers.length})
               </button>
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('Pending filter clicked');
                   setLocation('/offers?filter=pending');
                 }}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
                   activeFilter === 'pending'
                     ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
-                style={{ pointerEvents: 'auto' }}
               >
                 Pending ({pendingOffers.length})
               </button>
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('Lent filter clicked');
                   setLocation('/offers?filter=lent');
                 }}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
                   activeFilter === 'lent'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
-                style={{ pointerEvents: 'auto' }}
               >
-                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lend').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
+                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lent').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
               </button>
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   console.log('Borrowed filter clicked');
                   setLocation('/offers?filter=borrowed');
                 }}
-                className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm cursor-pointer ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
                   activeFilter === 'borrowed'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
-                style={{ pointerEvents: 'auto' }}
               >
                 Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
               </button>
