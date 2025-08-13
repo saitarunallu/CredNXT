@@ -62,6 +62,11 @@ export default function OffersPage() {
           !item.offer.status || item.offer.status === 'pending'
         );
       
+      case 'completed':
+        return allOffers.filter((item: any) => 
+          item.offer.status === 'completed' || item.offer.status === 'closed'
+        );
+      
       default:
         return allOffers;
     }
@@ -96,6 +101,8 @@ export default function OffersPage() {
         return { title: 'Active Offers', subtitle: 'Currently ongoing agreements', color: 'text-purple-600 bg-purple-50' };
       case 'pending':
         return { title: 'Pending Offers', subtitle: 'Awaiting approval', color: 'text-orange-600 bg-orange-50' };
+      case 'completed':
+        return { title: 'Completed Offers', subtitle: 'Finished agreements', color: 'text-green-600 bg-green-50' };
       default:
         return null;
     }
@@ -161,7 +168,6 @@ export default function OffersPage() {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Pending filter clicked');
-                  alert('Pending clicked!');
                   navigateToFilter('pending');
                 }}
                 className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
@@ -218,6 +224,27 @@ export default function OffersPage() {
                 }}
               >
                 Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Completed filter clicked');
+                  navigateToFilter('completed');
+                }}
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
+                  activeFilter === 'completed'
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 999
+                }}
+              >
+                Completed ({[...sentOffers, ...receivedOffers].filter((item: any) => item.offer.status === 'completed' || item.offer.status === 'closed').length})
               </button>
             </nav>
           </div>
