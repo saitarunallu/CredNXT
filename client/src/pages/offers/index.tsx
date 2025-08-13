@@ -25,14 +25,16 @@ export default function OffersPage() {
 
   // Parse filter from URL query parameters
   useEffect(() => {
-    console.log('Current location:', location);
-    console.log('Location parts:', location.split('?'));
-    const queryString = location.split('?')[1] || '';
-    console.log('Query string:', queryString);
-    const params = new URLSearchParams(queryString);
-    const filter = params.get('filter');
+    // Get the current URL from window.location
+    const currentUrl = window.location.href;
+    const urlObj = new URL(currentUrl);
+    const filter = urlObj.searchParams.get('filter');
+    
+    console.log('Current URL:', currentUrl);
+    console.log('Current location (wouter):', location);
     console.log('Parsed filter from URL:', filter);
-    console.log('All URL params:', Object.fromEntries(params.entries()));
+    console.log('All URL params:', Object.fromEntries(urlObj.searchParams.entries()));
+    
     setActiveFilter(filter);
   }, [location]);
 
@@ -101,15 +103,13 @@ export default function OffersPage() {
   // Clear filter
   const clearFilter = () => {
     console.log('Clear filter called');
-    setLocation('/offers');
-    setActiveFilter(null);
+    window.location.href = '/offers';
   };
 
   // Navigate to filter
   const navigateToFilter = (filter: string) => {
     console.log(`Navigating to filter: ${filter}`);
-    setLocation(`/offers?filter=${filter}`);
-    setActiveFilter(filter);
+    window.location.href = `/offers?filter=${filter}`;
   };
 
   // Get filter display info
