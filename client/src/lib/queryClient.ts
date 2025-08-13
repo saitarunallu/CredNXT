@@ -60,6 +60,8 @@ export const getQueryFn: <T>(options: {
         
         if (unauthorizedBehavior === "returnNull") {
           return null;
+        } else {
+          throw new Error('401: Unauthorized');
         }
       }
 
@@ -83,10 +85,17 @@ export const queryClient = new QueryClient({
     mutations: {
       retry: false,
       onSuccess: () => {
-        // Immediately invalidate all related data after mutations
-        queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        try {
+          // Immediately invalidate all related data after mutations
+          queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        } catch (error) {
+          console.error('Error invalidating queries after mutation:', error);
+        }
+      },
+      onError: (error) => {
+        console.error('Mutation error:', error);
       },
     },
   },

@@ -6,6 +6,8 @@ export function useRealtimeUpdates() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    const timeouts: NodeJS.Timeout[] = [];
+
     // Handle offer-related updates
     const handleOfferUpdate = (data: any) => {
       // Real-time offer update received
@@ -20,12 +22,17 @@ export function useRealtimeUpdates() {
         queryClient.invalidateQueries({ queryKey: ['/api/offers', data.offerId] });
       }
       
-      // Force immediate refetch with no delay
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-        queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
-        queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+      // Force immediate refetch with no delay - track timeout for cleanup
+      const timeout = setTimeout(() => {
+        try {
+          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
+          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+        } catch (error) {
+          console.error('Error refetching queries:', error);
+        }
       }, 100); // 100ms delay to ensure WebSocket processing is complete
+      timeouts.push(timeout);
     };
 
     // Handle payment updates
@@ -41,12 +48,17 @@ export function useRealtimeUpdates() {
         queryClient.invalidateQueries({ queryKey: ['/api/offers', data.offerId] });
       }
       
-      // Force immediate refetch
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-        queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
-        queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+      // Force immediate refetch - track timeout for cleanup
+      const timeout = setTimeout(() => {
+        try {
+          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
+          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+        } catch (error) {
+          console.error('Error refetching queries:', error);
+        }
       }, 100);
+      timeouts.push(timeout);
     };
 
     // Handle notification updates
@@ -58,12 +70,17 @@ export function useRealtimeUpdates() {
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
       
-      // Force immediate refetch
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
-        queryClient.refetchQueries({ queryKey: ['/api/offers'] });
-        queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+      // Force immediate refetch - track timeout for cleanup
+      const timeout = setTimeout(() => {
+        try {
+          queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
+          queryClient.refetchQueries({ queryKey: ['/api/offers'] });
+          queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] });
+        } catch (error) {
+          console.error('Error refetching queries:', error);
+        }
       }, 100);
+      timeouts.push(timeout);
     };
 
     // Register event listeners for all relevant events
@@ -74,8 +91,11 @@ export function useRealtimeUpdates() {
     wsService.on('payment_received', handlePaymentUpdate);
     wsService.on('notification_created', handleNotificationUpdate);
 
-    // Cleanup listeners on unmount
+    // Cleanup listeners and timeouts on unmount
     return () => {
+      // Clear all pending timeouts to prevent memory leaks and unhandled promises
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      
       wsService.off('offer_accepted', handleOfferUpdate);
       wsService.off('offer_declined', handleOfferUpdate);
       wsService.off('offer_created', handleOfferUpdate);

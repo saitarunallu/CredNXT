@@ -13,12 +13,23 @@ interface AuthGuardProps {
 export default function AuthGuard({ children }: AuthGuardProps) {
   const [, setLocation] = useLocation();
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
     enabled: authService.isAuthenticated(),
     queryFn: async () => {
-      return await authService.getCurrentUser();
+      try {
+        return await authService.getCurrentUser();
+      } catch (error) {
+        console.error('AuthGuard: Error getting current user:', error);
+        // If there's an auth error, clear tokens and redirect to login
+        if (error instanceof Error && error.message.includes('401')) {
+          authService.logout();
+          setLocation('/login');
+        }
+        throw error;
+      }
     },
+    retry: false, // Don't retry auth failures
   });
 
   // Enable real-time updates for authenticated users

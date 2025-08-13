@@ -52,8 +52,12 @@ class WebSocketService {
   }
 
   send(data: any) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
+    try {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error('WebSocket send error:', error);
     }
   }
 
