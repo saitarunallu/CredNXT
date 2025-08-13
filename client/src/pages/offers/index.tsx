@@ -73,7 +73,16 @@ export default function OffersPage() {
 
   // Clear filter
   const clearFilter = () => {
-    setLocation('/offers');
+    console.log('Clear filter called');
+    window.history.pushState({}, '', '/offers');
+    setActiveFilter(null);
+  };
+
+  // Navigate to filter
+  const navigateToFilter = (filter: string) => {
+    console.log(`Navigating to filter: ${filter}`);
+    window.history.pushState({}, '', `/offers?filter=${filter}`);
+    setActiveFilter(filter);
   };
 
   // Get filter display info
@@ -123,8 +132,8 @@ export default function OffersPage() {
           </div>
           
           {/* Simplified Filter Tabs */}
-          <div className="border-b border-gray-200 overflow-x-auto">
-            <nav className="-mb-px flex space-x-4 md:space-x-8 relative z-10 min-w-max" aria-label="Tabs">
+          <div className="border-b border-gray-200 overflow-x-auto relative z-50">
+            <nav className="-mb-px flex space-x-4 md:space-x-8 relative z-50 min-w-max pb-0" aria-label="Tabs">
               <button
                 type="button"
                 onClick={(e) => {
@@ -133,11 +142,16 @@ export default function OffersPage() {
                   console.log('All filter clicked');
                   clearFilter();
                 }}
-                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
                   !activeFilter
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 999
+                }}
               >
                 All ({sentOffers.length + receivedOffers.length})
               </button>
@@ -147,13 +161,19 @@ export default function OffersPage() {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Pending filter clicked');
-                  setLocation('/offers?filter=pending');
+                  alert('Pending clicked!');
+                  navigateToFilter('pending');
                 }}
-                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
                   activeFilter === 'pending'
                     ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 999
+                }}
               >
                 Pending ({pendingOffers.length})
               </button>
@@ -163,13 +183,18 @@ export default function OffersPage() {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Lent filter clicked');
-                  setLocation('/offers?filter=lent');
+                  navigateToFilter('lent');
                 }}
-                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
                   activeFilter === 'lent'
                     ? 'border-emerald-500 text-emerald-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 999
+                }}
               >
                 Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lent').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
               </button>
@@ -179,13 +204,18 @@ export default function OffersPage() {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('Borrowed filter clicked');
-                  setLocation('/offers?filter=borrowed');
+                  navigateToFilter('borrowed');
                 }}
-                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation ${
+                className={`flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer touch-manipulation relative z-50 bg-white ${
                   activeFilter === 'borrowed'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
+                style={{ 
+                  pointerEvents: 'auto',
+                  position: 'relative',
+                  zIndex: 999
+                }}
               >
                 Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
               </button>
