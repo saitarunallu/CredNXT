@@ -51,6 +51,7 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform that revolut
 - **AWS RDS** for managed PostgreSQL
 - **AWS ALB** for load balancing
 - **CloudFormation** for infrastructure as code
+- **Render.com** for simple cloud deployment
 
 ## 📋 Prerequisites
 
@@ -94,7 +95,37 @@ npm run dev
 # Visit http://localhost:5000
 ```
 
-## 🚀 AWS Deployment
+## 🚀 Deployment Options
+
+### Option 1: Render.com (Recommended for Quick Deployment)
+
+**One-click deployment with GitHub integration:**
+
+1. **Fork this repository** to your GitHub account
+
+2. **Connect to Render**:
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New" → "Blueprint"
+   - Connect your GitHub repository
+   - Render will auto-detect `render.yaml` and deploy:
+     - Web service with health checks
+     - PostgreSQL database
+     - Auto-generated environment variables
+
+3. **That's it!** Your app will be live at `https://your-app.onrender.com`
+
+**Manual setup:**
+```bash
+# Optional: Use the build script
+chmod +x render-build.sh
+./render-build.sh
+```
+
+See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed instructions.
+
+### Option 2: AWS Deployment
+
+**For enterprise production environments:**
 
 ### Prerequisites
 - AWS CLI configured with appropriate permissions

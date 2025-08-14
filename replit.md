@@ -45,7 +45,41 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 - **Full Payment**: Due date Aug 13, 2026 (₹1,12,009 lump sum)
 - **EMI (Quarterly)**: First payment due Nov 13, 2025 (quarterly payments)
 
-### August 14, 2025 - AWS Production Deployment Infrastructure
+### August 14, 2025 - Render.com Auto-Deploy Integration
+
+#### 1. Render.com Deployment Configuration
+**Added**:
+- `render.yaml` blueprint for one-click deployment to Render.com
+- Multi-stage Dockerfile optimized for Render's container platform
+- `render-build.sh` script for automated build process with database migrations
+- Comprehensive deployment documentation in `RENDER_DEPLOYMENT.md`
+- GitHub Actions workflow for CI/CD pipeline integration
+
+#### 2. Auto-Deploy Features
+**Implementation**:
+- Blueprint configuration with web service and PostgreSQL database
+- Automatic environment variable generation (JWT_SECRET, SESSION_SECRET)
+- Health check endpoints integration (/api/health, /api/ready, /api/live)
+- Auto-scaling configuration for production workloads
+- GitHub integration for automatic deployments on push to main/master
+
+#### 3. Enhanced Build Process
+**Added**:
+- Production-optimized build script with dependency installation
+- Database migration automation during deployment
+- TypeScript compilation and frontend/backend bundling
+- Docker container security with non-root user
+- Health check monitoring for container orchestration
+
+#### 4. Development Experience Improvements
+**Enhanced**:
+- Updated README.md with Render deployment as primary option
+- Environment configuration template (.env.render)
+- Build process verification and error handling
+- CI/CD pipeline with automated testing
+- Deployment verification through health endpoints
+
+### August 14, 2025 - Previous: AWS Production Deployment Infrastructure
 
 #### 1. Complete AWS Deployment Setup
 **Added**:
