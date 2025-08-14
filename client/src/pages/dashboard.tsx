@@ -239,17 +239,23 @@ export default function Dashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 <Link href="/offers/create">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Offer
+                  <Button 
+                    className="w-full justify-start h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg" 
+                    size="default"
+                  >
+                    <Plus className="w-5 h-5 mr-3" />
+                    <span className="font-medium">Create New Offer</span>
                   </Button>
                 </Link>
                 <Link href="/analytics">
-                  <Button variant="outline" className="w-full justify-start" size="sm">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    View Analytics
+                  <Button 
+                    className="w-full justify-start h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white border-0 shadow-md transition-all duration-200 hover:shadow-lg" 
+                    size="default"
+                  >
+                    <TrendingUp className="w-5 h-5 mr-3" />
+                    <span className="font-medium">View Analytics</span>
                   </Button>
                 </Link>
               </CardContent>
