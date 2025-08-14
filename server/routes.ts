@@ -1700,7 +1700,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Health check routes are already integrated above
+  // AWS Health Check Endpoints for Production Deployment
+  
+  // Basic health check for load balancer
+  app.get('/api/health', async (req, res) => {
+    try {
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api'
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api',
+        error: 'Service unavailable'
+      });
+    }
+  });
+
+  // Readiness probe - checks if app is ready to serve traffic
+  app.get('/api/ready', async (req, res) => {
+    try {
+      // Check database connectivity
+      await storage.getOffers();
+      
+      res.status(200).json({
+        status: 'ready',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api',
+        checks: {
+          database: 'connected'
+        }
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'not_ready',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api',
+        checks: {
+          database: 'disconnected'
+        },
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Liveness probe - checks if app is alive
+  app.get('/api/live', async (req, res) => {
+    res.status(200).json({
+      status: 'alive',
+      timestamp: new Date().toISOString(),
+      service: 'crednxt-api',
+      uptime: process.uptime()
+    });
+  });
+
+  // Detailed health check for monitoring
+  app.get('/api/health/detailed', async (req, res) => {
+    try {
+      const startTime = Date.now();
+      
+      // Database health check
+      let dbStatus = 'unknown';
+      let dbLatency = 0;
+      try {
+        const dbStart = Date.now();
+        await storage.getOffers();
+        dbLatency = Date.now() - dbStart;
+        dbStatus = 'healthy';
+      } catch (dbError) {
+        dbStatus = 'unhealthy';
+      }
+
+      // Memory usage
+      const memUsage = process.memoryUsage();
+      
+      // System information
+      const healthData = {
+        status: dbStatus === 'healthy' ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api',
+        version: process.env.npm_package_version || '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        uptime: process.uptime(),
+        responseTime: Date.now() - startTime,
+        checks: {
+          database: {
+            status: dbStatus,
+            latency: dbLatency
+          },
+          memory: {
+            rss: Math.round(memUsage.rss / 1024 / 1024),
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+            heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+            external: Math.round(memUsage.external / 1024 / 1024)
+          },
+          process: {
+            pid: process.pid,
+            nodeVersion: process.version,
+            platform: process.platform
+          }
+        }
+      };
+
+      const statusCode = dbStatus === 'healthy' ? 200 : 503;
+      res.status(statusCode).json(healthData);
+    } catch (error) {
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        service: 'crednxt-api',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
   return httpServer;
 }

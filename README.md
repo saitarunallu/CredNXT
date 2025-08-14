@@ -1,335 +1,300 @@
 # CredNXT - P2P Lending Platform
 
-[![CI/CD](https://github.com/crednxt/crednxt/workflows/CI/badge.svg)](https://github.com/crednxt/crednxt/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform that revolutionizes social lending through a mobile-first, user-centric approach tailored to the Indian financial ecosystem.
 
-CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutionizing social lending through a mobile-first, user-centric approach tailored to the Indian financial ecosystem.
+## 🚀 Features
 
-## 🚀 Quick Start
+### Core Functionality
+- **Peer-to-Peer Lending**: Create and manage lending offers between known individuals
+- **Mobile-First Design**: Optimized for mobile devices with responsive design
+- **Real-time Notifications**: WebSocket-based real-time updates for all activities
+- **Secure Authentication**: JWT-based authentication with banking-grade security
+- **Payment Management**: Comprehensive payment tracking with approval workflows
+- **Analytics Dashboard**: Detailed insights into lending/borrowing activities
 
-### Prerequisites
+### Financial Features
+- **Multiple Repayment Types**: EMI, Interest-only, and Full payment options
+- **Flexible Terms**: Weekly, bi-weekly, monthly, quarterly, semi-annual, and yearly repayment frequencies
+- **Interest Calculations**: Automatic interest calculations based on terms
+- **Payment Schedules**: Automated repayment schedule management
+- **Compliance Tracking**: Built-in compliance with financial regulations
 
-- Node.js 18+ and npm
-- PostgreSQL database
-- Modern web browser
+### Security & Compliance
+- **Banking-Grade Security**: Multi-layer security with audit trails
+- **Data Encryption**: End-to-end encryption for sensitive data
+- **Compliance Monitoring**: Automated compliance checks and reporting
+- **Rate Limiting**: Advanced rate limiting and DDoS protection
+- **Security Alerts**: Real-time security monitoring and alerting
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/crednxt.git
-   cd crednxt
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials and secrets
-   ```
-
-4. **Initialize database**
-   ```bash
-   npm run db:push
-   ```
-
-5. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-6. **Open your browser**
-   Navigate to `http://localhost:5000`
-
-## 🏗️ Technology Stack
+## 🛠 Technology Stack
 
 ### Frontend
-- **React 18** with TypeScript - Modern UI framework
-- **Vite** - Fast build tool and dev server
-- **Tailwind CSS** - Utility-first styling
-- **Wouter** - Lightweight routing
-- **TanStack Query** - Data fetching and caching
-- **React Hook Form** - Form management
-- **Framer Motion** - Smooth animations
+- **React 18** with TypeScript
+- **Vite** for build tooling
+- **Tailwind CSS** for styling
+- **TanStack Query** for data fetching
+- **Wouter** for routing
+- **Radix UI** components
+- **Framer Motion** for animations
 
 ### Backend
-- **Express.js** with TypeScript - Web framework
-- **Drizzle ORM** - Type-safe database queries
-- **PostgreSQL** - Robust relational database
-- **JWT** - Secure authentication
-- **WebSocket** - Real-time notifications
-- **Passport.js** - Authentication middleware
+- **Express.js** with TypeScript
+- **PostgreSQL** database
+- **Drizzle ORM** for database operations
+- **WebSocket** for real-time features
+- **JWT** for authentication
+- **Express Session** for session management
 
-### DevOps & Quality
-- **Docker** - Containerization
-- **GitHub Actions** - CI/CD pipeline
-- **Vitest** - Unit and integration testing
-- **ESLint & Prettier** - Code quality
-- **Health Checks** - Monitoring endpoints
+### Infrastructure
+- **Docker** containerization
+- **AWS ECS** for container orchestration
+- **AWS RDS** for managed PostgreSQL
+- **AWS ALB** for load balancing
+- **CloudFormation** for infrastructure as code
 
-## 🎯 Key Features
+## 📋 Prerequisites
 
-### 📱 Mobile-First Design
-- Responsive layout optimized for mobile devices
-- Progressive Web App (PWA) capabilities
-- Touch-friendly interfaces and gestures
-- Offline-first functionality
+- Node.js 20+ and npm
+- PostgreSQL 15+
+- Docker (for containerization)
+- AWS CLI (for deployment)
 
-### 🔐 Banking-Grade Security
-- JWT-based authentication with refresh tokens
-- Password hashing with bcrypt
-- CSRF protection and security headers
-- Audit trails for all financial transactions
-- Role-based access control
+## 🏃‍♂️ Quick Start
 
-### 💰 Comprehensive Loan Management
-- **Flexible Loan Terms**: Support for EMI, interest-only, and lump-sum payments
-- **Multiple Frequencies**: Weekly, bi-weekly, monthly, quarterly, semi-annual, yearly
-- **Dynamic Calculations**: Real-time interest and payment calculations
-- **Payment Tracking**: Detailed payment history and scheduling
-- **Due Date Management**: Automated reminders and overdue tracking
-
-### 🔔 Real-Time Notifications
-- WebSocket-based instant notifications
-- Multi-channel delivery (in-app, email ready)
-- Smart notification preferences
-- Payment reminders and status updates
-
-### 📊 Analytics Dashboard
-- Portfolio overview with key metrics
-- Payment tracking and trends
-- Risk assessment indicators
-- Export functionality for reports
-
-### 🎨 Enhanced User Experience
-- Smooth animations and transitions
-- Loading states and skeleton screens
-- Error boundaries with fallback UI
-- Accessibility compliance (WCAG 2.1)
-- Dark mode support
-
-## 🚀 Development
-
-### Available Scripts
-
+### 1. Clone and Install
 ```bash
-# Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-
-# Database
-npm run db:push      # Push schema changes to database
-npm run db:studio    # Open Drizzle Studio (database GUI)
-
-# Testing
-npm run test         # Run unit tests
-npm run test:ui      # Run tests with UI
-npm run test:coverage # Run tests with coverage report
-
-# Code Quality
-npm run lint         # Lint TypeScript files
-npm run type-check   # Type check without building
+git clone <repository-url>
+cd crednxt
+npm install
 ```
 
-### Project Structure
+### 2. Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env.production
+
+# Edit with your configuration
+nano .env.production
+```
+
+### 3. Database Setup
+```bash
+# Push database schema
+npm run db:push
+
+# Verify database connection
+npm run health-check
+```
+
+### 4. Development
+```bash
+# Start development server
+npm run dev
+
+# Visit http://localhost:5000
+```
+
+## 🚀 AWS Deployment
+
+### Prerequisites
+- AWS CLI configured with appropriate permissions
+- Docker installed and running
+- Environment variables configured
+
+### Automated Deployment
+
+1. **Setup Environment**:
+```bash
+# Generate secure secrets and configure AWS
+npm run aws:setup production
+```
+
+2. **Deploy to AWS**:
+```bash
+# Deploy to production
+npm run aws:deploy:production
+
+# Or deploy to staging
+npm run aws:deploy:staging
+```
+
+### Manual Deployment Steps
+
+1. **Configure Environment**:
+```bash
+./aws/environment-config.sh production
+```
+
+2. **Deploy Infrastructure**:
+```bash
+./aws/deploy.sh production
+```
+
+### Deployment Architecture
+
+The deployment creates:
+- **VPC** with public/private subnets across 2 AZs
+- **Application Load Balancer** for traffic distribution
+- **ECS Fargate** cluster for containerized application
+- **RDS PostgreSQL** for database
+- **CloudWatch** for monitoring and logging
+- **Security Groups** with least-privilege access
+
+## 🏗 Project Structure
 
 ```
 crednxt/
-├── client/                 # Frontend React application
+├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Page components and routing
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── lib/            # Utilities and configurations
-│   │   └── test/           # Test files and utilities
-│   └── index.html
-├── server/                 # Backend Express application
-│   ├── routes/             # API route handlers
-│   ├── services/           # Business logic services
-│   ├── db.ts              # Database connection
-│   ├── index.ts           # Server entry point
+│   │   ├── pages/         # Page components
+│   │   ├── lib/           # Utilities and configurations
+│   │   └── hooks/         # Custom React hooks
+├── server/                # Express backend
+│   ├── services/          # Business logic services
+│   ├── routes/            # API route definitions
+│   ├── db.ts              # Database configuration
 │   └── storage.ts         # Data access layer
-├── shared/                 # Shared TypeScript types and utilities
+├── shared/                # Shared types and schemas
 │   ├── schema.ts          # Database schema and types
 │   └── calculations.ts    # Financial calculations
-├── contracts/             # PDF contract storage
-├── kfs/                   # KFS document storage
-├── schedules/             # Payment schedule storage
-└── docs/                  # Additional documentation
+├── aws/                   # AWS deployment configuration
+│   ├── cloudformation.yml # Infrastructure template
+│   ├── deploy.sh          # Deployment script
+│   └── environment-config.sh # Environment setup
+├── Dockerfile             # Container definition
+├── docker-compose.yml     # Local containerization
+└── package.json           # Dependencies and scripts
 ```
 
-## 🏃‍♂️ API Endpoints
+## 🔧 Available Scripts
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
+### Development
+- `npm run dev` - Start development server
+- `npm run check` - TypeScript type checking
+- `npm run db:push` - Push database schema changes
 
-### Offers
-- `GET /api/offers` - List all offers
-- `POST /api/offers` - Create new offer
-- `GET /api/offers/:id` - Get offer details
-- `PATCH /api/offers/:id/accept` - Accept offer
-- `PATCH /api/offers/:id/reject` - Reject offer
+### Production
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run health-check` - Health check endpoint test
 
-### Payments
-- `GET /api/payments` - List payments
-- `POST /api/payments` - Submit payment
-- `PATCH /api/payments/:id/approve` - Approve payment
-- `PATCH /api/payments/:id/reject` - Reject payment
+### AWS Deployment
+- `npm run aws:setup` - Configure AWS environment
+- `npm run aws:deploy` - Deploy to AWS
+- `npm run aws:deploy:staging` - Deploy to staging
+- `npm run aws:deploy:production` - Deploy to production
 
-### Health Checks
+### Docker
+- `npm run docker:build` - Build Docker image
+- `npm run docker:run` - Run containerized app locally
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+- JWT-based stateless authentication
+- Session management with secure cookies
+- Role-based access control (RBAC)
+- Multi-factor authentication support
+
+### Data Protection
+- End-to-end encryption for sensitive data
+- Password hashing with bcrypt
+- SQL injection protection via parameterized queries
+- XSS protection with content security policies
+
+### Monitoring & Compliance
+- Comprehensive audit logging
+- Real-time security monitoring
+- Compliance reporting and tracking
+- Automated threat detection
+
+## 📊 Monitoring & Health Checks
+
+### Health Endpoints
 - `GET /api/health` - Basic health check
-- `GET /api/health/detailed` - Detailed system status
-- `GET /api/ready` - Readiness probe
-- `GET /api/live` - Liveness probe
+- `GET /api/ready` - Readiness probe (database connectivity)
+- `GET /api/live` - Liveness probe (application status)
+- `GET /api/health/detailed` - Comprehensive health report
 
-## 🧪 Testing
-
-The project includes comprehensive testing setup:
-
-### Unit Tests
-```bash
-npm run test                    # Run all tests
-npm run test:watch             # Run tests in watch mode
-npm run test:coverage          # Generate coverage report
-```
-
-### Integration Tests
-- API endpoint testing
-- Database integration tests
-- Authentication flow tests
-
-### Frontend Tests
-- Component rendering tests
-- User interaction tests
-- Error boundary tests
-- Hook behavior tests
-
-### Test Structure
-```
-client/src/test/
-├── components/           # Component tests
-├── hooks/               # Hook tests
-├── pages/               # Page integration tests
-├── utils/               # Testing utilities
-└── setup.ts            # Test configuration
-```
-
-## 🐳 Deployment
-
-### Docker Deployment
-
-1. **Build Docker image**
-   ```bash
-   docker build -t crednxt:latest .
-   ```
-
-2. **Run with Docker Compose**
-   ```bash
-   docker-compose up -d
-   ```
-
-### Environment Variables
-
-Required environment variables for production:
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@host:port/database
-
-# Authentication
-JWT_SECRET=your-super-secret-jwt-key
-JWT_REFRESH_SECRET=your-refresh-secret-key
-
-# Session
-SESSION_SECRET=your-session-secret
-
-# Optional: External Services
-EMAIL_SERVICE_API_KEY=your-email-service-key
-SMS_SERVICE_API_KEY=your-sms-service-key
-```
-
-See `.env.example` for complete configuration options.
-
-### Health Checks
-
-The application provides health check endpoints for monitoring:
-
-- **Basic Health**: `GET /api/health`
-- **Detailed Status**: `GET /api/health/detailed`
-- **Readiness**: `GET /api/ready`
-- **Liveness**: `GET /api/live`
+### Monitoring Features
+- Application performance monitoring
+- Database performance tracking
+- Real-time error tracking
+- Custom business metrics
 
 ## 🔧 Configuration
 
-### Database Schema
+### Environment Variables
 
-The application uses Drizzle ORM with PostgreSQL. Schema is defined in `shared/schema.ts` and includes:
+See `.env.example` for a complete list of configuration options.
 
-- **Users**: Authentication and profile data
-- **Offers**: Loan offers with terms and conditions
-- **Payments**: Payment tracking and history
-- **Notifications**: Multi-channel notification system
-- **Audit Logs**: Security and compliance tracking
+**Required Variables**:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT token signing
+- `SESSION_SECRET` - Secret for session management
 
-### Security Features
+**Optional Variables**:
+- `AWS_REGION` - AWS region for deployment
+- `LOG_LEVEL` - Logging level (debug, info, warn, error)
+- `RATE_LIMIT_MAX_REQUESTS` - Rate limiting configuration
 
-- **Authentication**: JWT with refresh token rotation
-- **Authorization**: Role-based access control
-- **Data Protection**: Input validation and sanitization
-- **Audit Trails**: Comprehensive logging of financial transactions
-- **Rate Limiting**: API rate limiting for security
-- **CORS**: Configured for production domains
+### Database Configuration
 
-## 🎨 UI/UX Features
+The application uses PostgreSQL with Drizzle ORM. The schema is defined in `shared/schema.ts` and includes:
+- User management and authentication
+- Loan offers and terms
+- Payment tracking and approval workflows
+- Notification system
+- Audit and compliance logging
 
-### Design System
-- Consistent color palette and typography
-- Reusable component library
-- Responsive breakpoints for all devices
-- Accessibility-first approach
+## 🐛 Troubleshooting
 
-### Animations
-- Smooth page transitions
-- Loading state animations
-- Micro-interactions for better UX
-- Reduced motion support for accessibility
+### Common Issues
 
-### Performance
-- Lazy loading for route components
-- Image optimization and compression
-- Bundle splitting for faster loads
-- Service worker for offline functionality
+**Database Connection Issues**:
+```bash
+# Check database connectivity
+npm run health-check
+
+# Verify environment variables
+echo $DATABASE_URL
+```
+
+**Build Failures**:
+```bash
+# Clear build cache
+rm -rf dist/ node_modules/
+npm install
+npm run build
+```
+
+**AWS Deployment Issues**:
+```bash
+# Check AWS credentials
+aws sts get-caller-identity
+
+# Verify CloudFormation stack status
+aws cloudformation describe-stacks --stack-name production-crednxt-infrastructure
+```
+
+### Logs
+
+**Application Logs**:
+- Development: Console output
+- Production: CloudWatch Logs
+
+**Database Logs**:
+- Available in AWS RDS console
+- Query performance insights enabled
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow TypeScript strict mode
-- Use conventional commit messages
-- Write tests for new features
-- Update documentation for API changes
-- Ensure mobile-first responsive design
-
-## 📚 Additional Resources
-
-- [API Documentation](./docs/api.md)
-- [Deployment Guide](./docs/deployment.md)
-- [Security Guidelines](./docs/security.md)
-- [Contributing Guide](./docs/contributing.md)
 
 ## 📄 License
 
@@ -337,8 +302,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-For support, email support@crednxt.com or create an issue in the GitHub repository.
+For support and questions:
+- Create an issue in the repository
+- Check the troubleshooting section above
+- Review the health check endpoints for diagnostic information
 
----
+## 🚀 Roadmap
 
-**Built with ❤️ for the Indian fintech ecosystem**
+- [ ] Mobile app development (React Native)
+- [ ] Advanced analytics and reporting
+- [ ] Integration with payment gateways
+- [ ] Machine learning for risk assessment
+- [ ] Multi-language support
+- [ ] API for third-party integrations
