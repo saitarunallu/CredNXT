@@ -12,6 +12,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Debug: Check if Firebase config is loaded properly
+console.log('Firebase config loaded:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasAuthDomain: !!firebaseConfig.authDomain,
+  hasProjectId: !!firebaseConfig.projectId,
+  projectId: firebaseConfig.projectId,
+  apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
+});
+
 // Initialize Firebase only if not already initialized
 let app;
 if (!getApps().length) {
@@ -26,16 +35,16 @@ const db = getFirestore(app);
 // Initialize Auth  
 const auth = getAuth(app);
 
-// Connect to emulators in development
-if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
-  try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    console.log('Connected to Firebase emulators');
-  } catch (error) {
-    console.log('Firebase emulators connection failed (may already be connected):', error);
-  }
-}
+// Connect to emulators in development (disabled for now to use production Firebase)
+// if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
+//   try {
+//     connectFirestoreEmulator(db, 'localhost', 8080);
+//     connectAuthEmulator(auth, 'http://localhost:9099');
+//     console.log('Connected to Firebase emulators');
+//   } catch (error) {
+//     console.log('Firebase emulators connection failed (may already be connected):', error);
+//   }
+// }
 
 // Extend window type for recaptcha
 declare global {
