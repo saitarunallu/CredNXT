@@ -197,14 +197,17 @@ export default function OfferCard({
   };
 
   const getStatusBadge = () => {
-    if (offer.status === 'accepted') {
-      return <span className="text-green-600 font-semibold text-sm">On Time</span>;
-    } else if (offer.status === 'pending') {
-      return <span className="text-orange-600 font-semibold text-sm">Pending</span>;
+    if (offer.status === 'pending') {
+      return <span className="text-yellow-600 font-semibold text-sm">Pending</span>;
+    } else if (offer.status === 'accepted') {
+      return <span className="text-green-600 font-semibold text-sm">Active</span>;
     } else if (offer.status === 'overdue') {
       return <span className="text-red-600 font-semibold text-sm">Overdue</span>;
+    } else if (offer.status === 'completed') {
+      return <span className="text-black font-semibold text-sm">Closed</span>;
     }
-    return <span className="text-gray-600 font-semibold text-sm capitalize">{offer.status}</span>;
+    // For other statuses, show in orange as "due in days"
+    return <span className="text-orange-600 font-semibold text-sm capitalize">{offer.status}</span>;
   };
 
   return (
