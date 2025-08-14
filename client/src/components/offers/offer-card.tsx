@@ -185,171 +185,88 @@ export default function OfferCard({
     }
   };
 
+  // Get initials from name
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  const getStatusBadge = () => {
+    if (offer.status === 'accepted') {
+      return <span className="text-green-600 font-semibold text-sm">On Time</span>;
+    } else if (offer.status === 'pending') {
+      return <span className="text-orange-600 font-semibold text-sm">Pending</span>;
+    } else if (offer.status === 'overdue') {
+      return <span className="text-red-600 font-semibold text-sm">Overdue</span>;
+    }
+    return <span className="text-gray-600 font-semibold text-sm capitalize">{offer.status}</span>;
+  };
+
   return (
-    <Card className="border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
-      {/* Gradient Top Bar */}
-      <div className={`h-1 w-full ${offer.status === 'accepted' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : offer.status === 'pending' ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-gradient-to-r from-gray-400 to-gray-500'}`} />
-      
-      <CardHeader className="pb-4 pt-5">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
-              <User className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg">{displayName}</h3>
-              <p className="text-sm text-gray-500 font-medium">
-                {isReceived ? fromUser?.phone : offer.toUserPhone}
-              </p>
-            </div>
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+      <div className="flex items-center justify-between">
+        {/* Left side - Avatar and Info */}
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-lg">{getInitials(displayName)}</span>
           </div>
-          <div className="flex flex-col items-end space-y-2">
-            <Badge className={`${getStatusColor(offer.status)} text-xs font-bold tracking-wide uppercase`}>
-              {offer.status}
-            </Badge>
-          </div>
-        </div>
-        
-        {/* Offer Type Banner */}
-        <div className={`mt-4 px-4 py-2 rounded-lg border-l-4 ${getDisplayTypeColor()}`}>
-          <div className="flex items-center space-x-2">
-            {(() => {
-              const IconComponent = getTypeIcon();
-              return <IconComponent className="w-4 h-4" />;
-            })()}
-            <span className="font-semibold text-sm">{getDisplayType().label}</span>
-          </div>
-          <p className="text-xs mt-1 opacity-80">{getDisplayType().subtitle}</p>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-5 pt-2">
-        {/* Amount and Date Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-              <IndianRupee className="w-3 h-3" />
-              <span className="font-medium uppercase tracking-wide">Amount</span>
-            </div>
-            <div className="font-bold text-xl text-gray-900">₹{amount.toLocaleString()}</div>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-              <Calendar className="w-3 h-3" />
-              <span className="font-medium uppercase tracking-wide">
-                {offer.status === 'accepted' && offer.nextPaymentDueDate ? 'Next Due' : 'Due Date'}
-              </span>
-            </div>
-            <div className="font-bold text-sm text-gray-900">
-              {offer.status === 'accepted' && offer.nextPaymentDueDate 
-                ? new Date(offer.nextPaymentDueDate).toLocaleDateString()
-                : new Date(offer.dueDate).toLocaleDateString()
+          <div>
+            <h3 className="font-bold text-gray-900 text-lg">{displayName}</h3>
+            <p className="text-gray-500 text-sm">
+              Due: {offer.status === 'accepted' && offer.nextPaymentDueDate 
+                ? new Date(offer.nextPaymentDueDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })
+                : new Date(offer.dueDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })
               }
-            </div>
+            </p>
           </div>
         </div>
 
-        {/* Progress Section for Accepted Offers */}
-        {offer.status === 'accepted' && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-semibold text-green-800">Payment Progress</span>
-              <span className="text-xs text-green-600 font-medium">{((paid / amount) * 100).toFixed(1)}% Complete</span>
-            </div>
-            
-            <div className="space-y-2 mb-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-green-700">Paid</span>
-                <span className="font-bold text-green-800">₹{paid.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-green-700">Outstanding</span>
-                <span className="font-bold text-red-600">₹{outstanding.toLocaleString()}</span>
-              </div>
-            </div>
-            
-            <div className="w-full bg-green-200 rounded-full h-2.5">
-              <div 
-                className="bg-gradient-to-r from-green-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300" 
-                style={{ width: `${(paid / amount) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
-
-        {/* Purpose Section */}
-        {offer.purpose && (
-          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-            <span className="text-xs text-blue-600 font-medium uppercase tracking-wide block mb-1">Purpose</span>
-            <span className="text-sm text-blue-900 font-medium">{offer.purpose}</span>
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter>
-        {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id ? (
-          <div className="w-full space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <Button 
-                onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
-                disabled={updateOfferMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-2 h-9"
-                size="sm"
-                data-testid="button-accept-offer"
-              >
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Accept
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
-                disabled={updateOfferMutation.isPending}
-                className="text-xs px-2 py-2 h-9"
-                size="sm"
-                data-testid="button-decline-offer"
-              >
-                <XCircle className="w-3 h-3 mr-1" />
-                Decline
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href={`/offers/${offer.id}`} className="w-full block">
-                <Button variant="outline" className="w-full text-xs h-9 border-gray-300" size="sm" data-testid="button-view-details">
-                  View Details
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="w-full text-xs h-9 border-green-300 bg-green-50 hover:bg-green-100 text-green-700"
-                size="sm"
-                onClick={downloadRepaymentSchedule}
-                data-testid="button-download-schedule-card"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Schedule
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full space-y-3">
-            <Link href={`/offers/${offer.id}`} className="w-full">
-              <Button variant="outline" className="w-full" data-testid="button-view-details">
-                View Details
-              </Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              className="w-full bg-green-50 border-green-200 hover:bg-green-100 text-green-700 text-sm"
-              onClick={downloadRepaymentSchedule}
-              data-testid="button-download-schedule-card"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Schedule
-            </Button>
-          </div>
-        )}
-      </CardFooter>
+        {/* Right side - Amount and Status */}
+        <div className="text-right">
+          <div className="font-bold text-xl text-gray-900">₹{amount.toLocaleString()}</div>
+          {getStatusBadge()}
+        </div>
+      </div>
+      
+      {/* Optional: Show action buttons for pending offers */}
+      {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id && (
+        <div className="mt-3 pt-3 border-t border-gray-100 flex space-x-2">
+          <Button 
+            onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
+            disabled={updateOfferMutation.isPending}
+            className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 h-8 flex-1"
+            size="sm"
+            data-testid="button-accept-offer"
+          >
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Accept
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
+            disabled={updateOfferMutation.isPending}
+            className="text-xs px-3 py-1.5 h-8 flex-1"
+            size="sm"
+            data-testid="button-decline-offer"
+          >
+            <XCircle className="w-3 h-3 mr-1" />
+            Decline
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
