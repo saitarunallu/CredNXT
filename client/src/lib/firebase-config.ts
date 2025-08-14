@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, connectAuthEmulator, RecaptchaVerifier } from 'firebase/auth';
 
 const firebaseConfig = {
   // These will be set from environment variables
@@ -35,6 +35,29 @@ if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
   } catch (error) {
     console.log('Firebase emulators connection failed (may already be connected):', error);
   }
+}
+
+// Extend window type for recaptcha
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
+
+// Initialize reCAPTCHA verifier for phone auth
+export function initializeRecaptcha() {
+  if (!window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      'size': 'invisible',
+      'callback': (response: any) => {
+        console.log('reCAPTCHA verified');
+      },
+      'expired-callback': () => {
+        console.log('reCAPTCHA expired');
+      }
+    });
+  }
+  return window.recaptchaVerifier;
 }
 
 export { db, auth };

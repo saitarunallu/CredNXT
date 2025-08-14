@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { completeProfileSchema, type CompleteProfileRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
@@ -24,13 +24,19 @@ export default function CompleteProfile() {
   });
 
   const profileMutation = useMutation({
-    mutationFn: authService.completeProfile.bind(authService),
+    mutationFn: firebaseAuthService.completeProfile.bind(firebaseAuthService),
     onSuccess: (result: any) => {
       if (result.success) {
         setLocation('/dashboard');
         toast({
           title: "Welcome to CredNXT!",
           description: "Your profile has been completed successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to complete profile. Please try again.",
+          variant: "destructive",
         });
       }
     },

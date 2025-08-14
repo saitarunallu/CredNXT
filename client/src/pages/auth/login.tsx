@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { loginSchema, type LoginRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
@@ -25,12 +25,22 @@ export default function Login() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: authService.login.bind(authService),
-    onSuccess: (result: any) => {
+    mutationFn: (data: LoginRequest) => firebaseAuthService.sendOTP(data.phone),
+    onSuccess: (result) => {
       if (result.success) {
         const phone = document.querySelector<HTMLInputElement>('input[name="phone"]')?.value;
         localStorage.setItem('pending_phone', phone || '');
         setLocation('/verify-otp');
+        toast({
+          title: "OTP Sent",
+          description: "Please check your phone for the verification code.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to send OTP. Please try again.",
+          variant: "destructive",
+        });
       }
     },
     onError: (error) => {
@@ -107,6 +117,9 @@ export default function Login() {
             </div>
           </CardContent>
         </Card>
+        
+        {/* reCAPTCHA container for Firebase Auth */}
+        <div id="recaptcha-container"></div>
       </div>
     </div>
   );

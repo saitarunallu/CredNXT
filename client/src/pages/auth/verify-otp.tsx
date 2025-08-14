@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { verifyOtpSchema, type VerifyOtpRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
@@ -42,11 +42,11 @@ export default function VerifyOtp() {
   }, [pendingPhone, setValue]);
 
   const verifyMutation = useMutation({
-    mutationFn: authService.verifyOtp.bind(authService),
-    onSuccess: (result: any) => {
+    mutationFn: (data: VerifyOtpRequest) => firebaseAuthService.verifyOTP(data.code),
+    onSuccess: (result) => {
       if (result.success) {
         localStorage.removeItem('pending_phone');
-        if (result.requiresProfile) {
+        if (result.needsProfile) {
           setLocation('/complete-profile');
         } else {
           setLocation('/dashboard');
@@ -54,6 +54,12 @@ export default function VerifyOtp() {
         toast({
           title: "Success",
           description: "Phone number verified successfully!",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Invalid or expired OTP. Please try again.",
+          variant: "destructive",
         });
       }
     },
@@ -72,16 +78,16 @@ export default function VerifyOtp() {
 
   const handleResendOtp = async () => {
     if (pendingPhone) {
-      try {
-        await authService.login({ phone: pendingPhone });
+      const result = await firebaseAuthService.sendOTP(pendingPhone);
+      if (result.success) {
         toast({
           title: "OTP Sent",
           description: "A new OTP has been sent to your phone.",
         });
-      } catch (error) {
+      } else {
         toast({
           title: "Error",
-          description: "Failed to resend OTP. Please try again.",
+          description: result.error || "Failed to resend OTP. Please try again.",
           variant: "destructive",
         });
       }
