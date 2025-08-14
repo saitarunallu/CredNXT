@@ -26,7 +26,9 @@ export default function OfferCard({
   const queryClient = useQueryClient();
   const currentUser = authService.getUser();
   
-  const displayName = isReceived ? fromUser?.name : offer.toUserName;
+  const displayName = isReceived 
+    ? (fromUser?.name || offer.toUserName || "Unknown User")
+    : (offer.toUserName || "Unknown User");
   const amount = parseFloat(offer.amount);
   const paid = parseFloat(totalPaid);
   const outstanding = amount - paid;
