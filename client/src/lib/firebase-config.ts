@@ -35,16 +35,9 @@ const db = getFirestore(app);
 // Initialize Auth  
 const auth = getAuth(app);
 
-// Connect to emulators in development to avoid hostname mismatch issues
-if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
-  try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    console.log('Connected to Firebase emulators');
-  } catch (error) {
-    console.log('Firebase emulators connection already established:', error);
-  }
-}
+// Use production Firestore but disable auth emulator to avoid network issues
+// Auth will be handled server-side with JWT tokens for now
+console.log('Firebase configured for production Firestore with server-side auth');
 
 // Extend window type for recaptcha
 declare global {
@@ -53,25 +46,10 @@ declare global {
   }
 }
 
-// Initialize reCAPTCHA verifier for phone auth
+// Skip reCAPTCHA initialization - using server-side OTP instead
 export function initializeRecaptcha() {
-  if (!window.recaptchaVerifier) {
-    try {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response: any) => {
-          console.log('reCAPTCHA verified');
-        },
-        'expired-callback': () => {
-          console.log('reCAPTCHA expired');
-        }
-      });
-    } catch (error) {
-      console.warn('reCAPTCHA initialization failed (may be in emulator mode):', error);
-      // In emulator mode, reCAPTCHA might not be needed
-    }
-  }
-  return window.recaptchaVerifier;
+  console.log('Using server-side authentication, skipping reCAPTCHA');
+  return null;
 }
 
 export { db, auth };
