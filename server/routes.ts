@@ -10,6 +10,7 @@ import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
 import { securityService } from "./services/security";
 import { repaymentService } from "./services/repayment";
+import { registerHealthRoutes } from "./routes/health";
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
@@ -1698,6 +1699,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Register health check routes
+  registerHealthRoutes(app);
 
   return httpServer;
 }

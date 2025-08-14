@@ -1,4 +1,5 @@
 import React from 'react';
+import ErrorFallback from './error-fallback';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -21,7 +22,13 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log to console in development, send to monitoring service in production
     console.error('Error Boundary caught an error:', error, errorInfo);
+    
+    // In production, you'd send this to a monitoring service like Sentry
+    if (import.meta.env.PROD) {
+      // Example: Sentry.captureException(error, { extra: errorInfo });
+    }
   }
 
   resetError = () => {
@@ -35,34 +42,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
         return <FallbackComponent error={this.state.error!} resetError={this.resetError} />;
       }
 
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Something went wrong
-              </h2>
-              <p className="text-gray-600 mb-6">
-                An unexpected error occurred. Please try refreshing the page.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={this.resetError}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Try Again
-                </button>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  Refresh Page
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+      return <ErrorFallback error={this.state.error!} resetError={this.resetError} />;
     }
 
     return this.props.children;
