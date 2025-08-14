@@ -12,17 +12,15 @@ import { MessageSquare, Phone, Send, CheckCircle, AlertCircle } from 'lucide-rea
 export default function SMSTest() {
   const [phoneNumber, setPhoneNumber] = useState('+91');
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('notification');
+  const [messageType, setMessageType] = useState('verification');
   const [sending, setSending] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
   const { toast } = useToast();
 
-  // Template messages for testing
+  // Template messages for authentication testing only
   const templates = {
     verification: 'Your CredNXT verification code is: 123456. Valid for 10 minutes. Do not share this code.',
-    loan_offer: 'New loan offer from John Doe for ₹10,000 on CredNXT. Login to view details and respond.',
-    payment_reminder: 'Payment reminder: ₹2,500 due on 15th Jan. Login to CredNXT to make payment.',
-    payment_received: 'Payment of ₹2,500 received from Jane Smith. Thank you for using CredNXT!'
+    password_reset: 'Your CredNXT password reset code is: 789012. Valid for 10 minutes. Do not share this code.'
   };
 
   const handleSendSMS = async () => {
@@ -117,10 +115,7 @@ export default function SMSTest() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="notification">Notification</SelectItem>
                   <SelectItem value="verification">Verification</SelectItem>
-                  <SelectItem value="reminder">Reminder</SelectItem>
-                  <SelectItem value="alert">Alert</SelectItem>
                 </SelectContent>
               </Select>
             </div>

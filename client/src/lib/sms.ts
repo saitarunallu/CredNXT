@@ -48,44 +48,18 @@ class SMSService {
     }
   }
 
-  async sendLoanOfferNotification(phoneNumber: string, amount: string, fromName: string): Promise<SMSResult> {
+  async sendPasswordResetCode(phoneNumber: string, code: string): Promise<SMSResult> {
     try {
-      const response = await apiRequest('POST', '/api/sms/loan-offer', {
+      const response = await apiRequest('POST', '/api/sms/send-password-reset', {
         phoneNumber,
-        amount,
-        fromName
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
+        code
       });
 
       return await response.json();
     } catch (error: any) {
       return {
         success: false,
-        error: error.message || 'Failed to send loan offer SMS'
-      };
-    }
-  }
-
-  async sendPaymentReminder(phoneNumber: string, amount: string, dueDate: string): Promise<SMSResult> {
-    try {
-      const response = await apiRequest('POST', '/api/sms/payment-reminder', {
-        phoneNumber,
-        amount,
-        dueDate
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      });
-
-      return await response.json();
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to send payment reminder SMS'
+        error: error.message || 'Failed to send password reset SMS'
       };
     }
   }

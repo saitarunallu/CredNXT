@@ -12,7 +12,7 @@ const smsConfigSchema = z.object({
 const smsMessageSchema = z.object({
   to: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
   message: z.string().min(1).max(1600, 'Message too long'),
-  type: z.enum(['verification', 'notification', 'reminder', 'alert']).optional(),
+  type: z.enum(['verification']).optional(),
 });
 
 export type SMSMessage = z.infer<typeof smsMessageSchema>;
@@ -142,7 +142,7 @@ class SMSService {
     }
   }
 
-  // Predefined SMS templates for common use cases
+  // SMS templates for authentication purposes only
   public async sendVerificationCode(phoneNumber: string, code: string): Promise<SMSResult> {
     const message = `Your CredNXT verification code is: ${code}. Valid for 10 minutes. Do not share this code.`;
     return this.sendSMS({
@@ -152,39 +152,12 @@ class SMSService {
     });
   }
 
-  public async sendLoanOfferNotification(phoneNumber: string, amount: string, fromName: string): Promise<SMSResult> {
-    const message = `New loan offer from ${fromName} for ₹${amount} on CredNXT. Login to view details and respond.`;
+  public async sendPasswordResetCode(phoneNumber: string, code: string): Promise<SMSResult> {
+    const message = `Your CredNXT password reset code is: ${code}. Valid for 10 minutes. Do not share this code.`;
     return this.sendSMS({
       to: phoneNumber,
       message,
-      type: 'notification',
-    });
-  }
-
-  public async sendPaymentReminder(phoneNumber: string, amount: string, dueDate: string): Promise<SMSResult> {
-    const message = `Payment reminder: ₹${amount} due on ${dueDate}. Login to CredNXT to make payment.`;
-    return this.sendSMS({
-      to: phoneNumber,
-      message,
-      type: 'reminder',
-    });
-  }
-
-  public async sendPaymentReceived(phoneNumber: string, amount: string, fromName: string): Promise<SMSResult> {
-    const message = `Payment of ₹${amount} received from ${fromName}. Thank you for using CredNXT!`;
-    return this.sendSMS({
-      to: phoneNumber,
-      message,
-      type: 'notification',
-    });
-  }
-
-  public async sendLoanApproved(phoneNumber: string, amount: string): Promise<SMSResult> {
-    const message = `Your loan application for ₹${amount} has been approved! Funds will be transferred as per agreement.`;
-    return this.sendSMS({
-      to: phoneNumber,
-      message,
-      type: 'notification',
+      type: 'verification',
     });
   }
 

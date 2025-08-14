@@ -9,7 +9,7 @@ const router = Router();
 const sendSMSSchema = z.object({
   to: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
   message: z.string().min(1).max(1600, 'Message too long'),
-  type: z.enum(['verification', 'notification', 'reminder', 'alert']).optional(),
+  type: z.enum(['verification']).optional(),
 });
 
 router.post('/send', requireAuth, async (req, res) => {
@@ -78,18 +78,18 @@ router.post('/send-verification', async (req, res) => {
   }
 });
 
-// Loan offer notification
-router.post('/loan-offer', requireAuth, async (req, res) => {
+// Password reset code
+router.post('/send-password-reset', async (req, res) => {
   try {
-    const { phoneNumber, amount, fromName } = req.body;
+    const { phoneNumber, code } = req.body;
     
-    if (!phoneNumber || !amount || !fromName) {
+    if (!phoneNumber || !code) {
       return res.status(400).json({
-        error: 'Phone number, amount, and sender name are required',
+        error: 'Phone number and reset code are required',
       });
     }
 
-    const result = await smsService.sendLoanOfferNotification(phoneNumber, amount, fromName);
+    const result = await smsService.sendPasswordResetCode(phoneNumber, code);
     
     if (result.success) {
       res.json({
@@ -103,43 +103,10 @@ router.post('/loan-offer', requireAuth, async (req, res) => {
       });
     }
   } catch (error: any) {
-    console.error('Loan offer SMS error:', error);
+    console.error('Password reset SMS error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to send loan offer SMS',
-    });
-  }
-});
-
-// Payment reminder
-router.post('/payment-reminder', requireAuth, async (req, res) => {
-  try {
-    const { phoneNumber, amount, dueDate } = req.body;
-    
-    if (!phoneNumber || !amount || !dueDate) {
-      return res.status(400).json({
-        error: 'Phone number, amount, and due date are required',
-      });
-    }
-
-    const result = await smsService.sendPaymentReminder(phoneNumber, amount, dueDate);
-    
-    if (result.success) {
-      res.json({
-        success: true,
-        messageId: result.messageId,
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: result.error,
-      });
-    }
-  } catch (error: any) {
-    console.error('Payment reminder SMS error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to send payment reminder SMS',
+      error: 'Failed to send password reset SMS',
     });
   }
 });

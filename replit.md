@@ -36,7 +36,18 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 
 ## Recent Updates
 
-### August 14, 2025 - SMS Service Migrated to Firebase
+### August 14, 2025 - SMS Service Restricted to Authentication Only
+**Restriction**: Limited SMS functionality to authentication purposes only
+**Implementation**: Removed transaction-related messaging and kept only login/password reset
+- Removed loan offer notifications, payment reminders, and transaction messages
+- Updated SMS service to only support `sendVerificationCode` and `sendPasswordResetCode` methods
+- Updated API routes to remove `/loan-offer` and `/payment-reminder` endpoints
+- Added `/send-password-reset` endpoint for password reset codes
+- Updated frontend SMS test interface to only show verification and password reset templates
+- Updated message type validation to only accept 'verification' type
+- Updated documentation and test page to reflect authentication-only usage
+
+### August 14, 2025 - SMS Service Migrated to Firebase  
 **Migration**: Replaced Twilio SMS with Google Firebase integration
 **Implementation**: Updated SMS service to use Firebase Admin SDK and Firestore
 - Updated `server/services/sms.ts` to use Firebase Admin SDK instead of Twilio
@@ -45,7 +56,6 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 - Modified `server/routes/sms.ts` error messages to reflect Firebase usage
 - Updated `SMS_INTEGRATION.md` documentation with Firebase setup instructions
 - Updated SMS test page to show Firebase configuration requirements
-- Maintained all existing SMS functionality and templates
 
 ### August 14, 2025 - SMS Integration Complete (Legacy)
 **Feature Added**: Comprehensive SMS functionality originally using Twilio

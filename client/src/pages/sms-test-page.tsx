@@ -30,7 +30,7 @@ export default function SMSTestPage() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">SMS Service Testing</h1>
           <p className="text-gray-600">
-            Test SMS functionality for notifications, verification codes, and alerts
+            Test SMS functionality for login verification and password reset codes only
           </p>
         </div>
 
@@ -108,37 +108,27 @@ export default function SMSTestPage() {
                 <h4 className="font-medium text-gray-900">Authentication & Security</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• OTP verification for login</li>
+                  <li>• Password reset codes</li>
                   <li>• Two-factor authentication codes</li>
-                  <li>• Account security alerts</li>
                 </ul>
               </div>
 
               <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">Loan Management</h4>
+                <h4 className="font-medium text-gray-900">Firebase Integration</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• New loan offer notifications</li>
-                  <li>• Loan approval confirmations</li>
-                  <li>• Status update alerts</li>
+                  <li>• Messages stored in Firestore</li>
+                  <li>• Delivery tracking and analytics</li>
+                  <li>• Secure credential management</li>
                 </ul>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">Payment Notifications</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Payment reminders</li>
-                  <li>• Payment received confirmations</li>
-                  <li>• Due date alerts</li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">System Alerts</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Security breach notifications</li>
-                  <li>• Account updates</li>
-                  <li>• Compliance alerts</li>
-                </ul>
-              </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-800 mb-2">Important Notice</h4>
+              <p className="text-sm text-blue-700">
+                SMS functionality is now limited to authentication purposes only (login verification and password reset). 
+                Transaction notifications, payment reminders, and loan alerts have been disabled as requested.
+              </p>
             </div>
           </CardContent>
         </Card>

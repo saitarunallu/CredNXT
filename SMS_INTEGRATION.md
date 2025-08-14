@@ -1,7 +1,7 @@
 # SMS Integration - CredNXT Platform
 
 ## Overview
-Successfully integrated SMS functionality using Google Firebase for sending notifications, verification codes, payment reminders, and alerts throughout the CredNXT lending platform.
+Successfully integrated SMS functionality using Google Firebase for authentication purposes only. The system handles login verification codes and password reset codes throughout the CredNXT lending platform.
 
 ## Features Implemented
 
@@ -14,10 +14,9 @@ Successfully integrated SMS functionality using Google Firebase for sending noti
 - **Bulk SMS**: Support for sending messages to multiple recipients
 
 ### 2. API Routes (`server/routes/sms.ts`)
-- `POST /api/sms/send` - Send custom SMS messages
-- `POST /api/sms/send-verification` - Send verification codes (no auth required)
-- `POST /api/sms/loan-offer` - Send loan offer notifications
-- `POST /api/sms/payment-reminder` - Send payment reminders
+- `POST /api/sms/send` - Send custom verification messages (auth required)
+- `POST /api/sms/send-verification` - Send login verification codes (no auth required)
+- `POST /api/sms/send-password-reset` - Send password reset codes (no auth required)
 - `GET /api/sms/status/:messageId` - Check SMS delivery status
 - `GET /api/sms/service-status` - Check if SMS service is configured
 
