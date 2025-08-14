@@ -7,14 +7,24 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+function getApiUrl(path: string): string {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (baseUrl) {
+    return `${baseUrl}${path}`;
+  }
+  return path; // Fallback to relative path
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
   options?: { headers?: Record<string, string> }
 ): Promise<Response> {
+  const token = localStorage.getItem('auth_token');
+  const fullUrl = getApiUrl(url);
+  
   try {
-    const token = localStorage.getItem('auth_token');
     
     const headers = {
       ...(data ? { "Content-Type": "application/json" } : {}),
@@ -22,7 +32,7 @@ export async function apiRequest(
       ...(options?.headers || {})
     };
 
-    const res = await fetch(url, {
+    const res = await fetch(fullUrl, {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
@@ -32,7 +42,7 @@ export async function apiRequest(
     await throwIfResNotOk(res);
     return res;
   } catch (error) {
-    console.error(`API request failed for ${method} ${url}:`, error);
+    console.error(`API request failed for ${method} ${fullUrl}:`, error);
     throw error;
   }
 }
@@ -43,10 +53,13 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const token = localStorage.getItem('auth_token');
+    const url = queryKey.join("/") as string;
+    const fullUrl = getApiUrl(url);
+    
     try {
-      const token = localStorage.getItem('auth_token');
       
-      const res = await fetch(queryKey.join("/") as string, {
+      const res = await fetch(fullUrl, {
         headers: {
           ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         },
@@ -68,7 +81,7 @@ export const getQueryFn: <T>(options: {
       await throwIfResNotOk(res);
       return await res.json();
     } catch (error) {
-      console.error(`Query failed for ${queryKey.join("/")}:`, error);
+      console.error(`Query failed for ${fullUrl}:`, error);
       throw error;
     }
   };
