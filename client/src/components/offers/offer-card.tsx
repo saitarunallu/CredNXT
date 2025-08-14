@@ -211,65 +211,75 @@ export default function OfferCard({
   };
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
-      <div className="flex items-center justify-between">
-        {/* Left side - Avatar and Info */}
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">{getInitials(displayName)}</span>
+    <Link href={`/offers/${offer.id}`} className="block" data-testid={`link-offer-${offer.id}`}>
+      <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer">
+        <div className="flex items-center justify-between">
+          {/* Left side - Avatar and Info */}
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">{getInitials(displayName)}</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 text-lg">{displayName}</h3>
+              <p className="text-gray-500 text-sm">
+                Due: {offer.status === 'accepted' && offer.nextPaymentDueDate 
+                  ? new Date(offer.nextPaymentDueDate).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })
+                  : new Date(offer.dueDate).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })
+                }
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg">{displayName}</h3>
-            <p className="text-gray-500 text-sm">
-              Due: {offer.status === 'accepted' && offer.nextPaymentDueDate 
-                ? new Date(offer.nextPaymentDueDate).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })
-                : new Date(offer.dueDate).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })
-              }
-            </p>
-          </div>
-        </div>
 
-        {/* Right side - Amount and Status */}
-        <div className="text-right">
-          <div className="font-bold text-xl text-gray-900">₹{amount.toLocaleString()}</div>
-          {getStatusBadge()}
+          {/* Right side - Amount and Status */}
+          <div className="text-right">
+            <div className="font-bold text-xl text-gray-900">₹{amount.toLocaleString()}</div>
+            {getStatusBadge()}
+          </div>
         </div>
-      </div>
       
-      {/* Optional: Show action buttons for pending offers */}
-      {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex space-x-2">
-          <Button 
-            onClick={() => updateOfferMutation.mutate({ status: 'accepted' })}
-            disabled={updateOfferMutation.isPending}
-            className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 h-8 flex-1"
-            size="sm"
-            data-testid="button-accept-offer"
-          >
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Accept
-          </Button>
-          <Button 
-            variant="destructive"
-            onClick={() => updateOfferMutation.mutate({ status: 'declined' })}
-            disabled={updateOfferMutation.isPending}
-            className="text-xs px-3 py-1.5 h-8 flex-1"
-            size="sm"
-            data-testid="button-decline-offer"
-          >
-            <XCircle className="w-3 h-3 mr-1" />
-            Decline
-          </Button>
-        </div>
-      )}
-    </Card>
+        {/* Optional: Show action buttons for pending offers */}
+        {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id && (
+          <div className="mt-3 pt-3 border-t border-gray-100 flex space-x-2">
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                updateOfferMutation.mutate({ status: 'accepted' });
+              }}
+              disabled={updateOfferMutation.isPending}
+              className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 h-8 flex-1"
+              size="sm"
+              data-testid="button-accept-offer"
+            >
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Accept
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                updateOfferMutation.mutate({ status: 'declined' });
+              }}
+              disabled={updateOfferMutation.isPending}
+              className="text-xs px-3 py-1.5 h-8 flex-1"
+              size="sm"
+              data-testid="button-decline-offer"
+            >
+              <XCircle className="w-3 h-3 mr-1" />
+              Decline
+            </Button>
+          </div>
+        )}
+      </Card>
+    </Link>
   );
 }
