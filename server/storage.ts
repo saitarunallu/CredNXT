@@ -182,21 +182,21 @@ export class DatabaseStorage implements IStorage {
 
   // Payments
   async getOfferPayments(offerId: string): Promise<Payment[]> {
-    return await this.firestore.getPaymentsByOfferId(offerId);
+    return await this.getFirestore().getPaymentsByOfferId(offerId);
   }
 
   async createPayment(payment: InsertPayment): Promise<Payment> {
-    return await this.firestore.createPayment(payment);
+    return await this.getFirestore().createPayment(payment);
   }
 
   async updatePayment(id: string, updates: UpdatePayment): Promise<Payment> {
-    const updated = await this.firestore.updatePayment(id, updates);
+    const updated = await this.getFirestore().updatePayment(id, updates);
     if (!updated) throw new Error('Payment not found');
     return updated;
   }
 
   async getPayment(id: string): Promise<Payment | undefined> {
-    const payment = await this.firestore.getPaymentById(id);
+    const payment = await this.getFirestore().getPaymentById(id);
     return payment || undefined;
   }
 
@@ -207,20 +207,20 @@ export class DatabaseStorage implements IStorage {
 
   async deletePayment(paymentId: string): Promise<void> {
     // For now, mark as rejected instead of actually deleting
-    await this.firestore.updatePayment(paymentId, { status: 'rejected' });
+    await this.getFirestore().updatePayment(paymentId, { status: 'rejected' });
   }
 
   // Notifications
   async getUserNotifications(userId: string): Promise<Notification[]> {
-    return await this.firestore.getNotificationsByUserId(userId);
+    return await this.getFirestore().getNotificationsByUserId(userId);
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
-    return await this.firestore.createNotification(notification);
+    return await this.getFirestore().createNotification(notification);
   }
 
   async markNotificationAsRead(id: string): Promise<void> {
-    await this.firestore.markNotificationAsRead(id);
+    await this.getFirestore().markNotificationAsRead(id);
   }
 
   async updateNotification(id: string, updates: Partial<InsertNotification>): Promise<Notification> {
@@ -276,20 +276,20 @@ export class DatabaseStorage implements IStorage {
 
   // OTP
   async createOtp(phone: string, code: string, expiresAt: Date): Promise<void> {
-    await this.firestore.createOTP(phone, code);
+    await this.getFirestore().createOTP(phone, code);
   }
 
   async verifyOtp(phone: string, code: string): Promise<boolean> {
-    const otp = await this.firestore.getValidOTP(phone, code);
+    const otp = await this.getFirestore().getValidOTP(phone, code);
     if (otp) {
-      await this.firestore.markOTPAsUsed(otp.id);
+      await this.getFirestore().markOTPAsUsed(otp.id);
       return true;
     }
     return false;
   }
 
   async deleteExpiredOtps(): Promise<void> {
-    await this.firestore.cleanupExpiredOTPs();
+    await this.getFirestore().cleanupExpiredOTPs();
   }
 }
 

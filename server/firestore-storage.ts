@@ -4,7 +4,7 @@ import {
   InsertUser, InsertOffer, InsertPayment, InsertNotification,
   UpdatePayment 
 } from '../shared/firestore-schema';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 export interface IFirestoreStorage {
   // User operations
@@ -60,6 +60,17 @@ class FirestoreStorage implements IFirestoreStorage {
     return Timestamp.fromDate(date);
   }
 
+  private convertTimestampFields(data: any): any {
+    if (!data) return data;
+    const converted = { ...data };
+    for (const key in converted) {
+      if (converted[key] && typeof converted[key].toDate === 'function') {
+        converted[key] = converted[key] as Timestamp;
+      }
+    }
+    return converted;
+  }
+
   // User operations
   async createUser(userData: InsertUser): Promise<User> {
     const id = this.generateId();
@@ -71,8 +82,8 @@ class FirestoreStorage implements IFirestoreStorage {
       name: userData.name,
       email: userData.email,
       isVerified: userData.isVerified || false,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now as any,
+      updatedAt: now as any,
     };
 
     await this.db.collection('users').doc(id).set(user);
@@ -131,9 +142,9 @@ class FirestoreStorage implements IFirestoreStorage {
       prepaymentPenalty: offerData.prepaymentPenalty || 0,
       latePaymentPenalty: offerData.latePaymentPenalty || 0,
       purpose: offerData.purpose,
-      startDate: this.dateToTimestamp(offerData.startDate),
-      dueDate: this.dateToTimestamp(offerData.dueDate),
-      nextPaymentDueDate: offerData.nextPaymentDueDate ? this.dateToTimestamp(offerData.nextPaymentDueDate) : undefined,
+      startDate: this.dateToTimestamp(offerData.startDate) as any,
+      dueDate: this.dateToTimestamp(offerData.dueDate) as any,
+      nextPaymentDueDate: offerData.nextPaymentDueDate ? this.dateToTimestamp(offerData.nextPaymentDueDate) as any : undefined,
       currentInstallmentNumber: offerData.currentInstallmentNumber || 1,
       totalInstallments: offerData.totalInstallments,
       note: offerData.note,
@@ -141,8 +152,8 @@ class FirestoreStorage implements IFirestoreStorage {
       contractPdfKey: offerData.contractPdfKey,
       kfsPdfKey: offerData.kfsPdfKey,
       schedulePdfKey: offerData.schedulePdfKey,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now as any,
+      updatedAt: now as any,
     };
 
     await this.db.collection('offers').doc(id).set(offer);
@@ -218,7 +229,7 @@ class FirestoreStorage implements IFirestoreStorage {
       paymentMode: paymentData.paymentMode,
       refString: paymentData.refString,
       status: paymentData.status || 'pending',
-      createdAt: now,
+      createdAt: now as any,
     };
 
     await this.db.collection('payments').doc(id).set(payment);
@@ -246,7 +257,8 @@ class FirestoreStorage implements IFirestoreStorage {
     const updateData: any = { ...updates };
     
     if (updates.paidAt) {
-      updateData.paidAt = this.dateToTimestamp(updates.paidAt);
+      const paidAt = updates.paidAt as any;
+      updateData.paidAt = this.dateToTimestamp(paidAt.toDate ? paidAt.toDate() : paidAt) as any;
     }
     
     await paymentRef.update(updateData);
@@ -280,11 +292,11 @@ class FirestoreStorage implements IFirestoreStorage {
       title: notificationData.title,
       message: notificationData.message,
       isRead: false,
-      scheduledFor: notificationData.scheduledFor ? this.dateToTimestamp(notificationData.scheduledFor) : now,
-      expiresAt: notificationData.expiresAt ? this.dateToTimestamp(notificationData.expiresAt) : undefined,
+      scheduledFor: notificationData.scheduledFor ? this.dateToTimestamp(notificationData.scheduledFor) as any : now as any,
+      expiresAt: notificationData.expiresAt ? this.dateToTimestamp(notificationData.expiresAt) as any : undefined,
       metadata: notificationData.metadata,
       batchId: notificationData.batchId,
-      createdAt: now,
+      createdAt: now as any,
     };
 
     await this.db.collection('notifications').doc(id).set(notification);
@@ -322,9 +334,9 @@ class FirestoreStorage implements IFirestoreStorage {
       id,
       phone,
       code,
-      expiresAt,
+      expiresAt: expiresAt as any,
       used: false,
-      createdAt: now,
+      createdAt: now as any,
     };
 
     await this.db.collection('otp_codes').doc(id).set(otp);
