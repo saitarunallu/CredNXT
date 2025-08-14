@@ -97,7 +97,11 @@ class WebSocketService {
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (authService.isAuthenticated()) {
-        this.connect();
+        try {
+          this.connect();
+        } catch (error) {
+          console.error('WebSocket reconnection error:', error);
+        }
       }
     }, 3000);
   }

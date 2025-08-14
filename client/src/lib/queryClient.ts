@@ -98,6 +98,14 @@ export const queryClient = new QueryClient({
       },
       onError: (error) => {
         console.error('Mutation error:', error);
+        // Ensure all mutation errors are properly handled
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            console.warn('Authentication error in mutation');
+          } else if (error.message.includes('Network')) {
+            console.warn('Network error in mutation');
+          }
+        }
       },
     },
   },

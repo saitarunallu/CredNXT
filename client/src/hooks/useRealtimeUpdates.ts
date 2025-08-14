@@ -25,11 +25,19 @@ export function useRealtimeUpdates() {
       // Force immediate refetch with no delay - track timeout for cleanup
       const timeout = setTimeout(async () => {
         try {
-          await Promise.allSettled([
+          const results = await Promise.allSettled([
             queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
             queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] }),
             queryClient.refetchQueries({ queryKey: ['/api/notifications'] })
           ]);
+          
+          // Check for any rejected promises and log them specifically
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              const queryNames = ['/api/offers', '/api/dashboard/stats', '/api/notifications'];
+              console.error(`Failed to refetch ${queryNames[index]}:`, result.reason);
+            }
+          });
         } catch (error) {
           console.error('Error refetching queries:', error);
         }
@@ -53,11 +61,19 @@ export function useRealtimeUpdates() {
       // Force immediate refetch - track timeout for cleanup
       const timeout = setTimeout(async () => {
         try {
-          await Promise.allSettled([
+          const results = await Promise.allSettled([
             queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
             queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] }),
             queryClient.refetchQueries({ queryKey: ['/api/notifications'] })
           ]);
+          
+          // Check for any rejected promises and log them specifically
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              const queryNames = ['/api/offers', '/api/dashboard/stats', '/api/notifications'];
+              console.error(`Failed to refetch ${queryNames[index]}:`, result.reason);
+            }
+          });
         } catch (error) {
           console.error('Error refetching queries:', error);
         }
@@ -77,11 +93,19 @@ export function useRealtimeUpdates() {
       // Force immediate refetch - track timeout for cleanup
       const timeout = setTimeout(async () => {
         try {
-          await Promise.allSettled([
+          const results = await Promise.allSettled([
             queryClient.refetchQueries({ queryKey: ['/api/notifications'] }),
             queryClient.refetchQueries({ queryKey: ['/api/offers'] }),
             queryClient.refetchQueries({ queryKey: ['/api/dashboard/stats'] })
           ]);
+          
+          // Check for any rejected promises and log them specifically
+          results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+              const queryNames = ['/api/notifications', '/api/offers', '/api/dashboard/stats'];
+              console.error(`Failed to refetch ${queryNames[index]}:`, result.reason);
+            }
+          });
         } catch (error) {
           console.error('Error refetching queries:', error);
         }

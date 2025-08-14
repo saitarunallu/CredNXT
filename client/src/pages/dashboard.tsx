@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { useEffect } from "react";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +12,14 @@ import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "luc
 export default function Dashboard() {
   const [, setLocation] = useLocation();
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
+  const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['/api/dashboard/stats'],
+    retry: 1,
   });
 
-  const { data: offersData, isLoading: offersLoading } = useQuery({
+  const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
+    retry: 1,
   });
 
   const stats = (statsData as any)?.stats || {
@@ -27,6 +30,16 @@ export default function Dashboard() {
   };
 
   console.log('Dashboard Stats Debug:', { statsData, stats, statsLoading });
+
+  // Handle query errors
+  useEffect(() => {
+    if (statsError) {
+      console.error('Dashboard stats error:', statsError);
+    }
+    if (offersError) {
+      console.error('Dashboard offers error:', offersError);
+    }
+  }, [statsError, offersError]);
 
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {

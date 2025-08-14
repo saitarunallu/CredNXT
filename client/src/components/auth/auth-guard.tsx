@@ -25,7 +25,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         if (error instanceof Error && error.message.includes('401')) {
           authService.logout();
           setLocation('/login');
+          return null; // Return null instead of throwing to prevent unhandled rejection
         }
+        // For other errors, still throw to maintain error state
         throw error;
       }
     },

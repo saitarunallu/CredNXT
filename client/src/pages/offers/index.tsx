@@ -13,8 +13,9 @@ export default function OffersPage() {
   const [location, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
-  const { data: offersData } = useQuery({
+  const { data: offersData, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
+    retry: 1,
   });
 
   const sentOffers = (offersData as any)?.sentOffers || [];
@@ -22,6 +23,13 @@ export default function OffersPage() {
 
   // Debug: Log offers data to understand structure
   console.log('Offers Debug:', { sentOffers, receivedOffers, location, activeFilter });
+
+  // Handle query errors
+  useEffect(() => {
+    if (offersError) {
+      console.error('Offers page error:', offersError);
+    }
+  }, [offersError]);
 
   // Parse filter from URL query parameters and sessionStorage
   useEffect(() => {

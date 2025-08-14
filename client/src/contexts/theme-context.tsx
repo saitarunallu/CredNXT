@@ -17,8 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const actualTheme: "light" = "light";
 
   const handleSetTheme = (newTheme: Theme) => {
-    // Force light theme only
-    console.log("Theme locked to light mode");
+    // Force light theme only - no console logging needed
   };
 
   return (
