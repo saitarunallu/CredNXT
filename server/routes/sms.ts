@@ -164,8 +164,8 @@ router.get('/service-status', (req, res) => {
   res.json({
     enabled: smsService.isEnabled(),
     message: smsService.isEnabled() 
-      ? 'SMS service is configured and ready'
-      : 'SMS service not configured. Please set Twilio environment variables.',
+      ? 'Firebase SMS service is configured and ready'
+      : 'SMS service not configured. Please set Firebase environment variables.',
   });
 });
 

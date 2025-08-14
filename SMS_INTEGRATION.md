@@ -1,12 +1,13 @@
 # SMS Integration - CredNXT Platform
 
 ## Overview
-Successfully integrated SMS functionality using Twilio for sending notifications, verification codes, payment reminders, and alerts throughout the CredNXT lending platform.
+Successfully integrated SMS functionality using Google Firebase for sending notifications, verification codes, payment reminders, and alerts throughout the CredNXT lending platform.
 
 ## Features Implemented
 
 ### 1. SMS Service (`server/services/sms.ts`)
-- **Twilio Integration**: Complete SMS service using Twilio API
+- **Firebase Integration**: Complete SMS service using Firebase Admin SDK
+- **Firestore Storage**: Messages are logged to Firestore for tracking and analytics
 - **Template Messages**: Pre-built templates for common use cases
 - **Validation**: Input validation for phone numbers and message content
 - **Error Handling**: Comprehensive error handling and logging
@@ -35,17 +36,21 @@ Successfully integrated SMS functionality using Twilio for sending notifications
 Add these to your `.env` file or production environment:
 
 ```env
-# Twilio SMS Configuration
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token  
-TWILIO_PHONE_NUMBER=your-twilio-phone-number
+# Firebase SMS Configuration
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_PRIVATE_KEY=your-firebase-private-key
+FIREBASE_CLIENT_EMAIL=your-firebase-client-email
 ```
 
 ### Development Setup
-1. Sign up for a [Twilio account](https://www.twilio.com/)
-2. Get your Account SID, Auth Token, and purchase a phone number
-3. Add the environment variables to your `.env` file
-4. Restart the application
+1. Create a [Firebase project](https://console.firebase.google.com/)
+2. Enable Firestore Database in your Firebase project
+3. Generate a service account key:
+   - Go to Project Settings > Service Accounts
+   - Click "Generate new private key"
+   - Copy the project_id, private_key, and client_email from the JSON file
+4. Add the environment variables to your `.env` file
+5. Restart the application
 
 ## Usage Examples
 

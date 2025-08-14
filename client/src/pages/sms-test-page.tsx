@@ -72,9 +72,9 @@ export default function SMSTestPage() {
                       To enable SMS functionality, configure the following environment variables:
                     </p>
                     <ul className="text-xs text-yellow-600 space-y-1 font-mono">
-                      <li>• TWILIO_ACCOUNT_SID</li>
-                      <li>• TWILIO_AUTH_TOKEN</li>
-                      <li>• TWILIO_PHONE_NUMBER</li>
+                      <li>• FIREBASE_PROJECT_ID</li>
+                      <li>• FIREBASE_PRIVATE_KEY</li>
+                      <li>• FIREBASE_CLIENT_EMAIL</li>
                     </ul>
                   </div>
                 )}
