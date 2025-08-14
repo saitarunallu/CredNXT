@@ -16,6 +16,7 @@ import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
 } from "@shared/firestore-schema";
+import { Timestamp } from 'firebase-admin/firestore';
 import { z } from "zod";
 
 interface AuthenticatedRequest extends Request {
@@ -653,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingPayments = await storage.getOfferPayments(paymentData.offerId);
       const totalPaid = existingPayments
         .filter(p => p.status === 'paid')
-        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        .reduce((sum, p) => sum + parseFloat(String(p.amount)), 0);
 
       // Check if there's already a pending payment for this installment (if not allowing part payments)
       const pendingPayments = existingPayments.filter(p => p.status === 'pending');
@@ -670,20 +671,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate repayment schedule to validate payment
       const loanTerms = {
-        principal: parseFloat(offer.amount),
-        interestRate: parseFloat(offer.interestRate),
+        principal: parseFloat(String(offer.amount)),
+        interestRate: parseFloat(String(offer.interestRate)),
         interestType: offer.interestType as 'fixed' | 'reducing',
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit as 'months' | 'years',
         repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
-        repaymentFrequency: offer.repaymentFrequency || 'monthly',
-        startDate: loanStartDate
+        repaymentFrequency: (offer.repaymentFrequency || 'monthly') as 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly',
+        startDate: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date()
       };
       
       const schedule = calculateRepaymentSchedule(loanTerms);
       const currentInstallmentNumber = offer.currentInstallmentNumber || 1;
-      const paymentAmount = parseFloat(paymentData.amount);
-      const remainingBalance = parseFloat(offer.amount) - totalPaid;
+      const paymentAmount = parseFloat(String(paymentData.amount));
+      const remainingBalance = parseFloat(String(offer.amount)) - totalPaid;
       
       // Basic validations
       if (paymentAmount <= 0) {
@@ -834,7 +835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update payment status to paid
       const updatedPayment = await storage.updatePayment(id, {
         status: 'paid' as const,
-        paidAt: new Date()
+        paidAt: Timestamp.fromDate(new Date())
       });
 
       // Advance to next installment (update due dates monthly as per repayment schedule)
@@ -977,14 +978,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { calculateRepaymentSchedule } = await import('@shared/calculations');
       
       const loanTerms = {
-        principal: parseFloat(offer.amount),
-        interestRate: parseFloat(offer.interestRate),
+        principal: parseFloat(String(offer.amount)),
+        interestRate: parseFloat(String(offer.interestRate)),
         interestType: offer.interestType,
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency || undefined,
-        startDate: offer.startDate || new Date()
+        repaymentFrequency: offer.repaymentFrequency || 'monthly',
+        startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date()
       };
 
       const schedule = calculateRepaymentSchedule(loanTerms);
@@ -1424,7 +1425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const payments = await storage.getOfferPayments(id);
       const totalPaid = payments
         .filter(p => p.status === 'paid')
-        .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        .reduce((sum, p) => sum + parseFloat(String(p.amount)), 0);
 
       // Calculate loan start date (should be from acceptance date, not creation date)
       const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
@@ -1432,14 +1433,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
 
       const loanTerms = {
-        principal: parseFloat(offer.amount),
-        interestRate: parseFloat(offer.interestRate),
+        principal: parseFloat(String(offer.amount)),
+        interestRate: parseFloat(String(offer.interestRate)),
         interestType: offer.interestType,
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
         repaymentType: offer.repaymentType,
-        repaymentFrequency: offer.repaymentFrequency || undefined,
-        startDate: loanStartDate
+        repaymentFrequency: offer.repaymentFrequency || 'monthly',
+        startDate: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date()
       };
 
       // Generate complete repayment schedule
