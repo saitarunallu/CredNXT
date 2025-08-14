@@ -225,8 +225,8 @@ export default function OfferCard({
               {/* Direction indicator */}
               <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${
                 isReceived 
-                  ? 'bg-green-500' // Money coming to you (borrowing)
-                  : 'bg-orange-500' // Money going from you (lending)
+                  ? 'bg-orange-500' // Money you owe (debt)
+                  : 'bg-green-500' // Money you own/lent (earning)
               }`}>
                 {isReceived ? (
                   <ArrowDownLeft className="w-3 h-3 text-white" />
@@ -240,8 +240,8 @@ export default function OfferCard({
                 <h3 className="font-bold text-gray-900 text-lg">{displayName}</h3>
                 <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                   isReceived 
-                    ? 'bg-green-100 text-green-700' // You're borrowing
-                    : 'bg-orange-100 text-orange-700' // You're lending
+                    ? 'bg-orange-100 text-orange-700' // Money you owe
+                    : 'bg-green-100 text-green-700' // Money you own/lent
                 }`}>
                   {isReceived ? 'Borrowing' : 'Lending'}
                 </span>

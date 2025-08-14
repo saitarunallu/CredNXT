@@ -45,6 +45,24 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 - **Full Payment**: Due date Aug 13, 2026 (₹1,12,009 lump sum)
 - **EMI (Quarterly)**: First payment due Nov 13, 2025 (quarterly payments)
 
+### August 14, 2025 - Compact Card Design & Visual Indicators
+
+#### 1. Modern Compact Card Design
+**Enhancement**: Redesigned offer cards with clean, minimal layout inspired by user reference
+**Implementation**:
+- Compact horizontal layout with circular initials avatars
+- Clean typography and proper spacing for mobile-first design
+- Clickable cards that navigate to offer details
+- Status color coding: pending(yellow), active(green), overdue(red), closed(black)
+
+#### 2. Clear Lending/Borrowing Indicators
+**Issue**: Users couldn't distinguish between money lent vs borrowed
+**Solution**:
+- Added directional arrow badges on avatars
+- Color-coded financial perspective: Green (money you own/lent), Orange (money you owe)
+- Text badges showing "Lending" vs "Borrowing" status
+- Enhanced visual hierarchy for instant recognition
+
 ### August 13, 2025 - Filter Navigation & Dashboard Integration
 
 #### 1. Fixed Filter Navigation Issues
