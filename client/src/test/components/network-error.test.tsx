@@ -1,80 +1,63 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '../utils'
-import NetworkError, { NetworkLoading, EmptyState } from '@/components/ui/network-error'
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '../utils/test-utils';
+import { NetworkError } from '@/components/ui/network-error';
 
 describe('NetworkError', () => {
-  it('renders default error message', () => {
-    render(<NetworkError />)
-    
-    expect(screen.getByText('Connection Problem')).toBeInTheDocument()
-    expect(screen.getByText(/We're having trouble connecting/)).toBeInTheDocument()
-    expect(screen.getByTestId('button-retry-network')).toBeInTheDocument()
-  })
+  it('renders network error message', () => {
+    render(<NetworkError onRetry={vi.fn()} />);
 
-  it('renders custom title and description', () => {
-    render(
-      <NetworkError 
-        title="Custom Error" 
-        description="Custom description" 
-      />
-    )
-    
-    expect(screen.getByText('Custom Error')).toBeInTheDocument()
-    expect(screen.getByText('Custom description')).toBeInTheDocument()
-  })
+    expect(screen.getByText(/network error/i)).toBeInTheDocument();
+    expect(screen.getByText(/check your internet connection/i)).toBeInTheDocument();
+  });
 
-  it('calls onRetry when retry button is clicked', () => {
-    const mockRetry = vi.fn()
-    render(<NetworkError onRetry={mockRetry} />)
-    
-    fireEvent.click(screen.getByTestId('button-retry-network'))
-    expect(mockRetry).toHaveBeenCalledTimes(1)
-  })
-})
+  it('calls onRetry when retry button is clicked', async () => {
+    const onRetryMock = vi.fn();
+    const { user } = render(<NetworkError onRetry={onRetryMock} />);
 
-describe('NetworkLoading', () => {
-  it('renders default loading message', () => {
-    render(<NetworkLoading />)
-    
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
-    expect(screen.getByTestId('network-loading')).toBeInTheDocument()
-  })
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    await user.click(retryButton);
 
-  it('renders custom loading message', () => {
-    render(<NetworkLoading message="Custom loading..." />)
-    
-    expect(screen.getByText('Custom loading...')).toBeInTheDocument()
-  })
-})
+    expect(onRetryMock).toHaveBeenCalledTimes(1);
+  });
 
-describe('EmptyState', () => {
-  it('renders default empty state', () => {
-    render(<EmptyState />)
+  it('shows loading state during retry', async () => {
+    const onRetryMock = vi.fn().mockImplementation(() => 
+      new Promise(resolve => setTimeout(resolve, 100))
+    );
     
-    expect(screen.getByText('No data available')).toBeInTheDocument()
-    expect(screen.getByText("There's nothing to show here yet.")).toBeInTheDocument()
-    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
-  })
+    const { user } = render(<NetworkError onRetry={onRetryMock} />);
 
-  it('renders custom title and description', () => {
-    render(
-      <EmptyState 
-        title="No offers found"
-        description="Create your first offer to get started"
-      />
-    )
-    
-    expect(screen.getByText('No offers found')).toBeInTheDocument()
-    expect(screen.getByText('Create your first offer to get started')).toBeInTheDocument()
-  })
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    await user.click(retryButton);
 
-  it('renders action button when provided', () => {
-    render(
-      <EmptyState 
-        action={<button data-testid="action-button">Create Offer</button>}
-      />
-    )
-    
-    expect(screen.getByTestId('action-button')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText(/retrying/i)).toBeInTheDocument();
+    expect(retryButton).toBeDisabled();
+
+    await waitFor(() => {
+      expect(screen.getByText(/retry/i)).toBeInTheDocument();
+    });
+  });
+
+  it('displays custom error message when provided', () => {
+    const customMessage = 'Custom network error occurred';
+    render(<NetworkError onRetry={vi.fn()} message={customMessage} />);
+
+    expect(screen.getByText(customMessage)).toBeInTheDocument();
+  });
+
+  it('has proper accessibility attributes', () => {
+    render(<NetworkError onRetry={vi.fn()} />);
+
+    const errorContainer = screen.getByRole('alert');
+    expect(errorContainer).toBeInTheDocument();
+
+    const retryButton = screen.getByRole('button', { name: /retry/i });
+    expect(retryButton).toHaveAttribute('data-testid', 'button-retry-network');
+  });
+
+  it('shows network status information', () => {
+    render(<NetworkError onRetry={vi.fn()} showNetworkStatus={true} />);
+
+    expect(screen.getByText(/network status/i)).toBeInTheDocument();
+  });
+});

@@ -1,270 +1,344 @@
 # CredNXT - P2P Lending Platform
 
-<div align="center">
-  <h3>Revolutionary Peer-to-Known-Person Lending Platform</h3>
-  <p>Transform social lending through secure, transparent, and legally-backed financial agreements</p>
-  
-  <img src="./attached_assets/CredNXT_1754810043245.png" alt="CredNXT Platform" width="200"/>
-</div>
+[![CI/CD](https://github.com/crednxt/crednxt/workflows/CI/badge.svg)](https://github.com/crednxt/crednxt/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🚀 Overview
+CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutionizing social lending through a mobile-first, user-centric approach tailored to the Indian financial ecosystem.
 
-CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform designed for the Indian financial ecosystem. It enables secure lending between friends, family, and trusted contacts with banking-grade security and legal documentation.
+## 🚀 Quick Start
 
-### ✨ Key Features
-
-- **Mobile-First Design**: Responsive PWA optimized for mobile devices
-- **Secure Authentication**: JWT with banking-grade security standards
-- **Smart Contract Generation**: Automated legal agreements with PDFs
-- **Real-time Dashboard**: Live analytics and payment tracking
-- **UPI Integration**: Seamless payment processing
-- **Multi-frequency Repayments**: Weekly, monthly, quarterly, and more
-- **Comprehensive Analytics**: Detailed lending insights
-
-## 🛠 Technology Stack
-
-| Category | Technology |
-|----------|------------|
-| **Frontend** | React 18, TypeScript, Vite |
-| **Styling** | Tailwind CSS, shadcn/ui |
-| **Backend** | Express.js, Node.js |
-| **Database** | PostgreSQL with Drizzle ORM |
-| **Authentication** | JWT, Passport.js |
-| **Real-time** | WebSocket connections |
-| **Payments** | Stripe, UPI ready |
-| **PDF Generation** | PDFKit |
-
-## 📋 Prerequisites
+### Prerequisites
 
 - Node.js 18+ and npm
 - PostgreSQL database
-- Git
+- Modern web browser
 
-## 🚀 Quick Setup
+### Installation
 
-### 1. Clone & Install
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/crednxt.git
+   cd crednxt
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials and secrets
+   ```
+
+4. **Initialize database**
+   ```bash
+   npm run db:push
+   ```
+
+5. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open your browser**
+   Navigate to `http://localhost:5000`
+
+## 🏗️ Technology Stack
+
+### Frontend
+- **React 18** with TypeScript - Modern UI framework
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first styling
+- **Wouter** - Lightweight routing
+- **TanStack Query** - Data fetching and caching
+- **React Hook Form** - Form management
+- **Framer Motion** - Smooth animations
+
+### Backend
+- **Express.js** with TypeScript - Web framework
+- **Drizzle ORM** - Type-safe database queries
+- **PostgreSQL** - Robust relational database
+- **JWT** - Secure authentication
+- **WebSocket** - Real-time notifications
+- **Passport.js** - Authentication middleware
+
+### DevOps & Quality
+- **Docker** - Containerization
+- **GitHub Actions** - CI/CD pipeline
+- **Vitest** - Unit and integration testing
+- **ESLint & Prettier** - Code quality
+- **Health Checks** - Monitoring endpoints
+
+## 🎯 Key Features
+
+### 📱 Mobile-First Design
+- Responsive layout optimized for mobile devices
+- Progressive Web App (PWA) capabilities
+- Touch-friendly interfaces and gestures
+- Offline-first functionality
+
+### 🔐 Banking-Grade Security
+- JWT-based authentication with refresh tokens
+- Password hashing with bcrypt
+- CSRF protection and security headers
+- Audit trails for all financial transactions
+- Role-based access control
+
+### 💰 Comprehensive Loan Management
+- **Flexible Loan Terms**: Support for EMI, interest-only, and lump-sum payments
+- **Multiple Frequencies**: Weekly, bi-weekly, monthly, quarterly, semi-annual, yearly
+- **Dynamic Calculations**: Real-time interest and payment calculations
+- **Payment Tracking**: Detailed payment history and scheduling
+- **Due Date Management**: Automated reminders and overdue tracking
+
+### 🔔 Real-Time Notifications
+- WebSocket-based instant notifications
+- Multi-channel delivery (in-app, email ready)
+- Smart notification preferences
+- Payment reminders and status updates
+
+### 📊 Analytics Dashboard
+- Portfolio overview with key metrics
+- Payment tracking and trends
+- Risk assessment indicators
+- Export functionality for reports
+
+### 🎨 Enhanced User Experience
+- Smooth animations and transitions
+- Loading states and skeleton screens
+- Error boundaries with fallback UI
+- Accessibility compliance (WCAG 2.1)
+- Dark mode support
+
+## 🚀 Development
+
+### Available Scripts
+
 ```bash
-git clone <your-repository-url>
-cd crednxt
-npm install
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+
+# Database
+npm run db:push      # Push schema changes to database
+npm run db:studio    # Open Drizzle Studio (database GUI)
+
+# Testing
+npm run test         # Run unit tests
+npm run test:ui      # Run tests with UI
+npm run test:coverage # Run tests with coverage report
+
+# Code Quality
+npm run lint         # Lint TypeScript files
+npm run type-check   # Type check without building
 ```
 
-### 2. Environment Setup
-Copy the environment template:
-```bash
-cp .env.example .env
-```
-
-Configure your environment variables (see [Environment Variables](#environment-variables) section).
-
-### 3. Database Setup
-```bash
-# Push schema to database
-npm run db:push
-```
-
-### 4. Start Development
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:5000`
-
-## 📦 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run check` | Type check with TypeScript |
-| `npm run db:push` | Push schema changes to database |
-
-## 🔧 Environment Variables
-
-Create a `.env` file with the following variables:
-
-### Required
-- `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - Secret key for JWT tokens
-- `SESSION_SECRET` - Session encryption secret
-
-### Optional
-- `PORT` - Server port (default: 5000)
-- `NODE_ENV` - Environment (development/production)
-- `STRIPE_SECRET_KEY` - Stripe payment processing
-- `TWILIO_ACCOUNT_SID` - SMS notifications
-- `TWILIO_AUTH_TOKEN` - SMS authentication
-- `TWILIO_PHONE_NUMBER` - Twilio phone number
-
-## 🏗 Project Structure
+### Project Structure
 
 ```
 crednxt/
 ├── client/                 # Frontend React application
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Application pages
+│   │   ├── pages/          # Page components and routing
+│   │   ├── hooks/          # Custom React hooks
 │   │   ├── lib/            # Utilities and configurations
-│   │   └── hooks/          # Custom React hooks
+│   │   └── test/           # Test files and utilities
+│   └── index.html
 ├── server/                 # Backend Express application
-│   ├── routes.ts           # API routes
-│   ├── storage.ts          # Database operations
-│   └── services/           # Business logic services
-├── shared/                 # Shared types and schemas
-│   ├── schema.ts           # Database schema (Drizzle)
-│   └── calculations.ts     # Shared calculations
-└── migrations/             # Database migrations
+│   ├── routes/             # API route handlers
+│   ├── services/           # Business logic services
+│   ├── db.ts              # Database connection
+│   ├── index.ts           # Server entry point
+│   └── storage.ts         # Data access layer
+├── shared/                 # Shared TypeScript types and utilities
+│   ├── schema.ts          # Database schema and types
+│   └── calculations.ts    # Financial calculations
+├── contracts/             # PDF contract storage
+├── kfs/                   # KFS document storage
+├── schedules/             # Payment schedule storage
+└── docs/                  # Additional documentation
 ```
 
-## 🎯 Core Features
+## 🏃‍♂️ API Endpoints
 
-### Lending Management
-- **Create Offers**: Flexible loan terms with multiple repayment options
-- **Accept/Decline**: Simple offer management workflow
-- **Payment Tracking**: Real-time payment status updates
-- **Automated Reminders**: Smart notification system
-
-### Dashboard Analytics
-- **Portfolio Overview**: Complete lending/borrowing summary
-- **Payment Calendar**: Visual repayment schedule
-- **Risk Assessment**: Credit scoring and risk analysis
-- **Transaction History**: Detailed financial records
-
-### Security & Compliance
-- **Banking-Grade Security**: Multi-layer authentication
-- **Legal Documentation**: Auto-generated contracts
-- **Audit Trails**: Comprehensive activity logging
-- **Data Protection**: GDPR-compliant data handling
-
-## 📱 Screenshots
-
-<div align="center">
-  <img src="./attached_assets/IMG_4033_1754837390262.jpeg" alt="Mobile Dashboard" width="250"/>
-  <img src="./attached_assets/IMG_4036_1754835365895.png" alt="Offer Creation" width="250"/>
-  <img src="./attached_assets/IMG_4037_1754835365895.png" alt="Payment Tracking" width="250"/>
-</div>
-
-## 🔄 API Documentation
-
-### Authentication Endpoints
-- `POST /api/auth/login` - User login with phone
-- `POST /api/auth/verify-otp` - OTP verification
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
 - `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
 
-### Offers Management
-- `GET /api/offers` - List user offers
+### Offers
+- `GET /api/offers` - List all offers
 - `POST /api/offers` - Create new offer
 - `GET /api/offers/:id` - Get offer details
-- `PUT /api/offers/:id/accept` - Accept offer
-- `PUT /api/offers/:id/decline` - Decline offer
+- `PATCH /api/offers/:id/accept` - Accept offer
+- `PATCH /api/offers/:id/reject` - Reject offer
 
 ### Payments
 - `GET /api/payments` - List payments
-- `POST /api/payments` - Create payment
-- `PUT /api/payments/:id/approve` - Approve payment
+- `POST /api/payments` - Submit payment
+- `PATCH /api/payments/:id/approve` - Approve payment
+- `PATCH /api/payments/:id/reject` - Reject payment
+
+### Health Checks
+- `GET /api/health` - Basic health check
+- `GET /api/health/detailed` - Detailed system status
+- `GET /api/ready` - Readiness probe
+- `GET /api/live` - Liveness probe
 
 ## 🧪 Testing
 
-### Running Tests
+The project includes comprehensive testing setup:
+
+### Unit Tests
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Generate coverage report
-npm run test:coverage
+npm run test                    # Run all tests
+npm run test:watch             # Run tests in watch mode
+npm run test:coverage          # Generate coverage report
 ```
+
+### Integration Tests
+- API endpoint testing
+- Database integration tests
+- Authentication flow tests
+
+### Frontend Tests
+- Component rendering tests
+- User interaction tests
+- Error boundary tests
+- Hook behavior tests
 
 ### Test Structure
-- **Unit Tests**: Component and utility testing
-- **Integration Tests**: API endpoint testing
-- **E2E Tests**: Full workflow testing
-
-## 🚀 Deployment
-
-### Replit Deployment
-1. Connect your repository to Replit
-2. Configure environment variables
-3. Deploy using Replit's deployment service
-
-### Manual Deployment
-```bash
-# Build the application
-npm run build
-
-# Start production server
-npm start
+```
+client/src/test/
+├── components/           # Component tests
+├── hooks/               # Hook tests
+├── pages/               # Page integration tests
+├── utils/               # Testing utilities
+└── setup.ts            # Test configuration
 ```
 
-## 🔧 Development Guide
+## 🐳 Deployment
 
-### Adding New Features
-1. Create database schema in `shared/schema.ts`
-2. Add storage methods in `server/storage.ts`
-3. Create API routes in `server/routes.ts`
-4. Build frontend components in `client/src/`
+### Docker Deployment
 
-### Code Standards
-- **TypeScript**: Strict type checking enabled
-- **ESLint**: Code quality enforcement
-- **Prettier**: Consistent code formatting
-- **Husky**: Pre-commit hooks
+1. **Build Docker image**
+   ```bash
+   docker build -t crednxt:latest .
+   ```
 
-## 🐛 Troubleshooting
+2. **Run with Docker Compose**
+   ```bash
+   docker-compose up -d
+   ```
 
-### Common Issues
+### Environment Variables
 
-**Database Connection Error**
-```bash
-# Check DATABASE_URL in .env
-# Ensure PostgreSQL is running
-npm run db:push
+Required environment variables for production:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-refresh-secret-key
+
+# Session
+SESSION_SECRET=your-session-secret
+
+# Optional: External Services
+EMAIL_SERVICE_API_KEY=your-email-service-key
+SMS_SERVICE_API_KEY=your-sms-service-key
 ```
 
-**Build Failures**
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
+See `.env.example` for complete configuration options.
 
-**Port Already in Use**
-```bash
-# Change PORT in .env or kill process
-lsof -ti:5000 | xargs kill -9
-```
+### Health Checks
+
+The application provides health check endpoints for monitoring:
+
+- **Basic Health**: `GET /api/health`
+- **Detailed Status**: `GET /api/health/detailed`
+- **Readiness**: `GET /api/ready`
+- **Liveness**: `GET /api/live`
+
+## 🔧 Configuration
+
+### Database Schema
+
+The application uses Drizzle ORM with PostgreSQL. Schema is defined in `shared/schema.ts` and includes:
+
+- **Users**: Authentication and profile data
+- **Offers**: Loan offers with terms and conditions
+- **Payments**: Payment tracking and history
+- **Notifications**: Multi-channel notification system
+- **Audit Logs**: Security and compliance tracking
+
+### Security Features
+
+- **Authentication**: JWT with refresh token rotation
+- **Authorization**: Role-based access control
+- **Data Protection**: Input validation and sanitization
+- **Audit Trails**: Comprehensive logging of financial transactions
+- **Rate Limiting**: API rate limiting for security
+- **CORS**: Configured for production domains
+
+## 🎨 UI/UX Features
+
+### Design System
+- Consistent color palette and typography
+- Reusable component library
+- Responsive breakpoints for all devices
+- Accessibility-first approach
+
+### Animations
+- Smooth page transitions
+- Loading state animations
+- Micro-interactions for better UX
+- Reduced motion support for accessibility
+
+### Performance
+- Lazy loading for route components
+- Image optimization and compression
+- Bundle splitting for faster loads
+- Service worker for offline functionality
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript strict mode
+- Use conventional commit messages
+- Write tests for new features
+- Update documentation for API changes
+- Ensure mobile-first responsive design
+
+## 📚 Additional Resources
+
+- [API Documentation](./docs/api.md)
+- [Deployment Guide](./docs/deployment.md)
+- [Security Guidelines](./docs/security.md)
+- [Contributing Guide](./docs/contributing.md)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🆘 Support
 
-- [Radix UI](https://radix-ui.com/) for accessible components
-- [Tailwind CSS](https://tailwindcss.com/) for styling system
-- [Drizzle ORM](https://orm.drizzle.team/) for database management
-- [Replit](https://replit.com/) for development platform
-
-## 📞 Support
-
-For support and questions:
-- 📧 Email: support@crednxt.com
-- 💬 Discord: [CredNXT Community](https://discord.gg/crednxt)
-- 🐛 Issues: [GitHub Issues](https://github.com/your-org/crednxt/issues)
+For support, email support@crednxt.com or create an issue in the GitHub repository.
 
 ---
 
-<div align="center">
-  <p>Made with ❤️ for the future of social lending</p>
-</div>
+**Built with ❤️ for the Indian fintech ecosystem**

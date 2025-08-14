@@ -1,5 +1,11 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Multi-stage build for CredNXT P2P Lending Platform
+# Base Node.js image with security updates
+FROM node:20-alpine AS base
+
+# Install security updates and required dependencies
+RUN apk update && apk upgrade && \
+    apk add --no-cache dumb-init && \
+    rm -rf /var/cache/apk/*
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +13,18 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Development stage
+FROM base AS development
+RUN npm ci --include=dev
+COPY . .
+EXPOSE 5000
+CMD ["dumb-init", "npm", "run", "dev"]
+
+# Build stage
+FROM base AS build
+
+# Install all dependencies (including dev dependencies)
+RUN npm ci --include=dev
 
 # Copy source code
 COPY . .
@@ -16,38 +32,54 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Remove dev dependencies to reduce image size
+RUN npm ci --only=production && npm cache clean --force
+
 # Production stage
 FROM node:20-alpine AS production
 
-# Create app user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Install security updates and create non-root user
+RUN apk update && apk upgrade && \
+    apk add --no-cache dumb-init && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001 -G nodejs && \
+    rm -rf /var/cache/apk/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install production dependencies
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+# Copy built application from build stage
+COPY --from=build --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=build --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=build --chown=nextjs:nodejs /app/package*.json ./
+COPY --from=build --chown=nextjs:nodejs /app/server ./server
+COPY --from=build --chown=nextjs:nodejs /app/shared ./shared
+COPY --from=build --chown=nextjs:nodejs /app/client/dist ./client/dist
 
-# Copy built application from builder stage
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/migrations ./migrations
-COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
+# Create necessary directories
+RUN mkdir -p /app/contracts /app/kfs /app/schedules && \
+    chown -R nextjs:nodejs /app
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=5000
+# Switch to non-root user
+USER nextjs
 
 # Expose port
 EXPOSE 5000
 
-# Switch to non-root user
-USER nodejs
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/api/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
+  CMD node -e "http.get('http://localhost:5000/api/health', (res) => { \
+    if (res.statusCode === 200) process.exit(0); \
+    else process.exit(1); \
+  }).on('error', () => process.exit(1));"
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["dumb-init", "node", "server/index.js"]
+
+# Labels for container metadata
+LABEL \
+  org.opencontainers.image.title="CredNXT" \
+  org.opencontainers.image.description="P2P Lending Platform" \
+  org.opencontainers.image.vendor="CredNXT" \
+  org.opencontainers.image.source="https://github.com/crednxt/crednxt" \
+  org.opencontainers.image.licenses="MIT"

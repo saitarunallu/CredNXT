@@ -1,88 +1,74 @@
-import { AlertCircle, Wifi, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { WifiOff, RefreshCw, Wifi } from 'lucide-react';
+import { useNetworkStatus } from '@/hooks/use-network-status';
 
 interface NetworkErrorProps {
-  onRetry?: () => void;
-  title?: string;
-  description?: string;
+  onRetry: () => void | Promise<void>;
+  message?: string;
+  showNetworkStatus?: boolean;
 }
 
-export default function NetworkError({ 
+export function NetworkError({ 
   onRetry, 
-  title = "Connection Problem",
-  description = "We're having trouble connecting to our servers. Please check your internet connection and try again."
+  message = "Please check your internet connection and try again.",
+  showNetworkStatus = false 
 }: NetworkErrorProps) {
-  
-  const handleRetry = () => {
-    if (onRetry) {
-      onRetry();
-    } else {
-      window.location.reload();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const networkStatus = useNetworkStatus();
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await onRetry();
+    } finally {
+      setIsRetrying(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center p-4" data-testid="network-error">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      role="alert"
+    >
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-            <Wifi className="w-6 h-6 text-orange-600" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+            <WifiOff className="h-6 w-6 text-orange-600" />
           </div>
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <CardDescription className="text-sm">
-            {description}
-          </CardDescription>
+          <CardTitle className="text-xl">Network Error</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <p className="text-center text-muted-foreground">
+            {message}
+          </p>
+
+          {showNetworkStatus && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Network Status</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Connection:</span>
+                <Badge variant={networkStatus.isOnline ? "default" : "destructive"}>
+                  <Wifi className="mr-1 h-3 w-3" />
+                  {networkStatus.isOnline ? 'Online' : 'Offline'}
+                </Badge>
+              </div>
+            </div>
+          )}
+          
           <Button 
             onClick={handleRetry}
+            disabled={isRetrying}
             className="w-full"
             data-testid="button-retry-network"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Try Again
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+            {isRetrying ? 'Retrying...' : 'Retry'}
           </Button>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-// Loading skeleton for network requests
-export function NetworkLoading({ message = "Loading..." }: { message?: string }) {
-  return (
-    <div className="flex items-center justify-center p-8" data-testid="network-loading">
-      <div className="text-center space-y-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="text-sm text-muted-foreground">{message}</p>
-      </div>
-    </div>
-  );
-}
-
-// Empty state for when no data is returned
-export function EmptyState({ 
-  title = "No data available",
-  description = "There's nothing to show here yet.",
-  action
-}: { 
-  title?: string;
-  description?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-center p-8" data-testid="empty-state">
-      <div className="text-center space-y-4 max-w-md">
-        <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-          <AlertCircle className="w-6 h-6 text-muted-foreground" />
-        </div>
-        <div>
-          <h3 className="font-medium">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        </div>
-        {action && <div>{action}</div>}
-      </div>
     </div>
   );
 }
