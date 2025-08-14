@@ -18,8 +18,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application (client and server separately)
+RUN chmod +x build-client.sh build-server.sh && ./build-client.sh && ./build-server.sh
 
 # Production image
 FROM base AS runner
@@ -33,6 +33,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -49,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:10000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "dist/index.prod.js"]

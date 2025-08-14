@@ -1,0 +1,50 @@
+2025-08-14T13:22:53.476851057Z     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:236:38)
+2025-08-14T13:22:53.476853847Z     at ModuleJob._link (node:internal/modules/esm/module_job:130:49) {
+2025-08-14T13:22:53.476857197Z   code: 'ERR_MODULE_NOT_FOUND'
+2025-08-14T13:22:53.476859697Z }
+2025-08-14T13:22:53.476862057Z 
+2025-08-14T13:22:53.476864477Z Node.js v20.19.4
+2025-08-14T13:22:57.337202792Z ==> Exited with status 1
+2025-08-14T13:22:57.499491507Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+2025-08-14T13:22:57.893623994Z 
+2025-08-14T13:22:57.893669716Z > rest-express@1.0.0 start
+2025-08-14T13:22:57.893677746Z > NODE_ENV=production node dist/index.js
+2025-08-14T13:22:57.893680266Z 
+2025-08-14T13:22:58.392599614Z node:internal/modules/esm/resolve:873
+2025-08-14T13:22:58.392626024Z   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+2025-08-14T13:22:58.392629815Z         ^
+2025-08-14T13:22:58.392632735Z 
+2025-08-14T13:22:58.392635065Z Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@vitejs/plugin-react' imported from /app/dist/index.js
+2025-08-14T13:22:58.392637365Z     at packageResolve (node:internal/modules/esm/resolve:873:9)
+2025-08-14T13:22:58.392639075Z     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+2025-08-14T13:22:58.392640765Z     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+2025-08-14T13:22:58.392642505Z     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:642:12)
+2025-08-14T13:22:58.392644125Z     at #cachedDefaultResolve (node:internal/modules/esm/loader:591:25)
+2025-08-14T13:22:58.392645785Z     at ModuleLoader.resolve (node:internal/modules/esm/loader:574:38)
+2025-08-14T13:22:58.392647735Z     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:236:38)
+2025-08-14T13:22:58.392649515Z     at ModuleJob._link (node:internal/modules/esm/module_job:130:49) {
+2025-08-14T13:22:58.392651675Z   code: 'ERR_MODULE_NOT_FOUND'
+2025-08-14T13:22:58.392653385Z }
+2025-08-14T13:22:58.392655465Z 
+2025-08-14T13:22:58.392658155Z Node.js v20.19.4
+2025-08-14T13:23:12.949962926Z 
+2025-08-14T13:23:12.950008367Z > rest-express@1.0.0 start
+2025-08-14T13:23:12.950012797Z > NODE_ENV=production node dist/index.js
+2025-08-14T13:23:12.950014547Z 
+2025-08-14T13:23:13.450187626Z node:internal/modules/esm/resolve:873
+2025-08-14T13:23:13.450208516Z   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+2025-08-14T13:23:13.450211796Z         ^
+2025-08-14T13:23:13.450214567Z 
+2025-08-14T13:23:13.450217776Z Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@vitejs/plugin-react' imported from /app/dist/index.js
+2025-08-14T13:23:13.450223587Z     at packageResolve (node:internal/modules/esm/resolve:873:9)
+2025-08-14T13:23:13.450225927Z     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+2025-08-14T13:23:13.450228487Z     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+2025-08-14T13:23:13.450231157Z     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:642:12)
+2025-08-14T13:23:13.450233737Z     at #cachedDefaultResolve (node:internal/modules/esm/loader:591:25)
+2025-08-14T13:23:13.450236237Z     at ModuleLoader.resolve (node:internal/modules/esm/loader:574:38)
+2025-08-14T13:23:13.450239267Z     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:236:38)
+2025-08-14T13:23:13.450241627Z     at ModuleJob._link (node:internal/modules/esm/module_job:130:49) {
+2025-08-14T13:23:13.450244387Z   code: 'ERR_MODULE_NOT_FOUND'
+2025-08-14T13:23:13.450246917Z }
+2025-08-14T13:23:13.450249157Z 
+2025-08-14T13:23:13.450251907Z Node.js v20.19.4

@@ -9,9 +9,13 @@ echo "Starting build process..."
 echo "Installing dependencies..."
 npm ci
 
-# Build the frontend and backend
-echo "Building application..."
-npm run build
+# Build the frontend first
+echo "Building frontend..."
+./build-client.sh
+
+# Build the backend with proper exclusions
+echo "Building backend..."
+./build-server.sh
 
 # Run database migration if needed
 if [ -n "$DATABASE_URL" ]; then

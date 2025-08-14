@@ -126,6 +126,12 @@ The application uses PostgreSQL with Drizzle ORM:
 - Verify all dependencies are in `package.json`
 - Ensure TypeScript compiles without errors
 
+**Module Not Found Errors (ERR_MODULE_NOT_FOUND):**
+- This typically occurs when dev dependencies are bundled into production
+- The build scripts are configured to exclude Vite and React plugins
+- Use the production-specific `index.prod.js` entry point
+- Server build excludes: `vite`, `@vitejs/plugin-react`, Replit plugins
+
 **Database Connection:**
 - Verify `DATABASE_URL` is set correctly
 - Check database service status in Render
@@ -135,6 +141,25 @@ The application uses PostgreSQL with Drizzle ORM:
 - Ensure all required variables are set
 - Check `/api/health/detailed` for missing variables
 - Verify secrets are generated properly
+
+### Build Process Details
+
+The build uses separate scripts to avoid dev dependency conflicts:
+- `build-client.sh`: Builds React frontend with Vite
+- `build-server.sh`: Builds Express backend with esbuild, excluding dev tools
+- `server/index.prod.ts`: Production server without Vite middleware
+
+### Testing Production Build Locally
+
+```bash
+# Test the production build
+./test-production-build.sh
+```
+
+This script validates:
+- Client and server build completion
+- Production server startup
+- Health check endpoint functionality
 
 ### Support Resources
 - [Render Documentation](https://render.com/docs)

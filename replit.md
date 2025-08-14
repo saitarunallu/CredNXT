@@ -1,302 +1,45 @@
 # CredNXT - P2P Lending Platform
 
-## Project Overview
-CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutionizing social lending through a mobile-first, user-centric approach tailored to the Indian financial ecosystem.
-
-## Technology Stack
-- **Frontend**: React with TypeScript, Vite, Tailwind CSS
-- **Backend**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT with banking-grade security
-- **Real-time**: WebSocket connections
-- **Payments**: UPI integration ready
-
-## Recent Changes
-
-### August 13, 2025 - Due Date & Repayment Frequency Enhancement
-
-#### 1. Fixed Due Date Calculation Logic
-**Issue**: Due dates were showing tenure end dates instead of repayment frequency-based due dates
-**Solution**: 
-- Updated `calculateDueDate()` in offer creation to use repayment frequency for first payment due date
-- EMI/Interest-only offers now calculate first payment based on frequency (weekly, monthly, etc.)
-- Full payment offers correctly show tenure end date
-- Added support for 6 repayment frequencies: weekly, bi-weekly, monthly, quarterly, semi-annual, yearly
-
-#### 2. Enhanced Repayment Frequency Support
-**Issue**: Limited repayment frequency options (only monthly/yearly)
-**Solution**:
-- Extended `repaymentFrequencyEnum` to support all major frequencies
-- Updated `LoanTerms` interface and calculation functions to handle all frequencies
-- Enhanced payment frequency calculations in `shared/calculations.ts`
-- Applied database schema changes via `npm run db:push`
-
-#### 3. UI Display Updates
-**Issue**: Inconsistent due date display between pending and accepted offers
-**Solution**:
-- Offer cards now show "Next Payment Due" for accepted offers with `nextPaymentDueDate`
-- View offer pages display correct due dates based on offer status
-- Pending offers show final due date, accepted offers show next payment due date
-
-#### 4. Comprehensive Testing Results
-**Test Cases Created** (₹1,00,000 @ 12% interest, 12 months):
-- **Interest Only (Monthly)**: First payment due Sept 13, 2025 (₹1,000/month)
-- **EMI (Weekly)**: First payment due Aug 20, 2025 (₹2,043/week, 52 payments)
-- **Full Payment**: Due date Aug 13, 2026 (₹1,12,009 lump sum)
-- **EMI (Quarterly)**: First payment due Nov 13, 2025 (quarterly payments)
-
-### August 14, 2025 - Render.com Auto-Deploy Integration
-
-#### 1. Render.com Deployment Configuration
-**Added**:
-- `render.yaml` blueprint for one-click deployment to Render.com
-- Multi-stage Dockerfile optimized for Render's container platform
-- `render-build.sh` script for automated build process with database migrations
-- Comprehensive deployment documentation in `RENDER_DEPLOYMENT.md`
-- GitHub Actions workflow for CI/CD pipeline integration
-
-#### 2. Auto-Deploy Features
-**Implementation**:
-- Blueprint configuration with web service and PostgreSQL database
-- Automatic environment variable generation (JWT_SECRET, SESSION_SECRET)
-- Health check endpoints integration (/api/health, /api/ready, /api/live)
-- Auto-scaling configuration for production workloads
-- GitHub integration for automatic deployments on push to main/master
-
-#### 3. Enhanced Build Process
-**Added**:
-- Production-optimized build script with dependency installation
-- Database migration automation during deployment
-- TypeScript compilation and frontend/backend bundling
-- Docker container security with non-root user
-- Health check monitoring for container orchestration
-
-#### 4. Development Experience Improvements
-**Enhanced**:
-- Updated README.md with Render deployment as primary option
-- Environment configuration template (.env.render)
-- Build process verification and error handling
-- CI/CD pipeline with automated testing
-- Deployment verification through health endpoints
-
-### August 14, 2025 - Previous: AWS Production Deployment Infrastructure
-
-#### 1. Complete AWS Deployment Setup
-**Added**:
-- Multi-stage Dockerfile with production optimizations and security hardening
-- CloudFormation template for complete AWS infrastructure (VPC, ECS, RDS, ALB)
-- Automated deployment scripts with environment configuration
-- Docker Compose for local production testing
-- Production-ready health check endpoints for AWS monitoring
-
-#### 2. Infrastructure as Code
-**Implementation**:
-- CloudFormation template with VPC, subnets, security groups, and networking
-- ECS Fargate cluster with auto-scaling and load balancing
-- RDS PostgreSQL with Multi-AZ support and automated backups
-- Application Load Balancer with health checks and SSL termination
-- CloudWatch monitoring and logging integration
-
-#### 3. Security and Production Configuration
-**Added**:
-- Non-root Docker user for enhanced container security
-- AWS Secrets Manager integration for sensitive configuration
-- Environment-specific configuration management
-- Health check endpoints: /api/health, /api/ready, /api/live, /api/health/detailed
-- Production-ready error handling and monitoring
-
-#### 4. Deployment Automation
-**Scripts Created**:
-- `aws/deploy.sh` - Complete deployment automation with error handling
-- `aws/environment-config.sh` - Secure secret generation and AWS configuration
-- Environment templates with comprehensive variable documentation
-- Docker build optimization with multi-stage builds
-
-#### 5. Monitoring and Health Checks
-**Enhanced**:
-- Comprehensive health monitoring with database connectivity checks
-- Memory usage tracking and system information reporting
-- Production readiness probes for Kubernetes/ECS deployment
-- Detailed health reporting with latency measurements
-- CloudWatch integration for metrics and alerting
-
-### August 14, 2025 - Previous: Complete Production Readiness & Quality Improvements
-
-#### 1. Comprehensive Documentation & Setup
-**Added**:
-- Complete README.md with setup instructions, tech overview, and feature descriptions
-- .env.example template with all required and optional environment variables categorized by purpose
-- LICENSE file (MIT License) for open source compliance
-- Comprehensive project documentation with troubleshooting guide and API endpoints
-
-#### 2. Advanced Testing Infrastructure
-**Implementation**:
-- Vitest configuration with JSdom environment and coverage reporting
-- React Testing Library integration with custom test utilities
-- Component tests for error boundaries, network error handling, and accessibility
-- Testing utilities with mock providers for consistent test setup
-- Coverage thresholds set to 70% for comprehensive code quality
-
-#### 3. Enhanced Error Handling & User Experience
-**Added**:
-- Enhanced error boundary with custom fallback UI and retry mechanisms
-- Network error components with retry functionality and loading states
-- Loading states and skeleton screens for better perceived performance
-- Comprehensive accessibility components (skip links, announcements, focus management)
-- Network status monitoring with connection quality detection
-
-#### 4. Production Deployment Configuration
-**Implementation**:
-- Multi-stage Docker configuration with security hardening and non-root user
-- GitHub Actions CI/CD pipeline with automated testing, security scanning, and deployment
-- Health check endpoints for monitoring (/api/health, /api/ready, /api/live, /api/health/detailed)
-- Production-ready error handling with structured logging
-
-#### 5. Advanced UI/UX Polish & Performance
-**Enhanced**:
-- Premium design system with improved typography, spacing variables, and animations
-- Smooth page transitions with reduced motion support for accessibility
-- Enhanced card and button components with hover effects and loading states
-- Lazy image loading with intersection observer for performance optimization
-- Performance monitoring component for development debugging
-- WCAG 2.1 compliant color contrast and accessibility features
-- Mobile-first responsive design with proper touch targets (44px minimum)
-
-#### 6. Security & Monitoring
-**Added**:
-- Comprehensive health check endpoints with database, memory, and filesystem monitoring
-- Enhanced error monitoring and reporting with structured alerts
-- Network error handling with retry mechanisms and exponential backoff
-- Security scanning in CI/CD pipeline with vulnerability assessment
-- Performance monitoring and optimization tools
-
-#### 7. Advanced Features & Components
-**New Components**:
-- `LazyImage`: Intersection observer-based lazy loading with fallback support
-- `EnhancedCard`: Card component with animations and hover effects
-- `EnhancedButton`: Button with loading states and icon positioning
-- `PerformanceMonitor`: Development tool for real-time performance metrics
-- Comprehensive test utilities with mocked providers and authentication contexts
-
-### August 14, 2025 - Previous: Compact Card Design & Visual Indicators
-
-#### 1. Modern Compact Card Design
-**Enhancement**: Redesigned offer cards with clean, minimal layout inspired by user reference
-**Implementation**:
-- Compact horizontal layout with circular initials avatars
-- Clean typography and proper spacing for mobile-first design
-- Clickable cards that navigate to offer details
-- Status color coding: pending(yellow), active(green), overdue(red), closed(black)
-
-#### 2. Clear Lending/Borrowing Indicators
-**Issue**: Users couldn't distinguish between money lent vs borrowed
-**Solution**:
-- Added directional arrow badges on avatars
-- Color-coded financial perspective: Green (money you own/lent), Orange (money you owe)
-- Text badges showing "Lending" vs "Borrowing" status
-- Enhanced visual hierarchy for instant recognition
-
-#### 3. Consistent Background Design
-**Enhancement**: Applied unified background color across all screens
-**Implementation**:
-- Changed main background from white to `#e1edfd` (light blue) across all pages
-- Maintained white headers/navbar for contrast and readability
-- Updated offers, analytics, profile, and create offer pages
-- Kept card backgrounds white for optimal content contrast
-
-### August 13, 2025 - Filter Navigation & Dashboard Integration
-
-#### 1. Fixed Filter Navigation Issues
-**Issue**: Filter buttons (Pending, Lent, Borrowed) were not clickable on offers page
-**Solution**:
-- Fixed click event handling with proper preventDefault() and stopPropagation()
-- Added horizontal-only scrolling with CSS constraints to prevent 360-degree movement
-- Enhanced responsive design with overflow-x-auto for mobile devices
-- Added "Completed" filter option for finished/closed offers
-
-#### 2. Dashboard to Offers Navigation
-**Enhancement**: Direct navigation from dashboard stat cards to filtered offers
-**Implementation**:
-- Total Lent card → `/offers?filter=lent`
-- Total Borrowed card → `/offers?filter=borrowed`
-- Active Offers card → `/offers?filter=active`
-- Pending Offers card → `/offers?filter=pending`
-- Maintained clean dashboard layout with only essential navigation elements
-
-#### 3. Filter System Enhancements
-**Added**: Complete filter system with 5 categories:
-- All offers (default view)
-- Pending (awaiting approval)
-- Lent (money given out)
-- Borrowed (money received)
-- Completed (finished agreements)
-
-### August 13, 2025 - Enhanced Payment System & Schedule Management
-
-#### 1. Payment Restriction & Schedule Compliance
-**Issue**: Multiple payments allowed without schedule validation
-**Solution**: 
-- Implemented payment restriction: Only 1 payment per repayment schedule unless `allowPartPayment` is enabled
-- Added pending payment validation - prevents multiple pending payments
-- Enhanced payment amount validation against expected EMI/installment amounts
-- Added payment timing validation (7 days before due date to grace period end)
-
-#### 2. Monthly Due Date Updates
-**Issue**: Due dates not advancing according to repayment schedule
-**Solution**:
-- Automatic due date advancement when payments are approved
-- Proper installment number tracking with each payment
-- Monthly schedule updates based on repayment frequency
-- Integration with existing `advanceToNextInstallment` service
-
-#### 3. Enhanced Payment Validation
-**Issue**: Insufficient payment validation against repayment terms
-**Solution**:
-- Payment amount validation against EMI/installment amounts
-- Repayment schedule compliance checks
-- Part payment restrictions based on loan terms
-- Improved error messages for payment validation failures
-
-#### 4. UI Enhancements
-- Enhanced repayment schedule styling with stronger borders
-- Improved Next Payment Due section with blue gradient styling
-- Better visual hierarchy and contrast for payment sections
-- Enhanced pending payment notifications with yellow gradients
-
-#### 5. Code Quality & Error Handling
-- Fixed TypeScript errors in advanced notification service  
-- Improved error handling for promise rejections
-- Enhanced payment approval workflow with proper error logging
-
-## Payment Workflow (Enhanced)
-1. **Validation**: System validates payment against repayment schedule and restrictions
-   - Checks for existing pending payments (if part payments not allowed)
-   - Validates payment amount against expected EMI/installment amount
-   - Confirms payment timing (7 days before due date minimum)
-2. **Submit Payment**: Borrower submits → Status: "Pending" (with installment number)
-3. **Notification**: Lender receives notification with payment details
-4. **Review**: Lender sees approve/reject buttons with payment context
-5. **Decision**: Lender approves/rejects → Status: "Paid"/"Rejected"
-6. **Advancement**: System advances installment and updates due dates monthly per schedule
+## Overview
+CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform designed for the Indian financial ecosystem. It aims to revolutionize social lending with a mobile-first, user-centric approach. The platform's core capabilities include comprehensive loan offer creation, automated repayment scheduling, a robust payment approval workflow, and real-time notifications, all built with banking-grade security and compliance with RBI guidelines. It supports flexible repayment frequencies (weekly, bi-weekly, monthly, quarterly, semi-annual, yearly) and provides clear visual indicators for money lent versus borrowed.
 
 ## User Preferences
 - **Communication**: Simple, everyday language for non-technical users
 - **Code Style**: Banking industry compliance standards
 - **Error Handling**: Comprehensive logging and user-friendly messages
 
-## Architecture Decisions
-- **Security First**: Banking-grade authentication and audit trails
-- **Mobile First**: Responsive design optimized for mobile users
-- **Compliance**: RBI guidelines and banking standards
-- **Real-time**: WebSocket for instant notifications
-- **Cloud Ready**: AWS-native deployment with ECS, RDS, and ALB
-- **Infrastructure as Code**: CloudFormation templates for reproducible deployments
-- **Container First**: Docker containerization with multi-stage builds
-- **Monitoring**: Comprehensive health checks and CloudWatch integration
+## System Architecture
+The platform follows a mobile-first, security-first, and cloud-ready architectural approach.
+- **UI/UX**: Features a modern, compact card design with clean typography and proper spacing. It utilizes a consistent light blue background (`#e1edfd`) with white headers for contrast. Visual indicators like directional arrow badges and color-coded financial perspectives (Green for lent, Orange for owed) provide instant recognition. The design is responsive, WCAG 2.1 compliant with enhanced accessibility features, and includes smooth page transitions, loading states, and skeleton screens for a premium user experience.
+- **Technical Implementations**:
+    - **Frontend**: React with TypeScript, Vite, and Tailwind CSS.
+    - **Backend**: Express.js with TypeScript.
+    - **Database**: PostgreSQL with Drizzle ORM.
+    - **Authentication**: JWT with banking-grade security.
+    - **Real-time**: WebSocket connections for instant notifications.
+    - **Payment Workflow**: Implements a robust payment validation system ensuring compliance with repayment schedules, preventing multiple pending payments unless explicitly allowed, and automatically advancing due dates upon payment approval.
+    - **Code Quality**: Adheres to banking industry compliance standards, includes comprehensive error boundaries, network error handling, and a sophisticated testing infrastructure using Vitest and React Testing Library with 70% coverage thresholds.
+- **System Design Choices**:
+    - **Security First**: Emphasizes banking-grade authentication, audit trails, and security hardening.
+    - **Compliance**: Designed to adhere to RBI guidelines and banking standards.
+    - **Cloud Ready**: Built for cloud-native deployment with a focus on AWS infrastructure (VPC, ECS Fargate, RDS, ALB) and Render.com integration.
+    - **Infrastructure as Code**: Utilizes CloudFormation templates and `render.yaml` blueprints for reproducible deployments and automated environment configuration.
+    - **Container First**: Leverages Docker containerization with multi-stage builds and non-root users for enhanced security.
+    - **Monitoring**: Integrates comprehensive health checks (`/api/health`, `/api/ready`, `/api/live`, `/api/health/detailed`) and CloudWatch for metrics and alerting.
+    - **Database Schema**: Includes core entities like Users, Offers, Payments, Notifications, and Audit for robust functionality and compliance.
 
-## Database Schema
-- **Users**: Authentication and profile management
-- **Offers**: Loan offers with comprehensive terms
-- **Payments**: Payment tracking with approval workflow
-- **Notifications**: Multi-channel notification system
-- **Audit**: Compliance and security logging
+## External Dependencies
+- **Payment Gateways**: UPI integration ready.
+- **Cloud Providers**:
+    - AWS (ECS Fargate, RDS PostgreSQL, Application Load Balancer, CloudFormation, Secrets Manager, CloudWatch).
+    - Render.com (for automated deployment and hosting).
+
+## Recent Updates
+
+### August 14, 2025 - Render Deployment Fix
+**Issue Resolved**: ERR_MODULE_NOT_FOUND for '@vitejs/plugin-react' in production
+**Solution**: Created separate production build process excluding dev dependencies
+- Added `server/index.prod.ts` for production-only server entry
+- Implemented `build-client.sh` and `build-server.sh` for separated builds
+- Updated deployment to use `node dist/index.prod.js` instead of npm start
+- Added production build testing with `test-production-build.sh`
