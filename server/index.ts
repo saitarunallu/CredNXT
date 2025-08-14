@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeFirebase } from "./firebase-config";
 
 const app = express();
 app.use(express.json());
@@ -70,6 +71,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Firebase
+  initializeFirebase();
+
   // Global error handlers for unhandled promises and exceptions
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);

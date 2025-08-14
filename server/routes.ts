@@ -15,7 +15,7 @@ import { smsRouter } from "./routes/sms";
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
-} from "@shared/schema";
+} from "@shared/firestore-schema";
 import { z } from "zod";
 
 interface AuthenticatedRequest extends Request {

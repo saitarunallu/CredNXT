@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
-import { verifyOtpSchema, type VerifyOtpRequest } from "@shared/schema";
+import { verifyOtpSchema, type VerifyOtpRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
 export default function VerifyOtp() {

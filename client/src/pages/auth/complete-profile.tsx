@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
-import { completeProfileSchema, type CompleteProfileRequest } from "@shared/schema";
+import { completeProfileSchema, type CompleteProfileRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
 export default function CompleteProfile() {

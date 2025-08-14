@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import type { LoginRequest, VerifyOtpRequest, CompleteProfileRequest, User } from "@shared/schema";
+import type { LoginRequest, VerifyOtpRequest, CompleteProfileRequest, User } from "@shared/firestore-schema";
 
 class AuthService {
   private token: string | null = null;
