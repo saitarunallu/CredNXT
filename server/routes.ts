@@ -10,6 +10,7 @@ import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
 import { securityService } from "./services/security";
 import { repaymentService } from "./services/repayment";
+import { smsRouter } from "./routes/sms";
 // Health routes are already integrated in the main routes
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
@@ -1816,6 +1817,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Register SMS routes
+  app.use('/api/sms', smsRouter);
 
   return httpServer;
 }

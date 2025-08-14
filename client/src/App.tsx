@@ -17,6 +17,7 @@ import CreateOffer from "@/pages/offers/create";
 import ViewOffer from "@/pages/offers/view";
 import Analytics from "@/pages/analytics";
 import Profile from "@/pages/profile";
+import SMSTestPage from "@/pages/sms-test-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -63,6 +64,12 @@ function Router() {
       <Route path="/offers">
         <AuthGuard>
           <OffersPage />
+        </AuthGuard>
+      </Route>
+      
+      <Route path="/sms-test">
+        <AuthGuard>
+          <SMSTestPage />
         </AuthGuard>
       </Route>
       

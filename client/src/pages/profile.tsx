@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -146,6 +146,11 @@ export default function Profile() {
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   Manage Notifications
                 </Button>
+                <Link href="/sms-test">
+                  <Button variant="outline" size="sm" className="w-full mt-2">
+                    SMS Test (Dev)
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
