@@ -63,6 +63,14 @@ CredNXT is an advanced P2KP (Peer-to-Known-Person) lending platform revolutioniz
 - Text badges showing "Lending" vs "Borrowing" status
 - Enhanced visual hierarchy for instant recognition
 
+#### 3. Consistent Background Design
+**Enhancement**: Applied unified background color across all screens
+**Implementation**:
+- Changed main background from white to `#e1edfd` (light blue) across all pages
+- Maintained white headers/navbar for contrast and readability
+- Updated offers, analytics, profile, and create offer pages
+- Kept card backgrounds white for optimal content contrast
+
 ### August 13, 2025 - Filter Navigation & Dashboard Integration
 
 #### 1. Fixed Filter Navigation Issues
