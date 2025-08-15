@@ -378,6 +378,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = { ...user, isVerified: true };
       }
 
+      // Link any existing offers that were created to this phone number before registration
+      try {
+        await storage.linkOffersToUser(user.id, normalizedPhone);
+        console.log(`Linked existing offers to newly registered user: ${user.id}`);
+      } catch (error) {
+        console.warn(`Failed to link offers to user ${user.id}:`, error);
+      }
+
       // Validate user compliance before issuing token
       const compliance = await complianceService.validateCompliance('user', user);
       if (!compliance.isCompliant) {

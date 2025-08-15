@@ -22,6 +22,7 @@ export interface IFirestoreStorage {
   getReceivedOffersByUserId(userId: string): Promise<Offer[]>;
   getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }>;
   updateOffer(id: string, updates: Partial<Offer>): Promise<Offer | null>;
+  linkOffersToUser(userId: string, phone: string): Promise<void>;
   
   // Payment operations
   createPayment(payment: InsertPayment): Promise<Payment>;
@@ -228,40 +229,7 @@ class FirestoreStorage implements IFirestoreStorage {
     const directOffers = directOffersSnapshot.docs.map(doc => doc.data() as Offer);
     const phoneOffers = phoneOffersSnapshot.docs.map(doc => doc.data() as Offer);
     
-    // Link phone-based offers to the user now that they're registered
-    for (const offer of phoneOffers) {
-      try {
-        await this.db.collection('offers').doc(offer.id).update({ toUserId: userId });
-        offer.toUserId = userId; // Update local copy too
-
-        // Create notification for the linked offer if it doesn't exist
-        const existingNotificationSnapshot = await this.db.collection('notifications')
-          .where('userId', '==', userId)
-          .where('offerId', '==', offer.id)
-          .where('type', '==', 'offer_received')
-          .get();
-
-        if (existingNotificationSnapshot.empty) {
-          const notification = {
-            id: randomUUID(),
-            userId: userId,
-            offerId: offer.id,
-            type: 'offer_received' as const,
-            title: 'New Offer Received',
-            message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`,
-            priority: 'high' as const,
-            isRead: false,
-            scheduledFor: new Date(),
-            createdAt: new Date()
-          };
-          
-          await this.db.collection('notifications').doc(notification.id).set(notification);
-          console.log(`Created notification for linked offer ${offer.id} to user ${userId}`);
-        }
-      } catch (error) {
-        console.warn(`Failed to link offer ${offer.id} to user ${userId}:`, error);
-      }
-    }
+    // Note: Phone-based offers are now linked during user registration
 
     // Combine and deduplicate offers
     const allOffers = [...directOffers, ...phoneOffers];
@@ -275,6 +243,44 @@ class FirestoreStorage implements IFirestoreStorage {
       const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
       return bTime - aTime; // Desc order
     });
+  }
+
+  async linkOffersToUser(userId: string, phone: string): Promise<void> {
+    try {
+      // Get offers where toUserPhone matches and toUserId is null
+      const phoneOffersSnapshot = await this.db.collection('offers')
+        .where('toUserPhone', '==', phone)
+        .where('toUserId', '==', null)
+        .get();
+      
+      const phoneOffers = phoneOffersSnapshot.docs.map(doc => doc.data() as Offer);
+      console.log(`Found ${phoneOffers.length} offers to link to user ${userId}`);
+      
+      // Update each offer to link it to the user
+      for (const offer of phoneOffers) {
+        await this.db.collection('offers').doc(offer.id).update({ toUserId: userId });
+        
+        // Create notification for the linked offer
+        const notification = {
+          id: randomUUID(),
+          userId: userId,
+          offerId: offer.id,
+          type: 'offer_received' as const,
+          title: 'New Offer Received',
+          message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`,
+          priority: 'high' as const,
+          isRead: false,
+          scheduledFor: new Date(),
+          createdAt: new Date()
+        };
+        
+        await this.db.collection('notifications').doc(notification.id).set(notification);
+        console.log(`Created notification for linked offer ${offer.id} to user ${userId}`);
+      }
+    } catch (error) {
+      console.error(`Failed to link offers to user ${userId}:`, error);
+      throw error;
+    }
   }
 
   async getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }> {

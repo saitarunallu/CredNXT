@@ -18,6 +18,7 @@ export interface IStorage {
   getUserOffers(userId: string): Promise<any[]>;
   getReceivedOffers(userId: string): Promise<any[]>;
   createOffer(offer: InsertOffer): Promise<Offer>;
+  linkOffersToUser(userId: string, phone: string): Promise<void>;
   updateOffer(id: string, updates: Partial<InsertOffer>): Promise<Offer>;
   getUpcomingDueOffers(days: number): Promise<any[]>;
   getOffersWithOverduePayments(): Promise<Offer[]>;
@@ -166,6 +167,10 @@ export class DatabaseStorage implements IStorage {
 
   async createOffer(offer: InsertOffer): Promise<Offer> {
     return await this.getFirestore().createOffer(offer);
+  }
+
+  async linkOffersToUser(userId: string, phone: string): Promise<void> {
+    return await this.getFirestore().linkOffersToUser(userId, phone);
   }
 
   async updateOffer(id: string, updates: Partial<InsertOffer>): Promise<Offer> {
