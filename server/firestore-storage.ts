@@ -17,6 +17,7 @@ export interface IFirestoreStorage {
   createOffer(offer: InsertOffer): Promise<Offer>;
   getOfferById(id: string): Promise<Offer | null>;
   getOffersByUserId(userId: string): Promise<Offer[]>;
+  getReceivedOffersByUserId(userId: string): Promise<Offer[]>;
   getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }>;
   updateOffer(id: string, updates: Partial<Offer>): Promise<Offer | null>;
   
@@ -168,17 +169,23 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   async getOffersByUserId(userId: string): Promise<Offer[]> {
-    const [lenderSnapshot, borrowerSnapshot] = await Promise.all([
-      this.db.collection('offers').where('fromUserId', '==', userId).orderBy('createdAt', 'desc').get(),
-      this.db.collection('offers').where('toUserId', '==', userId).orderBy('createdAt', 'desc').get(),
-    ]);
+    // Get offers where user is the creator (fromUserId)
+    const snapshot = await this.db.collection('offers')
+      .where('fromUserId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
 
-    const offers: Offer[] = [];
-    lenderSnapshot.docs.forEach(doc => offers.push(doc.data() as Offer));
-    borrowerSnapshot.docs.forEach(doc => offers.push(doc.data() as Offer));
-    
-    // Sort by createdAt descending
-    return offers.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    return snapshot.docs.map(doc => doc.data() as Offer);
+  }
+
+  async getReceivedOffersByUserId(userId: string): Promise<Offer[]> {
+    // Get offers where user is the recipient (toUserId)
+    const snapshot = await this.db.collection('offers')
+      .where('toUserId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    return snapshot.docs.map(doc => doc.data() as Offer);
   }
 
   async getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }> {

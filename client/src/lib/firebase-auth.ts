@@ -182,6 +182,10 @@ export class FirebaseAuthService {
     }
   }
 
+  getUser(): User | null {
+    return this.user;
+  }
+
   async getCurrentUser(): Promise<User | null> {
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) return null;

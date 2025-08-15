@@ -139,8 +139,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getReceivedOffers(userId: string): Promise<any[]> {
-    // For now, return same as getUserOffers since Firestore query handles both
-    return this.getUserOffers(userId);
+    // Get offers where user is the recipient (toUserId)
+    const offers = await this.getFirestore().getReceivedOffersByUserId(userId);
+    
+    // Enrich with user data and payment summaries
+    const enrichedOffers = await Promise.all(
+      offers.map(async (offer) => {
+        const fromUser = await this.getFirestore().getUserById(offer.fromUserId);
+        const toUser = offer.toUserId ? await this.getFirestore().getUserById(offer.toUserId) : null;
+        const payments = await this.getFirestore().getPaymentsByOfferId(offer.id);
+
+        return {
+          ...offer,
+          fromUser,
+          toUser,
+          totalPaid: payments
+            .filter(p => p.status === 'paid' || p.status === 'completed')
+            .reduce((sum, p) => sum + p.amount, 0),
+          pendingPayments: payments.filter(p => p.status === 'pending').length
+        };
+      })
+    );
+
+    return enrichedOffers;
   }
 
   async createOffer(offer: InsertOffer): Promise<Offer> {
