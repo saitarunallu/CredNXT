@@ -352,6 +352,31 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     });
   };
 
+  // Helper function to format Firebase timestamps
+  const formatFirebaseDate = (timestamp: any): string => {
+    if (!timestamp) return 'Invalid Date';
+    
+    try {
+      // Handle Firebase Timestamp objects
+      if (timestamp._seconds) {
+        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+        return date.toLocaleDateString();
+      }
+      
+      // Handle Firestore toDate() method
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString();
+      }
+      
+      // Handle regular date strings/objects
+      const date = new Date(timestamp);
+      return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen message="Loading offer details..." />;
   }
@@ -562,10 +587,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <span>{isReceiver ? 'From' : 'To'}</span>
                     </div>
                     <div className="font-semibold text-lg">
-                      {isReceiver ? fromUser?.name : contact?.name}
+                      {isReceiver ? fromUser?.name : (contact?.name || offer.toUserName || 'Unknown User')}
                     </div>
                     <div className="text-gray-600">
-                      {isReceiver ? fromUser?.phone : contact?.phone}
+                      {isReceiver ? fromUser?.phone : (contact?.phone || offer.toUserPhone || 'Unknown Phone')}
                     </div>
                   </div>
                   
@@ -593,8 +618,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     </div>
                     <div className="font-semibold">
                       {offer.status === 'accepted' && offer.nextPaymentDueDate 
-                        ? new Date(offer.nextPaymentDueDate).toLocaleDateString()
-                        : new Date(offer.dueDate).toLocaleDateString()
+                        ? formatFirebaseDate(offer.nextPaymentDueDate)
+                        : formatFirebaseDate(offer.dueDate)
                       }
                     </div>
                   </div>
@@ -711,7 +736,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                               <div>
                                 <div className="font-semibold text-gray-800">EMI #{installment.installmentNumber}</div>
                                 <div className="text-sm text-gray-600 mt-1">
-                                  Due: {new Date(installment.dueDate).toLocaleDateString()}
+                                  Due: {formatFirebaseDate(installment.dueDate)}
                                 </div>
                               </div>
                               <div className="text-right">
@@ -766,7 +791,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         </div>
                         <div>
                           <span className="text-gray-600">Due Date:</span>
-                          <p className="font-semibold">{new Date(paymentInfoData.dueDate).toLocaleDateString()}</p>
+                          <p className="font-semibold">{formatFirebaseDate(paymentInfoData.dueDate)}</p>
                         </div>
                         <div>
                           <span className="text-gray-600">Days {paymentInfoData.isOverdue ? 'Overdue' : 'Remaining'}:</span>
@@ -1087,7 +1112,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             <div>
                               <div className="font-semibold">₹{parseFloat(payment.amount).toLocaleString()}</div>
                               <div className="text-sm text-gray-600">
-                                {payment.paymentMode} • {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString() : new Date(payment.createdAt).toLocaleDateString()}
+                                {payment.paymentMode} • {payment.paidAt ? formatFirebaseDate(payment.paidAt) : formatFirebaseDate(payment.createdAt)}
                               </div>
                               {payment.refString && (
                                 <div className="text-xs text-gray-500">Ref: {payment.refString}</div>
@@ -1347,18 +1372,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Created</span>
-                    <span>{new Date(offer.createdAt).toLocaleDateString()}</span>
+                    <span>{formatFirebaseDate(offer.createdAt)}</span>
                   </div>
                   {offer.status !== 'pending' && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Status Updated</span>
-                      <span>{new Date(offer.updatedAt).toLocaleDateString()}</span>
+                      <span>{formatFirebaseDate(offer.updatedAt)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Due Date</span>
-                    <span className={new Date(offer.dueDate) < new Date() ? 'text-red-600 font-semibold' : ''}>
-                      {new Date(offer.dueDate).toLocaleDateString()}
+                    <span className={new Date(offer.dueDate._seconds ? offer.dueDate._seconds * 1000 : offer.dueDate) < new Date() ? 'text-red-600 font-semibold' : ''}>
+                      {formatFirebaseDate(offer.dueDate)}
                     </span>
                   </div>
                 </div>
