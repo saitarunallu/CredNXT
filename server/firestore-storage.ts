@@ -6,6 +6,7 @@ import {
   UpdatePayment 
 } from '../shared/firestore-schema';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { randomUUID } from 'crypto';
 
 export interface IFirestoreStorage {
   // User operations
@@ -232,6 +233,31 @@ class FirestoreStorage implements IFirestoreStorage {
       try {
         await this.db.collection('offers').doc(offer.id).update({ toUserId: userId });
         offer.toUserId = userId; // Update local copy too
+
+        // Create notification for the linked offer if it doesn't exist
+        const existingNotificationSnapshot = await this.db.collection('notifications')
+          .where('userId', '==', userId)
+          .where('offerId', '==', offer.id)
+          .where('type', '==', 'offer_received')
+          .get();
+
+        if (existingNotificationSnapshot.empty) {
+          const notification = {
+            id: randomUUID(),
+            userId: userId,
+            offerId: offer.id,
+            type: 'offer_received' as const,
+            title: 'New Offer Received',
+            message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`,
+            priority: 'high' as const,
+            isRead: false,
+            scheduledFor: new Date(),
+            createdAt: new Date()
+          };
+          
+          await this.db.collection('notifications').doc(notification.id).set(notification);
+          console.log(`Created notification for linked offer ${offer.id} to user ${userId}`);
+        }
       } catch (error) {
         console.warn(`Failed to link offer ${offer.id} to user ${userId}:`, error);
       }
