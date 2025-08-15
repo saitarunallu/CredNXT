@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../db.js';
+import { storage } from '../storage';
 
 const router = Router();
 
@@ -8,8 +8,9 @@ router.get('/health', async (req, res) => {
   try {
     const startTime = Date.now();
     
-    // Quick database ping
-    await db.execute('SELECT 1');
+    // Quick Firebase connectivity check
+    // Test with a simple read operation
+    await storage.getUser('test-health-check');
     
     const responseTime = Date.now() - startTime;
     
@@ -25,7 +26,7 @@ router.get('/health', async (req, res) => {
     res.status(503).json({
       status: 'error',
       timestamp: new Date().toISOString(),
-      error: 'Database connection failed'
+      error: 'Firebase connection failed'
     });
   }
 });
@@ -36,24 +37,24 @@ router.get('/health/detailed', async (req, res) => {
   let overallStatus = 'healthy';
 
   try {
-    // Database connectivity check
-    const dbStart = Date.now();
-    await db.execute('SELECT 1');
-    const dbResponseTime = Date.now() - dbStart;
+    // Firebase connectivity check
+    const firebaseStart = Date.now();
+    await storage.getUser('test-health-check');
+    const firebaseResponseTime = Date.now() - firebaseStart;
     
     checks.push({
-      name: 'database',
+      name: 'firebase',
       status: 'healthy',
-      responseTime: dbResponseTime,
-      details: 'PostgreSQL connection successful'
+      responseTime: firebaseResponseTime,
+      details: 'Firebase connection successful'
     });
   } catch (error) {
     overallStatus = 'unhealthy';
     checks.push({
-      name: 'database',
+      name: 'firebase',
       status: 'unhealthy',
       error: error instanceof Error ? error.message : 'Unknown error',
-      details: 'Failed to connect to PostgreSQL'
+      details: 'Failed to connect to Firebase'
     });
   }
 
@@ -105,7 +106,7 @@ router.get('/health/detailed', async (req, res) => {
   }
 
   // Environment checks
-  const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+  const requiredEnvVars = ['FIREBASE_PROJECT_ID', 'JWT_SECRET'];
   const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
   
   if (missingEnvVars.length > 0) {
@@ -141,7 +142,7 @@ router.get('/health/detailed', async (req, res) => {
 router.get('/ready', async (req, res) => {
   try {
     // Check if the application is ready to serve traffic
-    await db.execute('SELECT 1');
+    await storage.getUser('test-readiness-check');
     
     res.json({
       status: 'ready',

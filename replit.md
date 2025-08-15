@@ -22,19 +22,28 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 - **System Design Choices**:
     - **Security First**: Emphasizes banking-grade authentication, audit trails, and security hardening.
     - **Compliance**: Designed to adhere to RBI guidelines and banking standards.
-    - **Cloud Ready**: Built for cloud-native deployment with a focus on AWS infrastructure (VPC, ECS Fargate, RDS, ALB) and Render.com integration.
-    - **Infrastructure as Code**: Utilizes CloudFormation templates and `render.yaml` blueprints for reproducible deployments and automated environment configuration.
-    - **Container First**: Leverages Docker containerization with multi-stage builds and non-root users for enhanced security.
-    - **Monitoring**: Integrates comprehensive health checks (`/api/health`, `/api/ready`, `/api/live`, `/api/health/detailed`) and CloudWatch for metrics and alerting.
+    - **Cloud Ready**: Built for cloud-native deployment with Firebase infrastructure.
+    - **Firebase First**: Utilizes Firebase services for authentication, database, hosting, and functions.
+    - **Monitoring**: Integrates comprehensive health checks (`/api/health`, `/api/ready`, `/api/live`, `/api/health/detailed`) for application monitoring.
     - **Database Schema**: Includes core entities like Users, Offers, Payments, Notifications, and Audit for robust functionality and compliance.
 
 ## External Dependencies
 - **Payment Gateways**: UPI integration ready.
-- **Cloud Providers**:
-    - AWS (ECS Fargate, RDS PostgreSQL, Application Load Balancer, CloudFormation, Secrets Manager, CloudWatch).
-    - Render.com (for automated deployment and hosting).
+- **Cloud Providers**: Firebase (Authentication, Firestore, Hosting, Functions).
 
 ## Recent Updates
+
+### August 15, 2025 - Codebase Cleanup Complete
+**Status**: Removed all unused Stripe, AWS, and Render deployment code
+**Implementation**: Comprehensive cleanup of unused dependencies and deployment files
+- ✅ Removed Stripe dependencies (@stripe/react-stripe-js, @stripe/stripe-js, stripe)
+- ✅ Removed AWS deployment directory and CloudFormation templates
+- ✅ Removed Render deployment files (render.yaml, render-build.sh, RENDER_*.md)
+- ✅ Removed PostgreSQL/Drizzle dependencies (drizzle-zod, connect-pg-simple)
+- ✅ Removed unused build scripts and deployment automation
+- ✅ Updated health check endpoints to use Firebase instead of PostgreSQL
+- ✅ Cleaned up documentation files and GitHub Actions workflows
+- ✅ Codebase now focused entirely on Firebase backend with no unused dependencies
 
 ### August 15, 2025 - Offer Delivery Issue Fixed
 **Status**: All recipients now receive offer notifications properly
