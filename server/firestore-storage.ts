@@ -294,10 +294,15 @@ class FirestoreStorage implements IFirestoreStorage {
   async getPaymentsByOfferId(offerId: string): Promise<Payment[]> {
     const snapshot = await this.db.collection('payments')
       .where('offerId', '==', offerId)
-      .orderBy('createdAt', 'desc')
       .get();
     
-    return snapshot.docs.map(doc => doc.data() as Payment);
+    // Sort on the client side to avoid composite index requirement
+    const payments = snapshot.docs.map(doc => doc.data() as Payment);
+    return payments.sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Desc order
+    });
   }
 
   async updatePayment(id: string, updates: UpdatePayment): Promise<Payment | null> {
@@ -354,10 +359,15 @@ class FirestoreStorage implements IFirestoreStorage {
   async getNotificationsByUserId(userId: string): Promise<Notification[]> {
     const snapshot = await this.db.collection('notifications')
       .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .get();
     
-    return snapshot.docs.map(doc => doc.data() as Notification);
+    // Sort on the client side to avoid composite index requirement
+    const notifications = snapshot.docs.map(doc => doc.data() as Notification);
+    return notifications.sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Desc order
+    });
   }
 
   async markNotificationAsRead(id: string): Promise<boolean> {
