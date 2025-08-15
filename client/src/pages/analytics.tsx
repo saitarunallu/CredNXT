@@ -24,7 +24,7 @@ export default function Analytics() {
   const receivedOffers = (offersData as any)?.receivedOffers || [];
 
   const successRate = sentOffers.length > 0 ? 
-    Math.round((sentOffers.filter((o: any) => o.offer.status === 'accepted').length / sentOffers.length) * 100) : 0;
+    Math.round((sentOffers.filter((o: any) => o.status === 'accepted').length / sentOffers.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -109,7 +109,7 @@ export default function Analytics() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Accepted</span>
                   <span className="font-semibold text-green-600">
-                    {sentOffers.filter((o: any) => o.offer.status === 'accepted').length}
+                    {sentOffers.filter((o: any) => o.status === 'accepted').length}
                   </span>
                 </div>
               </div>
@@ -133,7 +133,7 @@ export default function Analytics() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Accepted</span>
                   <span className="font-semibold text-blue-600">
-                    {receivedOffers.filter((o: any) => o.offer.status === 'accepted').length}
+                    {receivedOffers.filter((o: any) => o.status === 'accepted').length}
                   </span>
                 </div>
               </div>
