@@ -34,6 +34,16 @@ export class FirebaseAuthService {
       if (cleanPhone.length !== 10 || !/^[6-9]\d{9}$/.test(cleanPhone)) {
         return { success: false, error: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9' };
       }
+
+      // Check if Firebase is configured - if not, use MVP mode
+      if (!hasFirebaseConfig) {
+        console.log('Firebase not configured, using MVP mode for OTP');
+        // For MVP: simulate OTP sending without actually sending SMS
+        localStorage.setItem('pending_phone', cleanPhone);
+        localStorage.setItem('mvp_mode', 'true');
+        console.log('OTP simulated for MVP mode. Use any 6-digit code to verify.');
+        return { success: true };
+      }
       
       // Initialize reCAPTCHA
       const recaptcha = initializeRecaptcha();
@@ -120,6 +130,40 @@ export class FirebaseAuthService {
 
   async verifyOTP(code: string): Promise<{ success: boolean; user?: User; needsProfile?: boolean; error?: string }> {
     try {
+      // Check if in MVP mode (Firebase not configured)
+      const isMvpMode = localStorage.getItem('mvp_mode') === 'true';
+      
+      if (!hasFirebaseConfig || isMvpMode) {
+        console.log('MVP mode: simulating OTP verification');
+        
+        // Get phone number from localStorage
+        const phone = localStorage.getItem('pending_phone');
+        if (!phone) {
+          return { success: false, error: 'Phone number not found. Please restart the process.' };
+        }
+        
+        // Accept any 6-digit OTP for MVP
+        if (!/^\d{6}$/.test(code)) {
+          return { success: false, error: 'Please enter a valid 6-digit OTP.' };
+        }
+        
+        // Create mock user data for MVP
+        const userData: User = {
+          id: `mvp_user_${phone}`,
+          phone: `+91${phone}`,
+          isVerified: true,
+          createdAt: Timestamp.now() as any,
+          updatedAt: Timestamp.now() as any
+        };
+        
+        await this.setUser(userData);
+        localStorage.removeItem('pending_phone');
+        localStorage.removeItem('mvp_mode');
+        
+        console.log('MVP authentication successful');
+        return { success: true, user: userData, needsProfile: true };
+      }
+
       if (!this.confirmationResult) {
         return { success: false, error: 'No OTP request found. Please request OTP first.' };
       }
