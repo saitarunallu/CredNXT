@@ -48,17 +48,26 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const { data: offerData, isLoading } = useQuery({
     queryKey: ['/api/offers', offerId],
+    onError: (error: any) => {
+      console.error('ViewOffer query error:', error);
+    },
   }) as { data: any, isLoading: boolean };
 
   const { data: scheduleData } = useQuery({
     queryKey: ['/api/offers', offerId, 'schedule'],
     enabled: !!offerData?.offer,
+    onError: (error: any) => {
+      console.error('Schedule query error:', error);
+    },
   }) as { data: any };
 
   // Get current payment information
   const { data: paymentInfoData } = useQuery({
     queryKey: ['/api/offers', offerId, 'payment-info'],
     enabled: !!offerData?.offer && offerData?.offer.status === 'accepted',
+    onError: (error: any) => {
+      console.error('Payment info query error:', error);
+    },
   }) as { data: any };
 
   const {
@@ -360,7 +369,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     );
   }
 
-  const { offer, fromUser, contact } = offerData.offer;
+  // Handle the nested structure from /api/offers/:id endpoint
+  const offer = offerData.offer;
+  const fromUser = offerData.fromUser;
+  const contact = offerData.contact;
   const payments = offerData.payments || [];
   
   const totalPaid = payments
