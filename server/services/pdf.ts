@@ -268,6 +268,7 @@ export class PdfService {
   private async createRepaymentScheduleDocument(offer: Offer, fromUser: User): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
+        console.log('Starting PDF creation for offer:', offer.id);
         const doc = new PDFDocument({ 
           margin: 40,
           size: 'A4',
@@ -278,10 +279,16 @@ export class PdfService {
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => {
           const pdfBuffer = Buffer.concat(buffers);
+          console.log('PDF generation completed, buffer size:', pdfBuffer.length);
           resolve(pdfBuffer);
+        });
+        doc.on('error', (error) => {
+          console.error('PDF document error:', error);
+          reject(error);
         });
 
         // Convert offer to LoanTerms
+        console.log('Converting offer to loan terms...');
         const loanTerms = {
           principal: parseFloat(offer.amount),
           interestRate: parseFloat(offer.interestRate),
@@ -292,9 +299,12 @@ export class PdfService {
           repaymentFrequency: offer.repaymentFrequency || undefined,
           startDate: new Date(offer.startDate)
         };
+        console.log('Loan terms:', loanTerms);
 
         // Calculate repayment schedule
+        console.log('Calculating repayment schedule...');
         const schedule = calculateRepaymentSchedule(loanTerms);
+        console.log('Schedule calculated, items:', schedule.schedule.length);
         const principal = parseFloat(offer.amount);
 
         // Header
@@ -365,6 +375,7 @@ export class PdfService {
 
         doc.end();
       } catch (error) {
+        console.error('Error in createRepaymentScheduleDocument:', error);
         reject(error);
       }
     });
