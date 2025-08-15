@@ -165,11 +165,18 @@ export class FirebaseAuthService {
         updatedAt: Timestamp.now() as any,
       };
 
-      await updateDoc(doc(db, 'users', this.user.id), {
+      // Only include fields that have values to avoid Firestore undefined errors
+      const updateData: any = {
         name,
-        email,
         updatedAt: Timestamp.now(),
-      });
+      };
+      
+      // Only add email if it has a value
+      if (email && email.trim() !== '') {
+        updateData.email = email;
+      }
+
+      await updateDoc(doc(db, 'users', this.user.id), updateData);
 
       await this.setUser(userData);
       return { success: true };
