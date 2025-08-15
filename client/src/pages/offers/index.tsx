@@ -16,6 +16,9 @@ export default function OffersPage() {
   const { data: offersData, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
     retry: 1,
+    onError: (error: any) => {
+      console.error('Offers page query error:', error);
+    },
   });
 
   const sentOffers = (offersData as any)?.sentOffers || [];

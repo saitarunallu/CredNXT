@@ -110,9 +110,10 @@ export const queryClient = new QueryClient({
           ]);
         } catch (error) {
           console.error('Error invalidating queries after mutation:', error);
+          // Ensure no unhandled rejections
         }
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error('Mutation error:', error);
         // Ensure all mutation errors are properly handled
         if (error instanceof Error) {

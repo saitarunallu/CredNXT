@@ -15,11 +15,17 @@ export default function Dashboard() {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['/api/dashboard/stats'],
     retry: 1,
+    onError: (error: any) => {
+      console.error('Dashboard stats query error:', error);
+    },
   });
 
   const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
     retry: 1,
+    onError: (error: any) => {
+      console.error('Dashboard offers query error:', error);
+    },
   });
 
   const stats = (statsData as any)?.stats || {
@@ -71,7 +77,16 @@ export default function Dashboard() {
   const receivedOffers = (offersData as any)?.receivedOffers || [];
 
   const recentOffers = [...sentOffers, ...receivedOffers]
-    .sort((a, b) => new Date(b.offer.createdAt).getTime() - new Date(a.offer.createdAt).getTime())
+    .sort((a, b) => {
+      try {
+        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+        return bTime - aTime;
+      } catch (error) {
+        console.error('Error sorting offers by date:', error);
+        return 0; // Default to no change in order if there's an error
+      }
+    })
     .slice(0, 4);
 
   return (
