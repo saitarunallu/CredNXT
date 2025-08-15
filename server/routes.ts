@@ -466,6 +466,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary test route to create a test user (for development only)
+  app.post('/api/test-user', async (req: Request, res) => {
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      const testUser = await storage.createUser({
+        phone: '9100754913',
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        isVerified: true
+      });
+      
+      res.json({ success: true, user: testUser, message: 'Test user created successfully' });
+    } catch (error) {
+      console.error('Create test user error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // Offers routes
   app.get('/api/offers', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
