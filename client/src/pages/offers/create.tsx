@@ -300,7 +300,7 @@ export default function CreateOffer() {
     
     const dueDate = calculateDueDate();
     
-    const formData = {
+    const formData: any = {
       toUserPhone: contactPhone,
       toUserName: contactName,
       offerType: offerType as "lend" | "borrow",
@@ -310,16 +310,24 @@ export default function CreateOffer() {
       tenureValue: parseInt(data.tenureValue) || 1,
       tenureUnit: tenureUnit as "months" | "years",
       repaymentType: repaymentType as "emi" | "interest_only" | "full_payment",
-      repaymentFrequency: (repaymentFrequency as "monthly" | "yearly") || null,
       allowPartPayment,
       gracePeriodDays: parseInt(data.gracePeriodDays) || 0,
       prepaymentPenalty: (parseFloat(data.prepaymentPenalty) || 0).toString(),
       latePaymentPenalty: (parseFloat(data.latePaymentPenalty) || 0).toString(),
       startDate: new Date(startDate),
       dueDate: dueDate,
-      purpose: data.purpose || null,
-      note: data.note || null
     };
+
+    // Only add optional fields if they have values
+    if (data.purpose && data.purpose.trim()) {
+      formData.purpose = data.purpose.trim();
+    }
+    if (data.note && data.note.trim()) {
+      formData.note = data.note.trim();
+    }
+    if (repaymentFrequency && repaymentFrequency !== 'monthly') {
+      formData.repaymentFrequency = repaymentFrequency as "monthly" | "yearly";
+    }
     
     console.log('Submitting offer with data:', formData);
     createOfferMutation.mutate(formData);

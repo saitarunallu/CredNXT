@@ -588,6 +588,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         toUserId: recipientUser?.id || null
       };
 
+      // Clean up null values for optional fields to avoid validation errors
+      if (completeOfferData.purpose === null) {
+        delete completeOfferData.purpose;
+      }
+      if (completeOfferData.note === null) {
+        delete completeOfferData.note;
+      }
+      if (completeOfferData.repaymentFrequency === null) {
+        delete completeOfferData.repaymentFrequency;
+      }
+
       const parsedOfferData = insertOfferSchema.parse(completeOfferData);
       const offer = await storage.createOffer(parsedOfferData);
       
