@@ -30,4 +30,20 @@ window.addEventListener('error', (event) => {
   console.error('Uncaught error:', event.error);
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+console.log('Main.tsx is executing');
+console.log('Root element:', document.getElementById("root"));
+
+try {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    console.error('Root element not found!');
+  } else {
+    console.log('Creating root...');
+    const root = createRoot(rootElement);
+    console.log('Rendering App...');
+    root.render(<div style={{padding: '20px', fontSize: '24px', fontWeight: 'bold'}}>CredNXT Test - React is working!</div>);
+    console.log('App rendered successfully');
+  }
+} catch (error) {
+  console.error('Error rendering app:', error);
+}
