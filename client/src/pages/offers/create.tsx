@@ -88,7 +88,14 @@ export default function CreateOffer() {
       try {
         // Check if user is registered with this phone number
         console.log('Checking phone number:', phoneNumber);
-        const response = await apiRequest('GET', `/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
+        
+        // Make direct fetch call without authentication for this public endpoint
+        const response = await fetch(`/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
