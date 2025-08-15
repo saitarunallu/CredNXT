@@ -60,6 +60,7 @@ export function initializeRecaptcha() {
     
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       'size': 'invisible',
+      'sitekey': '6Lfms6YrAAAAABr1PkSwB7g8AqDpkcep4KFePKZW', // Your reCAPTCHA site key
       'callback': (response: any) => {
         console.log('reCAPTCHA verified successfully', response);
       },

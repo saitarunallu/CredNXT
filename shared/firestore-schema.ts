@@ -36,7 +36,7 @@ export interface Offer {
   fromUserId: string;
   toUserPhone: string;
   toUserName: string;
-  toUserId?: string;
+  toUserId?: string | null;
   offerType: OfferType;
   amount: number;
   interestRate: number;
@@ -173,7 +173,7 @@ export const insertOfferSchema = z.object({
   fromUserId: z.string().min(1),
   toUserPhone: z.string().min(10).max(15).regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
   toUserName: z.string().min(2).max(100).regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens"),
-  toUserId: z.string().optional(),
+  toUserId: z.string().nullable().optional(),
   offerType: z.enum(['lend', 'borrow']),
   amount: z.coerce.number().min(1).max(10000000),
   interestRate: z.coerce.number().min(0).max(50),

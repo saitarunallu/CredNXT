@@ -128,7 +128,7 @@ class FirestoreStorage implements IFirestoreStorage {
       fromUserId: offerData.fromUserId,
       toUserPhone: offerData.toUserPhone,
       toUserName: offerData.toUserName,
-      toUserId: offerData.toUserId,
+      toUserId: offerData.toUserId || null,
       offerType: offerData.offerType,
       amount: offerData.amount,
       interestRate: offerData.interestRate,
