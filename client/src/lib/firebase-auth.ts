@@ -46,13 +46,19 @@ export class FirebaseAuthService {
       
       // Clear any existing verification
       if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          console.log('reCAPTCHA clear failed:', e);
+        }
         window.recaptchaVerifier = undefined;
-        initializeRecaptcha(); // Reinitialize
       }
       
+      // Reinitialize reCAPTCHA
+      const freshRecaptcha = initializeRecaptcha();
+      
       // Send OTP
-      this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptcha);
+      this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, freshRecaptcha);
       
       console.log('OTP sent successfully');
       return { success: true };
@@ -76,11 +82,13 @@ export class FirebaseAuthService {
       
       if (error.code === 'auth/invalid-app-credential' || 
           error.code === 'auth/unauthorized-domain' ||
+          error.code === 'auth/app-not-authorized' ||
           error.message?.includes('not authorized') ||
-          error.message?.includes('domain')) {
+          error.message?.includes('domain') ||
+          error.message?.includes('app-not-authorized')) {
         return { 
           success: false, 
-          error: `Domain authorization required. Please add ${window.location.hostname} to Firebase Console > Authentication > Settings > Authorized domains.`
+          error: `Domain not authorized for Firebase authentication. Please add the current domain "${window.location.hostname}" to your Firebase Console under Authentication > Settings > Authorized domains. Contact your administrator to add this domain.`
         };
       }
       

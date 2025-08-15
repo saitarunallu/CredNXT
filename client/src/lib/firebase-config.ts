@@ -58,29 +58,32 @@ export function initializeRecaptcha() {
   if (!window.recaptchaVerifier) {
     console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
     
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible',
-      'sitekey': '6Lfms6YrAAAAABr1PkSwB7g8AqDpkcep4KFePKZW', // Your reCAPTCHA site key
-      'callback': (response: any) => {
-        console.log('reCAPTCHA verified successfully', response);
-      },
-      'expired-callback': () => {
-        console.log('reCAPTCHA expired, please try again');
-        // Clear and reinitialize on expiry
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = undefined;
+    try {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'sitekey': '6Lfms6YrAAAAABr1PkSwB7g8AqDpkcep4KFePKZW', // Your reCAPTCHA site key
+        'callback': (response: any) => {
+          console.log('reCAPTCHA verified successfully', response);
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA expired, please try again');
+          // Clear and reinitialize on expiry
+          if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = undefined;
+          }
+        },
+        'error-callback': (error: any) => {
+          console.error('reCAPTCHA error:', error);
+          if (error.code === 'auth/invalid-app-credential') {
+            console.error('Domain not authorized. Please add', window.location.hostname, 'to Firebase authorized domains.');
+          }
         }
-      },
-      'error-callback': (error: any) => {
-        console.error('reCAPTCHA error:', error);
-        if (error.code === 'auth/invalid-app-credential') {
-          console.error('Domain not authorized. Please add', window.location.hostname, 'to Firebase authorized domains.');
-          // Provide user-friendly guidance
-          alert(`Domain authorization required. Please add ${window.location.hostname} to Firebase Console > Authentication > Settings > Authorized domains.`);
-        }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Failed to initialize reCAPTCHA:', error);
+      throw error;
+    }
   }
   return window.recaptchaVerifier;
 }
