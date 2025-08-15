@@ -195,13 +195,13 @@ export default function Dashboard() {
             
             {recentOffers.length > 0 ? (
               <div className="space-y-3">
-                {recentOffers.map((item) => (
+                {recentOffers.map((offer) => (
                   <OfferCard
-                    key={item.offer.id}
-                    offer={item.offer}
-                    fromUser={item.fromUser}
-                    totalPaid={item.totalPaid}
-                    isReceived={!!item.fromUser}
+                    key={offer.id}
+                    offer={offer}
+                    fromUser={offer.fromUser}
+                    totalPaid={offer.totalPaid}
+                    isReceived={!!offer.fromUser}
                   />
                 ))}
               </div>
