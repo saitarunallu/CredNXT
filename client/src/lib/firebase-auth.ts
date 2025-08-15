@@ -184,21 +184,46 @@ export class FirebaseAuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) return null;
+    const hasFirebaseConfig = !!import.meta.env.VITE_FIREBASE_API_KEY;
+    
+    if (hasFirebaseConfig) {
+      // Use Firebase auth when properly configured
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) return null;
 
-    try {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        this.setUser(userData);
-        return userData;
+      try {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data() as User;
+          this.setUser(userData);
+          return userData;
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
       }
-    } catch (error) {
-      console.error('Error getting current user:', error);
-    }
 
-    return null;
+      return null;
+    } else {
+      // Fallback to localStorage for MVP when Firebase isn't configured
+      if (this.user) {
+        return this.user;
+      }
+      
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          this.user = user;
+          return user;
+        } catch (error) {
+          console.error('Failed to parse user data from localStorage:', error);
+          this.logout();
+          return null;
+        }
+      }
+      
+      return null;
+    }
   }
 
   async setUser(user: User) {
@@ -230,7 +255,15 @@ export class FirebaseAuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!auth.currentUser;
+    // For MVP: Fall back to localStorage if Firebase auth isn't configured
+    const hasFirebaseConfig = !!import.meta.env.VITE_FIREBASE_API_KEY;
+    
+    if (hasFirebaseConfig) {
+      return !!auth.currentUser;
+    } else {
+      // Fallback to localStorage for MVP when Firebase isn't configured
+      return !!this.user && !!localStorage.getItem('user_data');
+    }
   }
 
   requiresProfile(): boolean {
