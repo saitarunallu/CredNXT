@@ -127,6 +127,7 @@ class FirestoreStorage implements IFirestoreStorage {
     const id = this.generateId();
     const now = Timestamp.now();
     
+    // Prepare the offer object, excluding undefined values to prevent Firestore errors
     const offer: Offer = {
       id,
       fromUserId: offerData.fromUserId,
@@ -140,25 +141,43 @@ class FirestoreStorage implements IFirestoreStorage {
       tenureValue: offerData.tenureValue,
       tenureUnit: offerData.tenureUnit,
       repaymentType: offerData.repaymentType,
-      repaymentFrequency: offerData.repaymentFrequency,
       allowPartPayment: offerData.allowPartPayment || false,
       gracePeriodDays: offerData.gracePeriodDays || 0,
       prepaymentPenalty: offerData.prepaymentPenalty || 0,
       latePaymentPenalty: offerData.latePaymentPenalty || 0,
-      purpose: offerData.purpose,
       startDate: this.dateToTimestamp(offerData.startDate) as any,
       dueDate: this.dateToTimestamp(offerData.dueDate) as any,
-      nextPaymentDueDate: offerData.nextPaymentDueDate ? this.dateToTimestamp(offerData.nextPaymentDueDate) as any : undefined,
       currentInstallmentNumber: offerData.currentInstallmentNumber || 1,
-      totalInstallments: offerData.totalInstallments,
-      note: offerData.note,
       status: offerData.status || 'pending',
-      contractPdfKey: offerData.contractPdfKey,
-      kfsPdfKey: offerData.kfsPdfKey,
-      schedulePdfKey: offerData.schedulePdfKey,
       createdAt: now as any,
       updatedAt: now as any,
     };
+
+    // Only add optional fields if they have values
+    if (offerData.repaymentFrequency !== undefined) {
+      offer.repaymentFrequency = offerData.repaymentFrequency;
+    }
+    if (offerData.purpose !== undefined) {
+      offer.purpose = offerData.purpose;
+    }
+    if (offerData.note !== undefined) {
+      offer.note = offerData.note;
+    }
+    if (offerData.totalInstallments !== undefined) {
+      offer.totalInstallments = offerData.totalInstallments;
+    }
+    if (offerData.nextPaymentDueDate) {
+      offer.nextPaymentDueDate = this.dateToTimestamp(offerData.nextPaymentDueDate) as any;
+    }
+    if (offerData.contractPdfKey !== undefined) {
+      offer.contractPdfKey = offerData.contractPdfKey;
+    }
+    if (offerData.kfsPdfKey !== undefined) {
+      offer.kfsPdfKey = offerData.kfsPdfKey;
+    }
+    if (offerData.schedulePdfKey !== undefined) {
+      offer.schedulePdfKey = offerData.schedulePdfKey;
+    }
 
     await this.db.collection('offers').doc(id).set(offer);
     return offer;

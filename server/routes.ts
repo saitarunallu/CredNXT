@@ -545,6 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ sentOffers, receivedOffers });
     } catch (error) {
+      console.error('Get offers error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
@@ -1187,12 +1188,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For sent offers (offers I created):
       // - If I created a 'lend' offer and it's accepted, I am lending money (money goes out)
       // - If I created a 'borrow' offer and it's accepted, I am borrowing money (money comes in)
-      sentOffers.forEach(item => {
-        const amount = parseFloat(item.offer.amount || '0');
-        if (item.offer.status === 'accepted') {
-          if (item.offer.offerType === 'lend') {
+      sentOffers.forEach(offer => {
+        const amount = parseFloat(offer.amount || '0');
+        if (offer.status === 'accepted') {
+          if (offer.offerType === 'lend') {
             totalLent += amount;  // I lent money to someone
-          } else if (item.offer.offerType === 'borrow') {
+          } else if (offer.offerType === 'borrow') {
             totalBorrowed += amount;  // I borrowed money from someone
           }
         }
@@ -1201,12 +1202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For received offers (offers others created for me):
       // - If someone created a 'lend' offer for me and it's accepted, they are lending to me (I borrow)
       // - If someone created a 'borrow' offer from me and it's accepted, they are borrowing from me (I lend)
-      receivedOffers.forEach(item => {
-        const amount = parseFloat(item.offer.amount || '0');
-        if (item.offer.status === 'accepted') {
-          if (item.offer.offerType === 'lend') {
+      receivedOffers.forEach(offer => {
+        const amount = parseFloat(offer.amount || '0');
+        if (offer.status === 'accepted') {
+          if (offer.offerType === 'lend') {
             totalBorrowed += amount;  // Someone lent money to me
-          } else if (item.offer.offerType === 'borrow') {
+          } else if (offer.offerType === 'borrow') {
             totalLent += amount;  // Someone borrowed money from me
           }
         }
@@ -1215,12 +1216,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = {
         totalLent,
         totalBorrowed,
-        activeOffers: [...sentOffers, ...receivedOffers].filter(item => item.offer.status === 'accepted').length,
-        pendingOffers: [...sentOffers, ...receivedOffers].filter(item => item.offer.status === 'pending').length,
+        activeOffers: [...sentOffers, ...receivedOffers].filter(offer => offer.status === 'accepted').length,
+        pendingOffers: [...sentOffers, ...receivedOffers].filter(offer => offer.status === 'pending').length,
       };
 
       res.json({ stats });
     } catch (error) {
+      console.error('Dashboard stats error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
