@@ -487,6 +487,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create user for your phone number
+  app.post('/api/create-my-user', async (req: Request, res) => {
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      const myUser = await storage.createUser({
+        phone: '9100788913',
+        name: 'CredNXT User',
+        email: 'user@crednxt.com',
+        isVerified: true
+      });
+      
+      res.json({ success: true, user: myUser, message: 'Your user created successfully' });
+    } catch (error) {
+      console.error('Create your user error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
   // Offers routes
   app.get('/api/offers', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
