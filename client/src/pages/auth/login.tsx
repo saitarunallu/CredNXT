@@ -84,7 +84,7 @@ export default function Login() {
                   id="phone"
                   type="tel"
                   {...register("phone")}
-                  placeholder="+91 98765 43210"
+                  placeholder="9876543210"
                   className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
                 />
                 {errors.phone && (
@@ -108,6 +108,9 @@ export default function Login() {
                 )}
               </Button>
             </form>
+            
+            {/* reCAPTCHA container - hidden but required for Firebase phone auth */}
+            <div id="recaptcha-container" className="hidden"></div>
 
             <div className="mt-8 text-center px-4">
               <p className="text-sm text-gray-500 leading-relaxed flex items-center justify-center space-x-2">

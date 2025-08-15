@@ -22,14 +22,34 @@ export class FirebaseAuthService {
 
   async sendOTP(phoneNumber: string): Promise<{ success: boolean; error?: string }> {
     try {
+      // Validate phone number format
+      if (!phoneNumber || phoneNumber.trim().length === 0) {
+        return { success: false, error: 'Phone number is required' };
+      }
+
+      // Clean and validate phone number
+      const cleanPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+      
+      // Check if it's a valid Indian phone number
+      if (cleanPhone.length !== 10 || !cleanPhone.startsWith('6') && !cleanPhone.startsWith('7') && !cleanPhone.startsWith('8') && !cleanPhone.startsWith('9')) {
+        return { success: false, error: 'Please enter a valid 10-digit Indian mobile number' };
+      }
+      
       // Initialize reCAPTCHA
       const recaptcha = initializeRecaptcha();
       
-      // Format phone number
-      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+      // Format phone number with country code
+      const formattedPhone = `+91${cleanPhone}`;
       
       console.log('Attempting to send OTP to:', formattedPhone);
       console.log('Current domain:', window.location.hostname);
+      
+      // Clear any existing verification
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = undefined;
+        initializeRecaptcha(); // Reinitialize
+      }
       
       // Send OTP
       this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptcha);
@@ -39,20 +59,41 @@ export class FirebaseAuthService {
     } catch (error: any) {
       console.error('Error sending OTP:', error);
       
-      // Check for specific domain-related errors
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/argument-error') {
+        return { 
+          success: false, 
+          error: 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.'
+        };
+      }
+      
+      if (error.code === 'auth/invalid-phone-number') {
+        return { 
+          success: false, 
+          error: 'Invalid phone number. Please enter a valid 10-digit Indian mobile number.'
+        };
+      }
+      
       if (error.code === 'auth/invalid-app-credential' || 
           error.code === 'auth/unauthorized-domain' ||
           error.message?.includes('not authorized') ||
           error.message?.includes('domain')) {
         return { 
           success: false, 
-          error: `Domain not authorized. Please add ${window.location.hostname} to Firebase authorized domains in your Firebase Console under Authentication > Settings > Authorized domains.`
+          error: `Domain authorization required. Please add ${window.location.hostname} to Firebase Console > Authentication > Settings > Authorized domains.`
+        };
+      }
+      
+      if (error.code === 'auth/quota-exceeded') {
+        return { 
+          success: false, 
+          error: 'SMS quota exceeded. Please try again later.'
         };
       }
       
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send OTP' 
+        error: error instanceof Error ? error.message : 'Failed to send OTP. Please try again.' 
       };
     }
   }
