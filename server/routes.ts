@@ -17,6 +17,7 @@ import {
   insertOfferSchema, insertPaymentSchema
 } from "@shared/firestore-schema";
 import { Timestamp } from 'firebase-admin/firestore';
+import admin from 'firebase-admin';
 import { z } from "zod";
 
 interface AuthenticatedRequest extends Request {
@@ -1179,7 +1180,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
               (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
           };
-          contractKey = await pdfService.generateContract(offerForPdf as any, fromUser);
+          contractKey = await pdfService.generateContract(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? null,
+            email: fromUser.email ?? null,
+            isVerified: fromUser.isVerified ?? null,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
+          });
           console.log(`Generated contract with key: ${contractKey}`);
           
           await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
@@ -1236,7 +1244,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
               (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
           };
-          kfsKey = await pdfService.generateKFS(offerForPdf as any, fromUser);
+          kfsKey = await pdfService.generateKFS(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? null,
+            email: fromUser.email ?? null,
+            isVerified: fromUser.isVerified ?? null,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
+          });
           console.log(`Generated KFS with key: ${kfsKey}`);
           
           await storage.updateOffer(offer.id, { kfsPdfKey: kfsKey });
@@ -1361,7 +1376,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
               (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
           };
-          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, fromUser);
+          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? null,
+            email: fromUser.email ?? null,
+            isVerified: fromUser.isVerified ?? null,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
+          });
           console.log(`Generated repayment schedule with key: ${scheduleKey}`);
           
           await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
@@ -1637,7 +1659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const expiredPayments = allPayments.filter(payment => 
         payment.status === 'pending' && 
-        payment.createdAt && new Date(payment.createdAt) < oneDayAgo
+        payment.createdAt && (payment.createdAt.toDate ? payment.createdAt.toDate() : new Date(payment.createdAt as any)) < oneDayAgo
       );
       
       console.log(`Found ${expiredPayments.length} expired pending payments to cleanup`);
