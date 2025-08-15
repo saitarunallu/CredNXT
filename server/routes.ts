@@ -589,7 +589,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Initialize repayment schedule when offer is accepted
       if (status === 'accepted') {
         try {
-          await repaymentService.initializeRepaymentSchedule(offer);
+          // Convert Firebase Timestamp to compatible format for repayment service
+          const offerForRepayment = {
+            ...offer,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : undefined)
+          };
+          await repaymentService.initializeRepaymentSchedule(offerForRepayment as any);
         } catch (error) {
           console.error('Failed to initialize repayment schedule:', error);
         }
@@ -665,9 +675,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Calculate loan start date (should be from acceptance date, not creation date)
-      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
-        ? new Date(offer.updatedAt)  // Use acceptance date
-        : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt 
+        ? (offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any))  // Use acceptance date
+        : (offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any)); // Use creation date or current date as fallback
 
       // Calculate repayment schedule to validate payment
       const loanTerms = {
@@ -835,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update payment status to paid
       const updatedPayment = await storage.updatePayment(id, {
         status: 'paid' as const,
-        paidAt: Timestamp.fromDate(new Date())
+        paidAt: { toDate: () => new Date(), toMillis: () => Date.now() } as any
       });
 
       // Advance to next installment (update due dates monthly as per repayment schedule)
@@ -1141,7 +1151,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Found user for contract generation: ${fromUser.name} (${fromUser.phone})`);
         
         try {
-          contractKey = await pdfService.generateContract(offer, fromUser);
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          contractKey = await pdfService.generateContract(offerForPdf as any, fromUser);
           console.log(`Generated contract with key: ${contractKey}`);
           
           await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
@@ -1187,7 +1208,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Found user for KFS generation: ${fromUser.name} (${fromUser.phone})`);
         
         try {
-          kfsKey = await pdfService.generateKFS(offer, fromUser);
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          kfsKey = await pdfService.generateKFS(offerForPdf as any, fromUser);
           console.log(`Generated KFS with key: ${kfsKey}`);
           
           await storage.updateOffer(offer.id, { kfsPdfKey: kfsKey });
@@ -1301,7 +1333,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Found user for schedule generation: ${fromUser.name} (${fromUser.phone})`);
         
         try {
-          scheduleKey = await pdfService.generateRepaymentSchedule(offer, fromUser);
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, fromUser);
           console.log(`Generated repayment schedule with key: ${scheduleKey}`);
           
           await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
@@ -1428,9 +1471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .reduce((sum, p) => sum + parseFloat(String(p.amount)), 0);
 
       // Calculate loan start date (should be from acceptance date, not creation date)
-      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt && offer.updatedAt !== offer.createdAt 
-        ? new Date(offer.updatedAt)  // Use acceptance date
-        : offer.createdAt ? new Date(offer.createdAt) : new Date(); // Use creation date or current date as fallback
+      const loanStartDate = offer.status === 'accepted' && offer.updatedAt && offer.createdAt 
+        ? (offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any))  // Use acceptance date
+        : (offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any)); // Use creation date or current date as fallback
 
       const loanTerms = {
         principal: parseFloat(String(offer.amount)),
