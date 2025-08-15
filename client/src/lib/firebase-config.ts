@@ -56,13 +56,21 @@ declare global {
 // Initialize reCAPTCHA verifier for phone auth
 export function initializeRecaptcha() {
   if (!window.recaptchaVerifier) {
+    console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
+    
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
       'size': 'invisible',
       'callback': (response: any) => {
-        console.log('reCAPTCHA verified');
+        console.log('reCAPTCHA verified successfully', response);
       },
       'expired-callback': () => {
-        console.log('reCAPTCHA expired');
+        console.log('reCAPTCHA expired, please try again');
+      },
+      'error-callback': (error: any) => {
+        console.error('reCAPTCHA error:', error);
+        if (error.code === 'auth/invalid-app-credential') {
+          console.error('Domain not authorized. Please add', window.location.hostname, 'to Firebase authorized domains.');
+        }
       }
     });
   }

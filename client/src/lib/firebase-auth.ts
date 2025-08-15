@@ -28,12 +28,28 @@ export class FirebaseAuthService {
       // Format phone number
       const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
       
+      console.log('Attempting to send OTP to:', formattedPhone);
+      console.log('Current domain:', window.location.hostname);
+      
       // Send OTP
       this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptcha);
       
+      console.log('OTP sent successfully');
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending OTP:', error);
+      
+      // Check for specific domain-related errors
+      if (error.code === 'auth/invalid-app-credential' || 
+          error.code === 'auth/unauthorized-domain' ||
+          error.message?.includes('not authorized') ||
+          error.message?.includes('domain')) {
+        return { 
+          success: false, 
+          error: `Domain not authorized. Please add ${window.location.hostname} to Firebase authorized domains in your Firebase Console under Authentication > Settings > Authorized domains.`
+        };
+      }
+      
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to send OTP' 
