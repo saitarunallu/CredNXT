@@ -61,7 +61,6 @@ export function initializeRecaptcha() {
     try {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'sitekey': '6Lfms6YrAAAAABr1PkSwB7g8AqDpkcep4KFePKZW', // Your reCAPTCHA site key
         'callback': (response: any) => {
           console.log('reCAPTCHA verified successfully', response);
         },
@@ -75,9 +74,7 @@ export function initializeRecaptcha() {
         },
         'error-callback': (error: any) => {
           console.error('reCAPTCHA error:', error);
-          if (error.code === 'auth/invalid-app-credential') {
-            console.error('Domain not authorized. Please add', window.location.hostname, 'to Firebase authorized domains.');
-          }
+          console.error('Domain authorization may still be pending. Please wait a few minutes after adding domain to Firebase Console.');
         }
       });
     } catch (error) {

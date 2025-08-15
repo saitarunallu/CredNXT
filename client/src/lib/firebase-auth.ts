@@ -67,9 +67,16 @@ export class FirebaseAuthService {
       
       // Handle specific Firebase auth errors
       if (error.code === 'auth/argument-error') {
+        // Check if it's a domain issue vs phone number issue
+        if (error.message?.includes('reCAPTCHA') || error.message?.includes('domain') || error.message?.includes('authorized')) {
+          return { 
+            success: false, 
+            error: 'Domain authorization is still processing. Please wait a few minutes after adding the domain to Firebase Console, then try again.'
+          };
+        }
         return { 
           success: false, 
-          error: 'Invalid phone number format. Please enter a valid 10-digit Indian mobile number.'
+          error: 'Phone number validation failed. Please enter exactly 10 digits starting with 6, 7, 8, or 9.'
         };
       }
       

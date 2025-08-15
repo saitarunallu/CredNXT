@@ -27,7 +27,17 @@ export default function Login() {
 
   // Debug: Watch phone input for real-time validation
   const phoneValue = watch("phone");
-  console.log('Current phone value:', phoneValue);
+  if (phoneValue) {
+    const digits = phoneValue.replace(/\D/g, '');
+    console.log('Phone validation debug:', {
+      original: phoneValue,
+      digits: digits,
+      length: digits.length,
+      startsWithValid: /^[6-9]/.test(digits),
+      fullMatch: /^[6-9]\d{9}$/.test(digits),
+      shouldPass: digits.length === 10 && /^[6-9]\d{9}$/.test(digits)
+    });
+  }
   console.log('Form errors:', errors);
 
   const loginMutation = useMutation({
