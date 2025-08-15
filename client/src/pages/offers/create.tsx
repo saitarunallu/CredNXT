@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
 
@@ -24,7 +24,7 @@ export default function CreateOffer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const currentUser = authService.getUser();
+  const currentUser = firebaseAuthService.getUser();
   const [contactPhone, setContactPhone] = useState("");
   const [contactName, setContactName] = useState("");
   const [isContactFound, setIsContactFound] = useState(false);

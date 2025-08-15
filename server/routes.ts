@@ -64,7 +64,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const payload = authService.verifyToken(token);
+      // Verify Firebase ID token instead of JWT
+      let payload;
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        payload = { userId: decodedToken.uid };
+      } catch (error) {
+        securityService.createAlert({
+          level: 'high',
+          type: 'AUTHENTICATION_FAILURE',
+          description: 'Firebase token verification failed',
+          clientIp,
+          details: { requestId, error: error instanceof Error ? error.message : 'Unknown error' }
+        });
+        return res.status(401).json({ 
+          message: 'Invalid authentication token',
+          code: 'AUTH_TOKEN_INVALID'
+        });
+      }
       
       // Additional security checks
       if (!payload.userId) {

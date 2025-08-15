@@ -129,7 +129,7 @@ export class FirebaseAuthService {
       if (userDoc.exists()) {
         // User exists, log them in
         const userData = userDoc.data() as User;
-        this.setUser(userData);
+        await this.setUser(userData);
         return { success: true, user: userData, needsProfile: !userData.name };
       } else {
         // New user, create profile
@@ -142,7 +142,7 @@ export class FirebaseAuthService {
         };
 
         await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-        this.setUser(newUser);
+        await this.setUser(newUser);
         return { success: true, user: newUser, needsProfile: true };
       }
     } catch (error) {
@@ -201,15 +201,27 @@ export class FirebaseAuthService {
     return null;
   }
 
-  setUser(user: User) {
+  async setUser(user: User) {
     this.user = user;
     localStorage.setItem('user_data', JSON.stringify(user));
+    
+    // Get Firebase ID token and store it
+    const firebaseUser = auth.currentUser;
+    if (firebaseUser) {
+      try {
+        const idToken = await firebaseUser.getIdToken();
+        localStorage.setItem('firebase_auth_token', idToken);
+      } catch (error) {
+        console.error('Error getting Firebase ID token:', error);
+      }
+    }
   }
 
   logout() {
     this.user = null;
     this.confirmationResult = null;
     localStorage.removeItem('user_data');
+    localStorage.removeItem('firebase_auth_token');
     auth.signOut();
   }
 

@@ -6,17 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { User, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const user = authService.getUser();
+  const user = firebaseAuthService.getUser();
   const [isEditing, setIsEditing] = useState(false);
   // Theme functionality removed - light theme only
 
   const handleLogout = () => {
-    authService.logout();
+    firebaseAuthService.logout();
     setLocation('/');
   };
 

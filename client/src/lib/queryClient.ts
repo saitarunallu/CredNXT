@@ -21,7 +21,8 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: { headers?: Record<string, string> }
 ): Promise<Response> {
-  const token = localStorage.getItem('auth_token');
+  // Get Firebase auth token
+  const token = localStorage.getItem('firebase_auth_token');
   const fullUrl = getApiUrl(url);
   
   try {
@@ -53,7 +54,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = localStorage.getItem('auth_token');
+    // Get Firebase auth token
+    const token = localStorage.getItem('firebase_auth_token');
     const url = queryKey.join("/") as string;
     const fullUrl = getApiUrl(url);
     
