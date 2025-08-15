@@ -2,38 +2,61 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator, RecaptchaVerifier } from 'firebase/auth';
 
-const firebaseConfig = {
-  // These will be set from environment variables
+// Check if Firebase config is available
+const hasFirebaseConfig = !!import.meta.env.VITE_FIREBASE_API_KEY && !!import.meta.env.VITE_FIREBASE_PROJECT_ID;
+
+const firebaseConfig = hasFirebaseConfig ? {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+} : {
+  // Fallback config for MVP when Firebase isn't configured
+  apiKey: "demo-api-key",
+  authDomain: "demo.firebaseapp.com",
+  projectId: "demo-project",
+  storageBucket: "demo-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef",
 };
 
-// Debug: Check if Firebase config is loaded properly
-console.log('Firebase config loaded:', {
-  hasApiKey: !!firebaseConfig.apiKey,
-  hasAuthDomain: !!firebaseConfig.authDomain,
-  hasProjectId: !!firebaseConfig.projectId,
-  projectId: firebaseConfig.projectId,
-  apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
+console.log('Firebase config status:', {
+  configured: hasFirebaseConfig,
+  hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+  hasProjectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  usingFallback: !hasFirebaseConfig
 });
 
-// Initialize Firebase only if not already initialized
+// Initialize Firebase only if we have proper config or using fallback
 let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
+let db: any = null;
+let auth: any = null;
+
+try {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+
+  // Only initialize Firestore and Auth if we have real config
+  if (hasFirebaseConfig) {
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } else {
+    // Create mock objects for MVP
+    console.log('Using Firebase fallback mode for MVP');
+    db = { collection: () => null, doc: () => null };
+    auth = { currentUser: null, signOut: () => Promise.resolve() };
+  }
+} catch (error) {
+  console.error('Firebase initialization failed, using fallback:', error);
+  // Create mock objects if initialization fails
+  db = { collection: () => null, doc: () => null };
+  auth = { currentUser: null, signOut: () => Promise.resolve() };
 }
-
-// Initialize Firestore
-const db = getFirestore(app);
-
-// Initialize Auth  
-const auth = getAuth(app);
 
 // Connect to emulators in development (disabled for now to use production Firebase)
 // if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
@@ -55,6 +78,11 @@ declare global {
 
 // Initialize reCAPTCHA verifier for phone auth
 export function initializeRecaptcha() {
+  if (!hasFirebaseConfig) {
+    console.log('reCAPTCHA not available in fallback mode');
+    return null;
+  }
+
   if (!window.recaptchaVerifier) {
     console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
     
@@ -84,6 +112,8 @@ export function initializeRecaptcha() {
   }
   return window.recaptchaVerifier;
 }
+
+export { hasFirebaseConfig };
 
 export { db, auth };
 export default app;

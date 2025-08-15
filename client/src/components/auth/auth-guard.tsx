@@ -29,8 +29,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     retry: false,
   });
 
-  // Enable real-time updates for authenticated users
-  useRealtimeUpdates();
+  // Enable real-time updates for authenticated users (skip if not configured)
+  try {
+    useRealtimeUpdates();
+  } catch (e) {
+    console.log('Real-time updates not available:', e);
+  }
 
   useEffect(() => {
     if (!firebaseAuthService.isAuthenticated()) {
@@ -43,11 +47,19 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       return;
     }
 
-    // Connect to WebSocket for authenticated users
-    wsService.connect();
+    // Connect to WebSocket for authenticated users (skip if not configured)
+    try {
+      wsService.connect();
+    } catch (e) {
+      console.log('WebSocket not available:', e);
+    }
 
     return () => {
-      wsService.disconnect();
+      try {
+        wsService.disconnect();
+      } catch (e) {
+        console.log('WebSocket disconnect failed:', e);
+      }
     };
   }, [setLocation, user]);
 

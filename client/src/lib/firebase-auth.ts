@@ -1,6 +1,6 @@
 import { signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider, ConfirmationResult, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { auth, db, initializeRecaptcha } from './firebase-config';
+import { auth, db, initializeRecaptcha, hasFirebaseConfig } from './firebase-config';
 import type { User } from "@shared/firestore-schema";
 
 export class FirebaseAuthService {
@@ -56,6 +56,11 @@ export class FirebaseAuthService {
       
       // Reinitialize reCAPTCHA
       const freshRecaptcha = initializeRecaptcha();
+      
+      // Check if reCAPTCHA is available (for Firebase config check)
+      if (!freshRecaptcha) {
+        return { success: false, error: 'Authentication service not available. Please try again later.' };
+      }
       
       // Send OTP
       this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, freshRecaptcha);
