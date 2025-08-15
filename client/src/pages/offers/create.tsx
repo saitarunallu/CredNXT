@@ -87,15 +87,44 @@ export default function CreateOffer() {
       
       try {
         // Check if user is registered with this phone number
+        console.log('Checking phone number:', phoneNumber);
         const response = await apiRequest('GET', `/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
-        const data = await response.json();
         
-        if (data.exists && data.user) {
+        if (!response.ok) {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('API response:', data);
+        
+        if (data.exists && data.user && data.user.name) {
+          console.log('Setting contact name:', data.user.name);
           setContactName(data.user.name);
           setIsContactFound(true);
+          toast({
+            title: "Contact Found",
+            description: `Found registered user: ${data.user.name}`,
+          });
+        } else {
+          console.log('User not found or no name available');
+          // Clear any previous name if user not found
+          setContactName("");
+          setIsContactFound(false);
         }
       } catch (error) {
+        console.error('Error checking phone number:', error);
         // User not registered - allow manual name entry
+        setContactName("");
+        setIsContactFound(false);
+        
+        // Only show error toast for actual API errors, not when user is simply not found
+        if (error instanceof Error && !error.message.includes('404')) {
+          toast({
+            title: "Error",
+            description: "Failed to check contact. Please try again.",
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsCheckingContact(false);
       }
