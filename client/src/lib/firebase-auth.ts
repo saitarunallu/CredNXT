@@ -30,9 +30,9 @@ export class FirebaseAuthService {
       // Clean and validate phone number
       const cleanPhone = phoneNumber.replace(/\D/g, ''); // Remove non-digits
       
-      // Check if it's a valid Indian phone number
-      if (cleanPhone.length !== 10 || !cleanPhone.startsWith('6') && !cleanPhone.startsWith('7') && !cleanPhone.startsWith('8') && !cleanPhone.startsWith('9')) {
-        return { success: false, error: 'Please enter a valid 10-digit Indian mobile number' };
+      // Check if it's a valid Indian phone number (10 digits, starting with 6-9)
+      if (cleanPhone.length !== 10 || !/^[6-9]\d{9}$/.test(cleanPhone)) {
+        return { success: false, error: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9' };
       }
       
       // Initialize reCAPTCHA
