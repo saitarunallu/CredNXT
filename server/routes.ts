@@ -13,6 +13,20 @@ import { repaymentService } from "./services/repayment";
 import { smsService } from "./services/sms";
 import { smsRouter } from "./routes/sms";
 // Health routes are already integrated in the main routes
+
+// Phone number normalization utility
+function normalizePhoneNumber(phone: string): string {
+  // Remove all non-digit characters and ensure it's a 10-digit Indian mobile number
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Handle +91 prefix
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    return cleaned.substring(2);
+  }
+  
+  // Return as-is if it's already 10 digits
+  return cleaned;
+}
 import {
   loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
@@ -319,15 +333,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { phone, code } = verifyOtpSchema.parse(req.body);
+      const normalizedPhone = normalizePhoneNumber(phone);
       
-      const isValid = await storage.verifyOtp(phone, code);
+      const isValid = await storage.verifyOtp(normalizedPhone, code);
       if (!isValid) {
         // Audit failed OTP attempt
         complianceService.createAuditEntry({
           operation: 'OTP_VERIFICATION_FAILED',
           entityType: 'user',
           entityId: phone,
-          details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+          details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
           compliance: {
             ruleId: 'AUTHENTICATION',
             status: 'failed',
@@ -341,16 +356,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      let user = await storage.getUserByPhone(phone);
+      let user = await storage.getUserByPhone(normalizedPhone);
       if (!user) {
-        user = await storage.createUser({ phone, isVerified: true });
+        user = await storage.createUser({ phone: normalizedPhone, isVerified: true });
         
         // Audit new user creation
         complianceService.createAuditEntry({
           operation: 'USER_CREATED',
           entityType: 'user',
           entityId: user.id,
-          details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+          details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
           compliance: {
             ruleId: 'USER_REGISTRATION',
             status: 'passed',
@@ -380,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         operation: 'LOGIN_SUCCESS',
         entityType: 'user',
         entityId: user.id,
-        details: { phone: phone.substring(0, 3) + '***', clientIp, requestId },
+        details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
         compliance: {
           ruleId: 'AUTHENTICATION',
           status: 'passed',
@@ -572,11 +587,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // First, handle the contact creation/lookup
       const { toUserPhone, toUserName, ...offerData } = req.body;
+      const normalizedToUserPhone = normalizePhoneNumber(toUserPhone);
       
       // Check if recipient is a registered user
       let recipientUser = null;
       try {
-        recipientUser = await storage.getUserByPhone(toUserPhone);
+        recipientUser = await storage.getUserByPhone(normalizedToUserPhone);
       } catch (error) {
         // User not found, that's fine
       }
@@ -585,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completeOfferData = {
         ...offerData,
         fromUserId: req.userId!,
-        toUserPhone,
+        toUserPhone: normalizedToUserPhone,
         toUserName,
         toUserId: recipientUser?.id || null
       };
@@ -642,13 +658,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Send SMS notification to unregistered recipients
         try {
-          await smsService.sendOfferNotification(toUserPhone, {
+          await smsService.sendOfferNotification(normalizedToUserPhone, {
             senderName: fromUser.name || 'Someone',
             offerType: offer.offerType,
             amount: offer.amount,
             offerId: offer.id
           });
-          console.log(`SMS notification sent to unregistered user: ${toUserPhone}`);
+          console.log(`SMS notification sent to unregistered user: ${normalizedToUserPhone}`);
         } catch (error) {
           console.error('Failed to send SMS notification to unregistered user:', error);
           // Continue without failing the offer creation
