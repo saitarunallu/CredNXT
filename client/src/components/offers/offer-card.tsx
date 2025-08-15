@@ -56,10 +56,12 @@ export default function OfferCard({
 
   const downloadRepaymentSchedule = async () => {
     try {
+      // Use the same token logic as other working API calls
+      const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
       const response = await fetch(`/api/offers/${offer.id}/schedule/download`, {
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
+          'Authorization': `Bearer ${token}`
         }
       });
       

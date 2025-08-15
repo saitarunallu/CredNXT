@@ -221,10 +221,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadContract = async () => {
     try {
+      // Use the same token logic as other working API calls
+      const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
       const response = await fetch(`/api/offers/${offerId}/contract`, {
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -252,10 +254,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadKFS = async () => {
     try {
+      // Use the same token logic as other working API calls
+      const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
       const response = await fetch(`/api/offers/${offerId}/kfs`, {
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -287,10 +291,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadRepaymentSchedule = async () => {
     try {
+      // Use the same token logic as other working API calls
+      const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
       const response = await fetch(`/api/offers/${offerId}/schedule/download`, {
         credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
