@@ -1,4 +1,5 @@
 import admin from 'firebase-admin';
+import { initializeFirebase } from './firebase-config';
 import { 
   User, Offer, Payment, Notification, OTPCode, 
   InsertUser, InsertOffer, InsertPayment, InsertNotification,
@@ -44,6 +45,8 @@ class FirestoreStorage implements IFirestoreStorage {
   private db: admin.firestore.Firestore;
 
   constructor() {
+    // Ensure Firebase is initialized before accessing Firestore
+    initializeFirebase();
     this.db = admin.firestore();
   }
 
