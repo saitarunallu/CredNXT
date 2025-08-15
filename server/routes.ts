@@ -10,6 +10,7 @@ import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
 import { securityService } from "./services/security";
 import { repaymentService } from "./services/repayment";
+import { smsService } from "./services/sms";
 import { smsRouter } from "./routes/sms";
 // Health routes are already integrated in the main routes
 import {
@@ -637,6 +638,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             offerId: offer.id,
             message: `New ${offer.offerType} offer for ₹${offer.amount}`
           }));
+        }
+      } else {
+        // Send SMS notification to unregistered recipients
+        try {
+          await smsService.sendOfferNotification(toUserPhone, {
+            senderName: fromUser.name || 'Someone',
+            offerType: offer.offerType,
+            amount: offer.amount,
+            offerId: offer.id
+          });
+          console.log(`SMS notification sent to unregistered user: ${toUserPhone}`);
+        } catch (error) {
+          console.error('Failed to send SMS notification to unregistered user:', error);
+          // Continue without failing the offer creation
         }
       }
 

@@ -36,6 +36,16 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 
 ## Recent Updates
 
+### August 15, 2025 - Offer Delivery Issue Fixed
+**Status**: All recipients now receive offer notifications properly
+**Implementation**: Enhanced notification system to support both registered and unregistered users
+- ✅ Fixed offer delivery issue where unregistered recipients weren't receiving notifications
+- ✅ Added SMS notifications for unregistered users when offers are sent to them
+- ✅ Enhanced SMS service to support essential offer notifications alongside authentication
+- ✅ Updated offer creation logic to send SMS with offer details and direct link to view
+- ✅ Maintained in-app notifications and WebSocket notifications for registered users
+- ✅ All offer recipients now receive proper notification regardless of registration status
+
 ### August 15, 2025 - Critical Bug Fixes and Error Handling Complete
 **Status**: App fully operational, all JavaScript errors resolved
 **Implementation**: Comprehensive debugging and data structure fixes

@@ -12,7 +12,7 @@ const smsConfigSchema = z.object({
 const smsMessageSchema = z.object({
   to: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
   message: z.string().min(1).max(1600, 'Message too long'),
-  type: z.enum(['verification']).optional(),
+  type: z.enum(['verification', 'offer_notification']).optional(),
 });
 
 export type SMSMessage = z.infer<typeof smsMessageSchema>;
@@ -142,7 +142,7 @@ class SMSService {
     }
   }
 
-  // SMS templates for authentication purposes only
+  // SMS templates for authentication and essential notifications
   public async sendVerificationCode(phoneNumber: string, code: string): Promise<SMSResult> {
     const message = `Your CredNXT verification code is: ${code}. Valid for 10 minutes. Do not share this code.`;
     return this.sendSMS({
@@ -158,6 +158,17 @@ class SMSService {
       to: phoneNumber,
       message,
       type: 'verification',
+    });
+  }
+
+  // Essential offer notification for unregistered users
+  public async sendOfferNotification(phoneNumber: string, offerDetails: { senderName: string; offerType: string; amount: number; offerId: string }): Promise<SMSResult> {
+    const { senderName, offerType, amount, offerId } = offerDetails;
+    const action = offerType === 'lend' ? 'lend you' : 'borrow from you';
+    const message = `${senderName} wants to ${action} ₹${amount.toLocaleString()} via CredNXT. View details: https://crednxt-ef673.web.app/offers/${offerId}`;
+    return this.sendSMS({
+      to: phoneNumber,
+      message,
     });
   }
 
