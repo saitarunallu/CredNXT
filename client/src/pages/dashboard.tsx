@@ -76,7 +76,10 @@ export default function Dashboard() {
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
 
-  const recentOffers = [...sentOffers, ...receivedOffers]
+  const recentOffers = [
+    ...sentOffers.map((offer: any) => ({ ...offer, _isReceived: false })),
+    ...receivedOffers.map((offer: any) => ({ ...offer, _isReceived: true }))
+  ]
     .sort((a, b) => {
       try {
         const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
@@ -216,7 +219,7 @@ export default function Dashboard() {
                     offer={offer}
                     fromUser={offer.fromUser}
                     totalPaid={offer.totalPaid}
-                    isReceived={!!offer.fromUser}
+                    isReceived={offer._isReceived}
                   />
                 ))}
               </div>
