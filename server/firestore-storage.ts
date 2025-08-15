@@ -194,39 +194,58 @@ class FirestoreStorage implements IFirestoreStorage {
     // Get offers where user is the creator (fromUserId)
     const snapshot = await this.db.collection('offers')
       .where('fromUserId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .get();
 
-    return snapshot.docs.map(doc => doc.data() as Offer);
+    // Sort on the client side to avoid composite index requirement
+    const offers = snapshot.docs.map(doc => doc.data() as Offer);
+    return offers.sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Desc order
+    });
   }
 
   async getReceivedOffersByUserId(userId: string): Promise<Offer[]> {
     // Get offers where user is the recipient (toUserId)
     const snapshot = await this.db.collection('offers')
       .where('toUserId', '==', userId)
-      .orderBy('createdAt', 'desc')
       .get();
 
-    return snapshot.docs.map(doc => doc.data() as Offer);
+    // Sort on the client side to avoid composite index requirement
+    const offers = snapshot.docs.map(doc => doc.data() as Offer);
+    return offers.sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Desc order
+    });
   }
 
   async getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }> {
-    let query = this.db.collection('offers')
+    // For now, get all offers and handle pagination on client side to avoid composite index
+    const snapshot = await this.db.collection('offers')
       .where('fromUserId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(limit + 1);
+      .get();
 
+    // Sort on the client side
+    const allOffers = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id } as Offer & { docId: string }));
+    const sortedOffers = allOffers.sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
+      return bTime - aTime; // Desc order
+    });
+
+    // Handle pagination logic
+    let startIndex = 0;
     if (startAfter) {
-      const startDoc = await this.db.collection('offers').doc(startAfter).get();
-      if (startDoc.exists) {
-        query = query.startAfter(startDoc);
-      }
+      startIndex = sortedOffers.findIndex(offer => offer.docId === startAfter) + 1;
     }
 
-    const snapshot = await query.get();
-    const offers = snapshot.docs.slice(0, limit).map(doc => doc.data() as Offer);
-    const hasMore = snapshot.docs.length > limit;
-    const lastDoc = hasMore ? snapshot.docs[limit - 1].id : undefined;
+    const paginatedOffers = sortedOffers.slice(startIndex, startIndex + limit);
+    const hasMore = startIndex + limit < sortedOffers.length;
+    const lastDoc = hasMore && paginatedOffers.length > 0 ? paginatedOffers[paginatedOffers.length - 1].docId : undefined;
+
+    // Remove the temporary docId field
+    const offers = paginatedOffers.map(({ docId, ...offer }) => offer as Offer);
 
     return { offers, hasMore, lastDoc };
   }
