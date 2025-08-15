@@ -453,7 +453,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Phone number is required' });
       }
       
-      const user = await storage.getUserByPhone(phone);
+      // Try both formats: with and without +91 prefix
+      let user = await storage.getUserByPhone(phone);
+      if (!user && !phone.startsWith('+91')) {
+        // Try with +91 prefix
+        user = await storage.getUserByPhone(`+91${phone}`);
+      }
+      if (!user && phone.startsWith('+91')) {
+        // Try without +91 prefix  
+        user = await storage.getUserByPhone(phone.substring(3));
+      }
       
       if (user) {
         res.json({ exists: true, user: { id: user.id, name: user.name || '', phone: user.phone } });
@@ -504,6 +513,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, user: myUser, message: 'Your user created successfully' });
     } catch (error) {
       console.error('Create your user error:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Debug endpoint to list all users (for development only)
+  app.get('/api/debug/users', async (req: Request, res) => {
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      const db = (storage as any).getFirestore().db;
+      const snapshot = await db.collection('users').get();
+      const users = snapshot.docs.map((doc: any) => doc.data());
+      
+      res.json({ users, count: users.length });
+    } catch (error) {
+      console.error('Debug users error:', error);
       res.status(500).json({ message: 'Server error' });
     }
   });
