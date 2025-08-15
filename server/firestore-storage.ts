@@ -206,14 +206,45 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   async getReceivedOffersByUserId(userId: string): Promise<Offer[]> {
-    // Get offers where user is the recipient (toUserId)
-    const snapshot = await this.db.collection('offers')
+    // First get the user to find their phone number
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return [];
+    }
+
+    // Get offers where user is the recipient by userId
+    const directOffersSnapshot = await this.db.collection('offers')
       .where('toUserId', '==', userId)
       .get();
 
+    // Get offers where user is the recipient by phone number (for offers created before registration)
+    const phoneOffersSnapshot = await this.db.collection('offers')
+      .where('toUserPhone', '==', user.phone)
+      .where('toUserId', '==', null)
+      .get();
+
+    // Combine both sets of offers
+    const directOffers = directOffersSnapshot.docs.map(doc => doc.data() as Offer);
+    const phoneOffers = phoneOffersSnapshot.docs.map(doc => doc.data() as Offer);
+    
+    // Link phone-based offers to the user now that they're registered
+    for (const offer of phoneOffers) {
+      try {
+        await this.db.collection('offers').doc(offer.id).update({ toUserId: userId });
+        offer.toUserId = userId; // Update local copy too
+      } catch (error) {
+        console.warn(`Failed to link offer ${offer.id} to user ${userId}:`, error);
+      }
+    }
+
+    // Combine and deduplicate offers
+    const allOffers = [...directOffers, ...phoneOffers];
+    const uniqueOffers = allOffers.filter((offer, index, self) => 
+      index === self.findIndex(o => o.id === offer.id)
+    );
+
     // Sort on the client side to avoid composite index requirement
-    const offers = snapshot.docs.map(doc => doc.data() as Offer);
-    return offers.sort((a, b) => {
+    return uniqueOffers.sort((a, b) => {
       const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt as any).getTime();
       const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt as any).getTime();
       return bTime - aTime; // Desc order
