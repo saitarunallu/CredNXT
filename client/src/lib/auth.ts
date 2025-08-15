@@ -1,6 +1,7 @@
 import { signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider, ConfirmationResult } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, initializeRecaptcha } from './firebase-config';
+import { apiRequest } from './queryClient';
 import type { LoginRequest, VerifyOtpRequest, CompleteProfileRequest, User } from "@shared/firestore-schema";
 
 class AuthService {

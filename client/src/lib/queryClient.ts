@@ -22,7 +22,7 @@ export async function apiRequest(
   options?: { headers?: Record<string, string> }
 ): Promise<Response> {
   // Get Firebase auth token
-  const token = localStorage.getItem('firebase_auth_token');
+  const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
   const fullUrl = getApiUrl(url);
   
   try {
@@ -55,7 +55,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     // Get Firebase auth token
-    const token = localStorage.getItem('firebase_auth_token');
+    const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
     const url = queryKey.join("/") as string;
     const fullUrl = getApiUrl(url);
     
@@ -71,6 +71,7 @@ export const getQueryFn: <T>(options: {
       if (res.status === 401) {
         // Clear auth data on 401 and handle appropriately
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('firebase_auth_token');
         localStorage.removeItem('user_data');
         
         if (unauthorizedBehavior === "returnNull") {

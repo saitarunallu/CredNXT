@@ -216,7 +216,9 @@ export class FirebaseAuthService {
     localStorage.setItem('user_data', JSON.stringify(user));
     
     // Get Firebase ID token and store it (async but don't await)
-    this.refreshToken();
+    this.refreshToken().catch(error => {
+      console.error('Failed to refresh token in setUser:', error);
+    });
   }
 
   async refreshToken() {
@@ -226,19 +228,29 @@ export class FirebaseAuthService {
         const idToken = await firebaseUser.getIdToken(true); // Force refresh
         localStorage.setItem('firebase_auth_token', idToken);
         console.log('Firebase token refreshed and stored');
+        return idToken;
       } catch (error) {
         console.error('Error getting Firebase ID token:', error);
+        // Don't re-throw the error to prevent unhandled rejections
+        return null;
       }
     }
+    return null;
   }
 
-  logout() {
+  async logout() {
     this.user = null;
     this.confirmationResult = null;
     localStorage.removeItem('user_data');
     localStorage.removeItem('firebase_auth_token');
     localStorage.removeItem('pending_phone');
-    return auth.signOut();
+    
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error('Error during Firebase logout:', error);
+      // Don't re-throw to prevent unhandled rejections
+    }
   }
 
   isAuthenticated(): boolean {

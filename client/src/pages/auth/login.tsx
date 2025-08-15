@@ -130,8 +130,7 @@ export default function Login() {
               </Button>
             </form>
             
-            {/* reCAPTCHA container - hidden but required for Firebase phone auth */}
-            <div id="recaptcha-container" className="hidden"></div>
+
 
             <div className="mt-8 text-center px-4">
               <p className="text-sm text-gray-500 leading-relaxed flex items-center justify-center space-x-2">

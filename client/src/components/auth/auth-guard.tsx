@@ -50,7 +50,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         return await firebaseAuthService.getCurrentUser();
       } catch (error) {
         console.error('AuthGuard: Error getting current user:', error);
-        firebaseAuthService.logout();
+        firebaseAuthService.logout().catch(logoutError => {
+          console.error('Error during logout in AuthGuard:', logoutError);
+        });
         setLocation('/login');
         return null;
       }
