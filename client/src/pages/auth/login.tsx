@@ -20,9 +20,15 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
+    watch
   } = useForm<LoginRequest>({
     resolver: zodResolver(loginSchema)
   });
+
+  // Debug: Watch phone input for real-time validation
+  const phoneValue = watch("phone");
+  console.log('Current phone value:', phoneValue);
+  console.log('Form errors:', errors);
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => firebaseAuthService.sendOTP(data.phone),
@@ -53,6 +59,7 @@ export default function Login() {
   });
 
   const onSubmit = (data: LoginRequest) => {
+    console.log('Form submitted with phone:', data.phone);
     loginMutation.mutate(data);
   };
 
@@ -79,13 +86,17 @@ export default function Login() {
           <CardContent className="px-8 pb-10">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-3">
-                <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">Phone Number</Label>
+                <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">
+                  Phone Number <span className="text-gray-500 font-normal">(10 digits, starting with 6-9)</span>
+                </Label>
                 <Input
                   id="phone"
                   type="tel"
                   {...register("phone")}
                   placeholder="9876543210"
                   className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 transition-all duration-300 h-14 text-base rounded-xl shadow-sm"
+                  maxLength={10}
+                  data-testid="input-phone"
                 />
                 {errors.phone && (
                   <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>

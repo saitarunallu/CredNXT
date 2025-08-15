@@ -230,8 +230,13 @@ export const insertNotificationSchema = z.object({
 export const loginSchema = z.object({
   phone: z.string()
     .min(10, "Phone number must be at least 10 digits")
-    .max(13, "Phone number must not exceed 13 characters")
-    .regex(/^(\+91|91)?[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"),
+    .max(15, "Phone number must not exceed 15 characters")
+    .regex(/^[+]?[0-9\s\-()]+$/, "Please enter a valid phone number")
+    .refine((val) => {
+      // Remove all non-digit characters and check if it's a valid Indian mobile number
+      const digits = val.replace(/\D/g, '');
+      return digits.length === 10 && /^[6-9]/.test(digits);
+    }, "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"),
 });
 
 export const verifyOtpSchema = z.object({
