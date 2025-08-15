@@ -200,16 +200,21 @@ export class FirebaseAuthService {
     return null;
   }
 
-  async setUser(user: User) {
+  setUser(user: User) {
     this.user = user;
     localStorage.setItem('user_data', JSON.stringify(user));
     
-    // Get Firebase ID token and store it
+    // Get Firebase ID token and store it (async but don't await)
+    this.refreshToken();
+  }
+
+  async refreshToken() {
     const firebaseUser = auth.currentUser;
     if (firebaseUser) {
       try {
-        const idToken = await firebaseUser.getIdToken();
+        const idToken = await firebaseUser.getIdToken(true); // Force refresh
         localStorage.setItem('firebase_auth_token', idToken);
+        console.log('Firebase token refreshed and stored');
       } catch (error) {
         console.error('Error getting Firebase ID token:', error);
       }

@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase-config";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { wsService } from "@/lib/websocket";
@@ -12,10 +14,37 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const [, setLocation] = useLocation();
+  const [authStateLoading, setAuthStateLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Listen for Firebase auth state changes to handle page refresh
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Firebase auth state changed:', !!user);
+      setIsAuthenticated(!!user);
+      setAuthStateLoading(false);
+      
+      if (user) {
+        // User is signed in, update the auth service and refresh token
+        const userData = localStorage.getItem('user_data');
+        if (userData) {
+          try {
+            firebaseAuthService.setUser(JSON.parse(userData));
+            // Refresh the token to ensure it's valid for API calls
+            firebaseAuthService.refreshToken();
+          } catch (error) {
+            console.error('Error restoring user data:', error);
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['firebase-auth-user'],
-    enabled: firebaseAuthService.isAuthenticated(),
+    enabled: isAuthenticated && !authStateLoading,
     queryFn: async () => {
       try {
         return await firebaseAuthService.getCurrentUser();
@@ -37,7 +66,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }
 
   useEffect(() => {
-    if (!firebaseAuthService.isAuthenticated()) {
+    // Don't redirect until we know the auth state
+    if (authStateLoading) return;
+    
+    if (!isAuthenticated) {
       setLocation('/login');
       return;
     }
@@ -61,9 +93,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         console.log('WebSocket disconnect failed:', e);
       }
     };
-  }, [setLocation, user]);
+  }, [setLocation, user, authStateLoading, isAuthenticated]);
 
-  if (!firebaseAuthService.isAuthenticated()) {
+  // Show loading while waiting for Firebase auth state
+  if (authStateLoading) {
+    return <LoadingScreen message="Restoring session..." />;
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 
