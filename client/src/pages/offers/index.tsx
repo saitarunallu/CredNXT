@@ -90,38 +90,38 @@ export default function OffersPage() {
     switch (activeFilter) {
       case 'lent':
         // Money I gave out: sent lend offers + received borrow offers
-        const sentLendOffers = sentOffers.filter((item: any) => item.offer.offerType === 'lend');
-        const receivedBorrowOffers = receivedOffers.filter((item: any) => item.offer.offerType === 'borrow');
+        const sentLendOffers = sentOffers.filter((offer: any) => offer.offerType === 'lend');
+        const receivedBorrowOffers = receivedOffers.filter((offer: any) => offer.offerType === 'borrow');
         filtered = [...sentLendOffers, ...receivedBorrowOffers];
         console.log('Lent filter - sent lend:', sentLendOffers.length, 'received borrow:', receivedBorrowOffers.length, 'total:', filtered.length);
         return filtered;
       
       case 'borrowed':
         // Money I received: sent borrow offers + received lend offers
-        const sentBorrowOffers = sentOffers.filter((item: any) => item.offer.offerType === 'borrow');
-        const receivedLendOffers = receivedOffers.filter((item: any) => item.offer.offerType === 'lend');
+        const sentBorrowOffers = sentOffers.filter((offer: any) => offer.offerType === 'borrow');
+        const receivedLendOffers = receivedOffers.filter((offer: any) => offer.offerType === 'lend');
         filtered = [...sentBorrowOffers, ...receivedLendOffers];
         console.log('Borrowed filter - sent borrow:', sentBorrowOffers.length, 'received lend:', receivedLendOffers.length, 'total:', filtered.length);
         return filtered;
       
       case 'active':
         // All accepted offers
-        filtered = allOffers.filter((item: any) => 
-          item.offer.status && item.offer.status !== 'pending' && item.offer.status !== 'rejected'
+        filtered = allOffers.filter((offer: any) => 
+          offer.status && offer.status !== 'pending' && offer.status !== 'rejected'
         );
         console.log('Active filter - total:', filtered.length);
         return filtered;
       
       case 'pending':
-        filtered = allOffers.filter((item: any) => 
-          !item.offer.status || item.offer.status === 'pending'
+        filtered = allOffers.filter((offer: any) => 
+          !offer.status || offer.status === 'pending'
         );
         console.log('Pending filter - total:', filtered.length);
         return filtered;
       
       case 'completed':
-        filtered = allOffers.filter((item: any) => 
-          item.offer.status === 'completed' || item.offer.status === 'closed'
+        filtered = allOffers.filter((offer: any) => 
+          offer.status === 'completed' || offer.status === 'closed'
         );
         console.log('Completed filter - total:', filtered.length);
         return filtered;
@@ -133,7 +133,7 @@ export default function OffersPage() {
   }, [sentOffers, receivedOffers, activeFilter]);
 
   const pendingOffers = [...sentOffers, ...receivedOffers].filter(
-    (item: any) => !item.offer.status || item.offer.status === 'pending'
+    (offer: any) => !offer.status || offer.status === 'pending'
   );
 
   // Clear filter
@@ -231,7 +231,7 @@ export default function OffersPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Lent ({sentOffers.filter((item: any) => item.offer.offerType === 'lend').length + receivedOffers.filter((item: any) => item.offer.offerType === 'borrow').length})
+                Lent ({sentOffers.filter((offer: any) => offer.offerType === 'lend').length + receivedOffers.filter((offer: any) => offer.offerType === 'borrow').length})
               </button>
               <button
                 type="button"
@@ -247,7 +247,7 @@ export default function OffersPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Borrowed ({sentOffers.filter((item: any) => item.offer.offerType === 'borrow').length + receivedOffers.filter((item: any) => item.offer.offerType === 'lend').length})
+                Borrowed ({sentOffers.filter((offer: any) => offer.offerType === 'borrow').length + receivedOffers.filter((offer: any) => offer.offerType === 'lend').length})
               </button>
               <button
                 type="button"
@@ -279,7 +279,7 @@ export default function OffersPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Active ({[...sentOffers, ...receivedOffers].filter((item: any) => item.offer.status === 'accepted' || item.offer.status === 'active').length})
+                Active ({[...sentOffers, ...receivedOffers].filter((offer: any) => offer.status === 'accepted' || offer.status === 'active').length})
               </button>
               <button
                 type="button"
@@ -295,7 +295,7 @@ export default function OffersPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                Completed ({[...sentOffers, ...receivedOffers].filter((item: any) => item.offer.status === 'completed' || item.offer.status === 'closed').length})
+                Completed ({[...sentOffers, ...receivedOffers].filter((offer: any) => offer.status === 'completed' || offer.status === 'closed').length})
               </button>
             </nav>
           </div>
@@ -318,13 +318,13 @@ export default function OffersPage() {
           <div className="space-y-4">
             {filteredOffers.length > 0 ? (
               <div className="space-y-3">
-                {filteredOffers.map((item: any) => (
+                {filteredOffers.map((offer: any) => (
                   <OfferCard
-                    key={item.offer.id}
-                    offer={item.offer}
-                    fromUser={item.fromUser || null}
-                    totalPaid={item.totalPaid}
-                    isReceived={!!item.fromUser}
+                    key={offer.id}
+                    offer={offer}
+                    fromUser={offer.fromUser || null}
+                    totalPaid={offer.totalPaid}
+                    isReceived={!!offer.fromUser}
                   />
                 ))}
               </div>
@@ -360,10 +360,10 @@ export default function OffersPage() {
               <p className="text-sm text-gray-600 mb-4">Offers you created</p>
               <div className="space-y-3">
                 {sentOffers.length > 0 ? (
-                  sentOffers.map((item: any) => (
+                  sentOffers.map((offer: any) => (
                     <OfferCard 
-                      key={item.offer.id} 
-                      offer={item.offer} 
+                      key={offer.id} 
+                      offer={offer} 
                       isReceived={false}
                     />
                   ))
@@ -387,11 +387,11 @@ export default function OffersPage() {
               <p className="text-sm text-gray-600 mb-4">Offers sent to you</p>
               <div className="space-y-3">
                 {receivedOffers.length > 0 ? (
-                  receivedOffers.map((item: any) => (
+                  receivedOffers.map((offer: any) => (
                     <OfferCard 
-                      key={item.offer.id} 
-                      offer={item.offer} 
-                      fromUser={item.fromUser}
+                      key={offer.id} 
+                      offer={offer} 
+                      fromUser={offer.fromUser}
                       isReceived={true}
                     />
                   ))
