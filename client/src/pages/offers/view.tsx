@@ -739,7 +739,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   // Use repayment schedule if available for accurate calculations
   if (scheduleData?.schedule?.schedule) {
     const today = new Date();
-    const schedule = scheduleData.schedule.schedule;
+    const schedule = scheduleData?.schedule?.schedule || [];
     let remainingPaid = totalPaid;
     let totalPrincipalPaid = 0;
     
@@ -1023,32 +1023,32 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
                       <div className="border-r border-blue-200 pr-4">
                         <div className="text-sm text-gray-600 font-medium mb-1">Total Amount</div>
-                        <div className="font-bold text-xl text-gray-900">₹{(scheduleData.schedule.totalAmount || 0).toLocaleString()}</div>
+                        <div className="font-bold text-xl text-gray-900">₹{(scheduleData?.schedule?.totalAmount || 0).toLocaleString()}</div>
                       </div>
                       <div className="pl-4">
                         <div className="text-sm text-gray-600 font-medium mb-1">Total Interest</div>
-                        <div className="font-bold text-xl text-green-700">₹{(scheduleData.schedule.totalInterest || 0).toLocaleString()}</div>
+                        <div className="font-bold text-xl text-green-700">₹{(scheduleData?.schedule?.totalInterest || 0).toLocaleString()}</div>
                       </div>
-                      {scheduleData.schedule.emiAmount && (
+                      {scheduleData?.schedule?.emiAmount && (
                         <>
                           <div className="border-r border-blue-200 pr-4 pt-4 border-t border-blue-200">
                             <div className="text-sm text-gray-600 font-medium mb-1">EMI Amount</div>
-                            <div className="font-bold text-xl text-blue-700">₹{(scheduleData.schedule.emiAmount || 0).toLocaleString()}</div>
+                            <div className="font-bold text-xl text-blue-700">₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString()}</div>
                           </div>
                           <div className="pl-4 pt-4 border-t border-blue-200">
                             <div className="text-sm text-gray-600 font-medium mb-1">Number of EMIs</div>
-                            <div className="font-bold text-xl text-gray-900">{scheduleData.schedule.numberOfPayments}</div>
+                            <div className="font-bold text-xl text-gray-900">{scheduleData?.schedule?.numberOfPayments || 0}</div>
                           </div>
                         </>
                       )}
                     </div>
 
                     {/* Schedule Details for EMI */}
-                    {offer.repaymentType === 'emi' && scheduleData.schedule.schedule.length <= 12 && (
+                    {offer.repaymentType === 'emi' && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length <= 12 && (
                       <div className="space-y-3">
                         <h4 className="font-semibold text-gray-800 text-lg">Payment Schedule</h4>
                         <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
-                          {scheduleData.schedule.schedule.map((installment: any, index: number) => (
+                          {(scheduleData?.schedule?.schedule || []).map((installment: any, index: number) => (
                             <div key={index} className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                               <div>
                                 <div className="font-semibold text-gray-800">EMI #{installment.installmentNumber}</div>
@@ -1069,11 +1069,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     )}
 
                     {/* Simple message for large schedules */}
-                    {offer.repaymentType === 'emi' && scheduleData.schedule.schedule.length > 12 && (
+                    {offer.repaymentType === 'emi' && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length > 12 && (
                       <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                         <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
                         <p className="text-gray-800 font-semibold text-lg">
-                          {scheduleData.schedule.numberOfPayments} EMI payments of ₹{(scheduleData.schedule.emiAmount || 0).toLocaleString()} each
+                          {scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString()} each
                         </p>
                       </div>
                     )}
@@ -1341,13 +1341,13 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           let paymentAmount;
                           if (scheduleData?.schedule?.emiAmount) {
                             // For EMI-based repayment types
-                            paymentAmount = scheduleData.schedule.emiAmount;
+                            paymentAmount = scheduleData?.schedule?.emiAmount || 0;
                           } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
                             // For interest-only, find the next payment that is actually due or partially paid
                             const today = new Date();
                             let remainingPaid = totalPaid;
                             
-                            const nextPayment = scheduleData.schedule.schedule.find((p: any) => {
+                            const nextPayment = (scheduleData?.schedule?.schedule || []).find((p: any) => {
                               const paidForThisPayment = Math.min(remainingPaid, p.totalAmount);
                               const remainingForThisPayment = p.totalAmount - paidForThisPayment;
                               const paymentDueDate = new Date(p.dueDate);
@@ -1380,9 +1380,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             // Calculate display amount using the same logic
                             let displayAmount;
                             if (scheduleData?.schedule?.emiAmount) {
-                              displayAmount = scheduleData.schedule.emiAmount;
+                              displayAmount = scheduleData?.schedule?.emiAmount || 0;
                             } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
-                              const nextPayment = scheduleData.schedule.schedule.find((p: any) => {
+                              const nextPayment = (scheduleData?.schedule?.schedule || []).find((p: any) => {
                                 const totalPaidForPayment = Math.min(totalPaid, p.totalAmount);
                                 return (p.totalAmount - totalPaidForPayment) > 0.01;
                               });
