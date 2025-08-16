@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { firebaseAuthService } from "@/lib/firebase-auth";
-import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
 
@@ -168,9 +168,36 @@ export default function CreateOffer() {
   };
 
   const createOfferMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/offers', data);
-      return await response.json();
+    mutationFn: async (offerData: any) => {
+      // Try API first, fallback to direct Firebase
+      try {
+        const response = await apiRequest('POST', '/api/offers', offerData);
+        return await response.json();
+      } catch (apiError) {
+        console.log('API not available, using direct Firebase:', apiError);
+        
+        // Direct Firebase implementation
+        const db = getFirestore();
+        const currentUser = firebaseAuthService.getUser();
+        
+        if (!currentUser?.id) {
+          throw new Error('User not authenticated');
+        }
+        
+        const offerDoc = {
+          ...offerData,
+          fromUserId: currentUser.id,
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          // Convert dates to Firestore timestamps if needed
+          startDate: new Date(offerData.startDate),
+          dueDate: new Date(offerData.dueDate)
+        };
+        
+        const docRef = await addDoc(collection(db, 'offers'), offerDoc);
+        return { id: docRef.id, ...offerDoc };
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
@@ -180,7 +207,8 @@ export default function CreateOffer() {
         description: "Your offer has been sent successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Create offer error:', error);
       toast({
         title: "Error",
         description: "Failed to create offer. Please try again.",
