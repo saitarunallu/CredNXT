@@ -105,24 +105,41 @@ router.get('/health/detailed', async (req, res) => {
     });
   }
 
-  // Environment checks
-  const requiredEnvVars = ['FIREBASE_PROJECT_ID', 'JWT_SECRET'];
+  // Enhanced environment checks for deployment
+  const requiredEnvVars = [
+    'FIREBASE_PROJECT_ID', 
+    'FIREBASE_PRIVATE_KEY', 
+    'FIREBASE_CLIENT_EMAIL',
+    'JWT_SECRET'
+  ];
   const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
   
-  if (missingEnvVars.length > 0) {
-    overallStatus = 'degraded';
-    checks.push({
-      name: 'environment',
-      status: 'warning',
-      details: `Missing environment variables: ${missingEnvVars.join(', ')}`
-    });
-  } else {
-    checks.push({
-      name: 'environment',
-      status: 'healthy',
-      details: 'All required environment variables present'
-    });
+  // Check for insecure defaults
+  const insecureDefaults = [];
+  if (process.env.JWT_SECRET === 'fallback-secret-please-change-in-production') {
+    insecureDefaults.push('JWT_SECRET using default value');
   }
+  
+  let envStatus = 'healthy';
+  let envDetails = 'All required environment variables are properly configured';
+  
+  if (missingEnvVars.length > 0) {
+    envStatus = 'unhealthy';
+    overallStatus = 'unhealthy';
+    envDetails = `Missing critical variables: ${missingEnvVars.join(', ')}. Check DEPLOYMENT_CHECKLIST.md`;
+  } else if (insecureDefaults.length > 0) {
+    envStatus = 'warning';
+    if (overallStatus === 'healthy') overallStatus = 'degraded';
+    envDetails = `Security issues: ${insecureDefaults.join(', ')}`;
+  }
+  
+  checks.push({
+    name: 'environment',
+    status: envStatus,
+    details: envDetails,
+    ...(missingEnvVars.length > 0 && { missing: missingEnvVars }),
+    ...(insecureDefaults.length > 0 && { security_warnings: insecureDefaults })
+  });
 
   const statusCode = overallStatus === 'healthy' ? 200 : 
                     overallStatus === 'degraded' ? 200 : 503;

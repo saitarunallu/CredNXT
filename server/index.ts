@@ -7,6 +7,48 @@ import { initializeFirebase } from "./firebase-config";
 
 const app = express();
 
+// Validate critical environment variables
+function validateEnvironment() {
+  const requiredVars = [
+    'JWT_SECRET',
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_PRIVATE_KEY', 
+    'FIREBASE_CLIENT_EMAIL'
+  ];
+  
+  const missing = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missing.length > 0) {
+    console.error('❌ CRITICAL: Missing required environment variables:', missing);
+    console.error('📋 Please check DEPLOYMENT_CHECKLIST.md for setup instructions');
+    console.error('📄 Copy .env.example to .env and configure all variables');
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚫 Cannot start in production without proper configuration');
+      process.exit(1);
+    } else {
+      console.warn('⚠️  Development mode: continuing with missing variables');
+      return false;
+    }
+  }
+  
+  // Validate JWT secret
+  if (process.env.JWT_SECRET === 'fallback-secret-please-change-in-production') {
+    console.error('❌ SECURITY RISK: Using default JWT secret in production!');
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚫 Generate a secure JWT secret: openssl rand -base64 32');
+      process.exit(1);
+    } else {
+      console.warn('⚠️  Development mode: using default JWT secret');
+    }
+  }
+  
+  return true;
+}
+
+// Check environment before starting
+const configValid = validateEnvironment();
+
 // CORS configuration for production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
@@ -85,7 +127,13 @@ app.use((req, res, next) => {
 
 (async () => {
   // Initialize Firebase
-  initializeFirebase();
+  const firebaseInitialized = initializeFirebase();
+  
+  if (!firebaseInitialized && process.env.NODE_ENV === 'production') {
+    console.error('❌ CRITICAL: Firebase initialization failed in production');
+    console.error('📋 Please check Firebase environment variables in DEPLOYMENT_CHECKLIST.md');
+    process.exit(1);
+  }
 
   // Global error handlers for unhandled promises and exceptions
   process.on('unhandledRejection', (reason, promise) => {

@@ -11,22 +11,57 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-if (process.env.NODE_ENV === 'development') {
-  console.log('Firebase config loaded:', {
-    hasApiKey: !!firebaseConfig.apiKey,
-    hasAuthDomain: !!firebaseConfig.authDomain,
-    hasProjectId: !!firebaseConfig.projectId,
-    projectId: firebaseConfig.projectId,
-    apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
-  });
+// Validate Firebase configuration
+function validateFirebaseConfig() {
+  const requiredFields = [
+    'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
+  ];
+  
+  const missing = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+  
+  if (missing.length > 0) {
+    console.error('❌ Firebase frontend configuration incomplete');
+    console.error('📋 Missing environment variables:', missing.map(f => `VITE_FIREBASE_${f.toUpperCase()}`));
+    console.error('🔧 Add these to your environment variables or .env file');
+    console.error('📄 Check DEPLOYMENT_CHECKLIST.md for setup instructions');
+    return false;
+  }
+  
+  // Validate API key format
+  if (!firebaseConfig.apiKey?.startsWith('AIza')) {
+    console.error('❌ Firebase API key appears to be invalid');
+    console.error('🔧 API keys should start with "AIza" - check VITE_FIREBASE_API_KEY');
+    return false;
+  }
+  
+  return true;
 }
 
-// Initialize Firebase only if not already initialized
+const configValid = validateFirebaseConfig();
+
+if (process.env.NODE_ENV === 'development') {
+  if (configValid) {
+    console.log('✅ Firebase config loaded successfully:', {
+      projectId: firebaseConfig.projectId,
+      authDomain: firebaseConfig.authDomain,
+      apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
+    });
+  }
+}
+
+// Initialize Firebase only if not already initialized and config is valid
 let app;
 if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+  if (configValid) {
+    app = initializeApp(firebaseConfig);
+    console.log('✅ Firebase app initialized');
+  } else {
+    console.error('❌ Cannot initialize Firebase - configuration validation failed');
+    throw new Error('Firebase configuration validation failed');
+  }
 } else {
   app = getApps()[0];
+  console.log('✅ Using existing Firebase app');
 }
 
 // Initialize Firestore
