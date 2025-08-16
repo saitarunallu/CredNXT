@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/lib/auth";
-import { unifiedDataService } from "@/lib/unified-data-service";
+import { firebaseBackend } from "@/lib/firebase-backend-service";
 
 interface OfferCardProps {
   offer: Offer;
@@ -35,7 +35,7 @@ export default function OfferCard({
   const outstanding = amount - paid;
 
   const acceptOfferMutation = useMutation({
-    mutationFn: () => unifiedDataService.acceptOffer(offer.id),
+    mutationFn: () => firebaseBackend.updateOfferStatus(offer.id, 'accepted'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
@@ -55,7 +55,7 @@ export default function OfferCard({
   });
 
   const rejectOfferMutation = useMutation({
-    mutationFn: () => unifiedDataService.rejectOffer(offer.id),
+    mutationFn: () => firebaseBackend.updateOfferStatus(offer.id, 'declined'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
@@ -76,28 +76,10 @@ export default function OfferCard({
 
   const downloadRepaymentSchedule = async () => {
     try {
-      const blob = await unifiedDataService.downloadRepaymentSchedule(offer.id);
-      
-      if (blob.size === 0) {
-        throw new Error('Downloaded file is empty');
-      }
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `repayment-schedule-${offer.id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Add delay before cleanup to ensure download starts
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 100);
-      
+      await firebaseBackend.downloadSchedulePDF(offer.id);
       toast({
         title: "Success",
-        description: `Repayment schedule downloaded successfully (${blob.size} bytes).`,
+        description: "Repayment schedule downloaded successfully.",
       });
     } catch (error) {
       console.error('Download error:', error);

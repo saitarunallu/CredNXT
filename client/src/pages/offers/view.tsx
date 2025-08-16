@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authService } from "@/lib/auth";
-import { unifiedDataService } from "@/lib/unified-data-service";
+import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { insertPaymentSchema, type InsertPayment } from "@shared/firestore-schema";
 import { 
   ArrowLeft, 
@@ -406,7 +406,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   });
 
   const acceptOfferMutation = useMutation({
-    mutationFn: () => unifiedDataService.acceptOffer(offerId),
+    mutationFn: () => firebaseBackend.updateOfferStatus(offerId, 'accepted'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offer-details', offerId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
@@ -426,7 +426,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   });
 
   const rejectOfferMutation = useMutation({
-    mutationFn: () => unifiedDataService.rejectOffer(offerId),
+    mutationFn: () => firebaseBackend.updateOfferStatus(offerId, 'declined'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['offer-details', offerId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
@@ -565,16 +565,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadContract = async () => {
     try {
-      const blob = await unifiedDataService.downloadContract(offerId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `contract-${offerId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
+      await firebaseBackend.downloadContractPDF(offerId);
       toast({
         title: "Success",
         description: "Contract downloaded successfully.",
@@ -591,16 +582,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadKFS = async () => {
     try {
-      const blob = await unifiedDataService.downloadKFS(offerId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `kfs-${offerId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
+      await firebaseBackend.downloadKFSPDF(offerId);
       toast({
         title: "Success",
         description: "KFS document downloaded successfully.",
@@ -617,28 +599,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadRepaymentSchedule = async () => {
     try {
-      const blob = await unifiedDataService.downloadRepaymentSchedule(offerId);
-      
-      if (blob.size === 0) {
-        throw new Error('Downloaded file is empty');
-      }
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `repayment-schedule-${offerId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Add delay before cleanup to ensure download starts
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 100);
-      
+      await firebaseBackend.downloadSchedulePDF(offerId);
       toast({
         title: "Success",
-        description: `Repayment schedule downloaded successfully (${blob.size} bytes).`,
+        description: "Repayment schedule downloaded successfully.",
       });
     } catch (error) {
       console.error('Download repayment schedule error:', error);

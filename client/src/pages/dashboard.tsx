@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
-import { unifiedDataService } from "@/lib/unified-data-service";
+import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 
 export default function Dashboard() {
@@ -46,11 +46,12 @@ export default function Dashboard() {
         throw new Error('User not authenticated');
       }
 
-      // Get both sent and received offers
-      const [sentOffers, receivedOffers] = await Promise.all([
-        unifiedDataService.getUserOffers(currentUser.id),
-        unifiedDataService.getReceivedOffers(currentUser.id)
-      ]);
+      // Get all offers (sent and received)
+      const allOffers = await firebaseBackend.getOffers();
+      
+      // Separate sent and received offers
+      const sentOffers = allOffers.filter(offer => offer.fromUserId === currentUser.id);
+      const receivedOffers = allOffers.filter(offer => offer.toUserId === currentUser.id);
 
       return {
         sentOffers: sentOffers || [],
