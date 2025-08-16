@@ -727,7 +727,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     .filter((p: any) => p.status === 'paid')
     .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
   
-  const amount = parseFloat(offer.amount);
+  const amount = offer.amount ? parseFloat(offer.amount) : 0;
   const totalAmountDue = scheduleData?.schedule?.totalAmount || amount;
   
   // Calculate outstanding amounts using proper banking standards
@@ -917,7 +917,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <span>Amount</span>
                     </div>
                     <div className="font-semibold text-2xl text-navy-600">
-                      ₹{amount.toLocaleString()}
+                      ₹{(amount || 0).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -1023,17 +1023,17 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
                       <div className="border-r border-blue-200 pr-4">
                         <div className="text-sm text-gray-600 font-medium mb-1">Total Amount</div>
-                        <div className="font-bold text-xl text-gray-900">₹{scheduleData.schedule.totalAmount.toLocaleString()}</div>
+                        <div className="font-bold text-xl text-gray-900">₹{(scheduleData.schedule.totalAmount || 0).toLocaleString()}</div>
                       </div>
                       <div className="pl-4">
                         <div className="text-sm text-gray-600 font-medium mb-1">Total Interest</div>
-                        <div className="font-bold text-xl text-green-700">₹{scheduleData.schedule.totalInterest.toLocaleString()}</div>
+                        <div className="font-bold text-xl text-green-700">₹{(scheduleData.schedule.totalInterest || 0).toLocaleString()}</div>
                       </div>
                       {scheduleData.schedule.emiAmount && (
                         <>
                           <div className="border-r border-blue-200 pr-4 pt-4 border-t border-blue-200">
                             <div className="text-sm text-gray-600 font-medium mb-1">EMI Amount</div>
-                            <div className="font-bold text-xl text-blue-700">₹{scheduleData.schedule.emiAmount.toLocaleString()}</div>
+                            <div className="font-bold text-xl text-blue-700">₹{(scheduleData.schedule.emiAmount || 0).toLocaleString()}</div>
                           </div>
                           <div className="pl-4 pt-4 border-t border-blue-200">
                             <div className="text-sm text-gray-600 font-medium mb-1">Number of EMIs</div>
@@ -1057,9 +1057,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-bold text-lg text-gray-900">₹{installment.totalAmount.toLocaleString()}</div>
+                                <div className="font-bold text-lg text-gray-900">₹{(installment.totalAmount || 0).toLocaleString()}</div>
                                 <div className="text-xs text-gray-600 mt-1">
-                                  Principal: ₹{installment.principalAmount.toLocaleString()} | Interest: ₹{installment.interestAmount.toLocaleString()}
+                                  Principal: ₹{(installment.principalAmount || 0).toLocaleString()} | Interest: ₹{(installment.interestAmount || 0).toLocaleString()}
                                 </div>
                               </div>
                             </div>
@@ -1073,7 +1073,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                         <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
                         <p className="text-gray-800 font-semibold text-lg">
-                          {scheduleData.schedule.numberOfPayments} EMI payments of ₹{scheduleData.schedule.emiAmount?.toLocaleString()} each
+                          {scheduleData.schedule.numberOfPayments} EMI payments of ₹{(scheduleData.schedule.emiAmount || 0).toLocaleString()} each
                         </p>
                       </div>
                     )}
@@ -1104,7 +1104,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Amount Due:</span>
-                          <p className="font-semibold">₹{paymentInfoData.expectedAmount?.toLocaleString()}</p>
+                          <p className="font-semibold">₹{(paymentInfoData.expectedAmount || 0).toLocaleString()}</p>
                         </div>
                         <div>
                           <span className="text-gray-600">Due Date:</span>
@@ -1118,7 +1118,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         </div>
                         <div>
                           <span className="text-gray-600">Remaining Balance:</span>
-                          <p className="font-semibold">₹{paymentInfoData.remainingBalance?.toLocaleString()}</p>
+                          <p className="font-semibold">₹{(paymentInfoData.remainingBalance || 0).toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
@@ -1257,18 +1257,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="bg-blue-50 p-3 rounded-lg text-center">
                           <div className="text-xs text-blue-600 mb-1">Principal Amount</div>
-                          <div className="font-bold text-blue-900">₹{parseFloat(offer.amount).toLocaleString()}</div>
+                          <div className="font-bold text-blue-900">₹{(parseFloat(offer.amount || '0')).toLocaleString()}</div>
                         </div>
                         {scheduleData.summary?.totalInterest && (
                           <div className="bg-orange-50 p-3 rounded-lg text-center">
                             <div className="text-xs text-orange-600 mb-1">Total Interest</div>
-                            <div className="font-bold text-orange-900">₹{scheduleData.summary.totalInterest.toLocaleString()}</div>
+                            <div className="font-bold text-orange-900">₹{(scheduleData.summary?.totalInterest || 0).toLocaleString()}</div>
                           </div>
                         )}
                         {scheduleData.summary?.totalAmount && (
                           <div className="bg-green-50 p-3 rounded-lg text-center">
                             <div className="text-xs text-green-600 mb-1">Total Repayment</div>
-                            <div className="font-bold text-green-900">₹{scheduleData.summary.totalAmount.toLocaleString()}</div>
+                            <div className="font-bold text-green-900">₹{(scheduleData.summary?.totalAmount || 0).toLocaleString()}</div>
                           </div>
                         )}
                         {scheduleData.summary?.effectiveRate && (
@@ -1306,14 +1306,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       </div>
                       <div className="text-right bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
                         <div className="font-black text-blue-900 text-3xl">
-                          ₹{outstanding.toLocaleString()}
+                          ₹{(outstanding || 0).toLocaleString()}
                         </div>
                         <div className="text-sm text-blue-700 mt-1 font-medium">
-                          Principal Outstanding: ₹{outstandingPrincipal.toLocaleString()}
+                          Principal Outstanding: ₹{(outstandingPrincipal || 0).toLocaleString()}
                         </div>
                         {overDueAmount > 0 && (
                           <div className="text-sm text-red-700 mt-2 font-bold bg-red-50 px-2 py-1 rounded border border-red-200">
-                            Overdue: ₹{overDueAmount.toLocaleString()}
+                            Overdue: ₹{(overDueAmount || 0).toLocaleString()}
                           </div>
                         )}
                       </div>
@@ -1390,7 +1390,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             } else {
                               displayAmount = Math.min(outstanding, 10000);
                             }
-                            return `Pay ₹${displayAmount.toLocaleString()}`;
+                            return `Pay ₹${(displayAmount || 0).toLocaleString()}`;
                           })()
                         )}
                       </Button>
@@ -1427,7 +1427,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         <div key={payment.id} className="p-3 bg-gray-50 rounded-lg">
                           <div className="flex justify-between items-start">
                             <div>
-                              <div className="font-semibold">₹{parseFloat(payment.amount).toLocaleString()}</div>
+                              <div className="font-semibold">₹{(parseFloat(payment.amount || '0')).toLocaleString()}</div>
                               <div className="text-sm text-gray-600">
                                 {payment.paymentMode} • {payment.paidAt ? formatFirebaseDate(payment.paidAt) : formatFirebaseDate(payment.createdAt)}
                               </div>
@@ -1484,41 +1484,41 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Original Principal</span>
-                  <span className="font-semibold">₹{amount.toLocaleString()}</span>
+                  <span className="font-semibold">₹{(amount || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Outstanding Principal</span>
-                  <span className="font-semibold text-red-600">₹{outstandingPrincipal.toLocaleString()}</span>
+                  <span className="font-semibold text-red-600">₹{(outstandingPrincipal || 0).toLocaleString()}</span>
                 </div>
                 {scheduleData?.schedule && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Interest</span>
-                    <span className="font-semibold text-orange-600">₹{scheduleData.schedule.totalInterest.toLocaleString()}</span>
+                    <span className="font-semibold text-orange-600">₹{(scheduleData.schedule?.totalInterest || 0).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-t pt-2">
                   <span className="text-gray-600">Total Loan Amount</span>
-                  <span className="font-semibold">₹{totalAmountDue.toLocaleString()}</span>
+                  <span className="font-semibold">₹{(totalAmountDue || 0).toLocaleString()}</span>
                 </div>
                 {dueAmount > 0 && (
                   <div className="flex justify-between text-blue-600">
                     <span>Current Due</span>
-                    <span className="font-semibold">₹{dueAmount.toLocaleString()}</span>
+                    <span className="font-semibold">₹{(dueAmount || 0).toLocaleString()}</span>
                   </div>
                 )}
                 {overDueAmount > 0 && (
                   <div className="flex justify-between text-red-600">
                     <span>Overdue Amount</span>
-                    <span className="font-semibold">₹{overDueAmount.toLocaleString()}</span>
+                    <span className="font-semibold">₹{(overDueAmount || 0).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Paid Amount</span>
-                  <span className="font-semibold text-green-600">₹{totalPaid.toLocaleString()}</span>
+                  <span className="font-semibold text-green-600">₹{(totalPaid || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg border-t pt-2">
                   <span className="text-gray-600">Total Outstanding</span>
-                  <span className="font-bold text-red-600">₹{outstanding.toLocaleString()}</span>
+                  <span className="font-bold text-red-600">₹{(outstanding || 0).toLocaleString()}</span>
                 </div>
                 
                 {offer.status === 'accepted' && (
@@ -1548,7 +1548,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         return (
                           <>
                             <div className="text-sm font-medium text-blue-800">Complete EMI #{completedEMIs + 1}</div>
-                            <div className="text-lg font-bold text-blue-900">₹{requiredAmount.toLocaleString()}</div>
+                            <div className="text-lg font-bold text-blue-900">₹{(requiredAmount || 0).toLocaleString()}</div>
                             <div className="text-xs text-blue-600">Remaining amount to complete this EMI</div>
                           </>
                         );
@@ -1556,7 +1556,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         return (
                           <>
                             <div className="text-sm font-medium text-blue-800">Next EMI #{completedEMIs + 1} Due</div>
-                            <div className="text-lg font-bold text-blue-900">₹{emiAmount.toLocaleString()}</div>
+                            <div className="text-lg font-bold text-blue-900">₹{(emiAmount || 0).toLocaleString()}</div>
                             <div className="text-xs text-blue-600">EMI payments must be exact amount</div>
                           </>
                         );
