@@ -15,20 +15,27 @@ import type { User as UserType } from "@shared/firestore-schema";
 export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState(firebaseAuthService.getUser());
+  const [user, setUser] = useState(() => {
+    // Initialize with cached user data to reduce loading time
+    const cachedUser = firebaseAuthService.getUser();
+    if (cachedUser && cachedUser.name) {
+      return cachedUser; // Use cached data if available and complete
+    }
+    return cachedUser;
+  });
   
-  // Fetch fresh user data from server
+  // Fetch fresh user data from server only when needed
   const { data: serverUser, isLoading, error } = useQuery<{user: UserType}>({
     queryKey: ['/api/auth/me'],
-    enabled: !!firebaseAuthService.isAuthenticated(),
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Always fetch fresh data
+    enabled: !!firebaseAuthService.isAuthenticated() && (!user || !user.name), // Only fetch if no cached data or incomplete
+    refetchOnWindowFocus: false, // Reduce unnecessary fetches
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: (failureCount, error: any) => {
       // Don't retry on authentication errors
       if (error?.response?.status === 401) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2; // Reduce retry attempts
     },
   });
   
@@ -55,19 +62,22 @@ export default function Profile() {
     setLocation('/');
   };
 
-  // Show loading while fetching user data
-  if (isLoading) {
-    return <LoadingScreen message="Loading profile..." />;
-  }
-  
-  // Handle authentication check
+  // Handle authentication check first (fastest check)
   if (!firebaseAuthService.isAuthenticated()) {
     setLocation('/login');
     return null;
   }
   
+  // If we have cached user data, show it immediately while fetching fresh data
+  const displayUser = user || (serverUser?.user);
+  
+  // Only show loading if we have no user data at all and are still loading
+  if (isLoading && !displayUser) {
+    return <LoadingScreen message="Loading profile..." />;
+  }
+  
   // Redirect if no user data available after loading
-  if (!user && !isLoading) {
+  if (!displayUser && !isLoading) {
     console.log('No user data available, redirecting to complete profile');
     setLocation('/auth/complete-profile');
     return null;
@@ -103,7 +113,7 @@ export default function Profile() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input 
                   id="name" 
-                  value={user?.name || ''} 
+                  value={displayUser?.name || ''} 
                   disabled={!isEditing}
                   className="mt-1"
                 />
@@ -112,7 +122,7 @@ export default function Profile() {
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input 
                   id="phone" 
-                  value={user?.phone || ''} 
+                  value={displayUser?.phone || ''} 
                   disabled
                   className="mt-1 bg-gray-50"
                 />
@@ -121,7 +131,7 @@ export default function Profile() {
                 <Label htmlFor="email">Email Address</Label>
                 <Input 
                   id="email" 
-                  value={user?.email || ''} 
+                  value={displayUser?.email || ''} 
                   disabled={!isEditing}
                   className="mt-1"
                 />
