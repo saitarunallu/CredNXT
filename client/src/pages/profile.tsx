@@ -1,18 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import LoadingScreen from "@/components/ui/loading-screen";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { User, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
+import type { User as UserType } from "@shared/firestore-schema";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const user = firebaseAuthService.getUser();
   const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState(firebaseAuthService.getUser());
+  
+  // Fetch fresh user data from server
+  const { data: serverUser, isLoading } = useQuery<{user: UserType}>({
+    queryKey: ['/api/auth/me'],
+    enabled: !!firebaseAuthService.isAuthenticated(),
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always fetch fresh data
+  });
+  
+  // Update local user data when server data is available
+  useEffect(() => {
+    if (serverUser?.user) {
+      setUser(serverUser.user);
+      firebaseAuthService.setUser(serverUser.user);
+    }
+  }, [serverUser]);
   // Theme functionality removed - light theme only
 
   const handleLogout = () => {
@@ -20,7 +39,13 @@ export default function Profile() {
     setLocation('/');
   };
 
-  if (!user) {
+  // Show loading while fetching user data
+  if (isLoading) {
+    return <LoadingScreen message="Loading profile..." />;
+  }
+  
+  // Redirect if no user data available
+  if (!user && !isLoading) {
     setLocation('/');
     return null;
   }
@@ -55,7 +80,7 @@ export default function Profile() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input 
                   id="name" 
-                  value={user.name || ''} 
+                  value={user?.name || ''} 
                   disabled={!isEditing}
                   className="mt-1"
                 />
@@ -64,7 +89,7 @@ export default function Profile() {
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input 
                   id="phone" 
-                  value={user.phone} 
+                  value={user?.phone || ''} 
                   disabled
                   className="mt-1 bg-gray-50"
                 />
@@ -73,7 +98,7 @@ export default function Profile() {
                 <Label htmlFor="email">Email Address</Label>
                 <Input 
                   id="email" 
-                  value={user.email || ''} 
+                  value={user?.email || ''} 
                   disabled={!isEditing}
                   className="mt-1"
                 />
