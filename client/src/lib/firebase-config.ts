@@ -11,13 +11,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-console.log('Firebase config loaded:', {
-  hasApiKey: !!firebaseConfig.apiKey,
-  hasAuthDomain: !!firebaseConfig.authDomain,
-  hasProjectId: !!firebaseConfig.projectId,
-  projectId: firebaseConfig.projectId,
-  apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
-});
+if (process.env.NODE_ENV === 'development') {
+  console.log('Firebase config loaded:', {
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasAuthDomain: !!firebaseConfig.authDomain,
+    hasProjectId: !!firebaseConfig.projectId,
+    projectId: firebaseConfig.projectId,
+    apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
+  });
+}
 
 // Initialize Firebase only if not already initialized
 let app;
@@ -54,16 +56,22 @@ declare global {
 // Initialize reCAPTCHA verifier for phone auth
 export function initializeRecaptcha() {
   if (!window.recaptchaVerifier) {
-    console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
+    }
     
     try {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
         'callback': (response: any) => {
-          console.log('reCAPTCHA verified successfully', response);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('reCAPTCHA verified successfully', response);
+          }
         },
         'expired-callback': () => {
-          console.log('reCAPTCHA expired, please try again');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('reCAPTCHA expired, please try again');
+          }
           // Clear and reinitialize on expiry
           if (window.recaptchaVerifier) {
             window.recaptchaVerifier.clear();
@@ -71,12 +79,16 @@ export function initializeRecaptcha() {
           }
         },
         'error-callback': (error: any) => {
-          console.error('reCAPTCHA error:', error);
-          console.error('Domain authorization may still be pending. Please wait a few minutes after adding domain to Firebase Console.');
+          if (process.env.NODE_ENV === 'development') {
+            console.error('reCAPTCHA error:', error);
+            console.error('Domain authorization may still be pending. Please wait a few minutes after adding domain to Firebase Console.');
+          }
         }
       });
     } catch (error) {
-      console.error('Failed to initialize reCAPTCHA:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to initialize reCAPTCHA:', error);
+      }
       throw error;
     }
   }

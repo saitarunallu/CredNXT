@@ -15,22 +15,23 @@ export default function OffersPage() {
   
   const { data: offersData, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
-    retry: 1,
-    onError: (error: any) => {
-      console.error('Offers page query error:', error);
-    },
+    retry: 1
   });
 
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
 
-  // Debug: Log offers data to understand structure
-  console.log('Offers Debug:', { sentOffers, receivedOffers, location, activeFilter });
+  // Debug: Log offers data only in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Offers Debug:', { sentOffers, receivedOffers, location, activeFilter });
+  }
 
   // Handle query errors
   useEffect(() => {
     if (offersError) {
-      console.error('Offers page error:', offersError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Offers page error:', offersError);
+      }
     }
   }, [offersError]);
 
@@ -40,7 +41,9 @@ export default function OffersPage() {
       // First check if there's a pending filter from navigation
       const pendingFilter = sessionStorage.getItem('pendingFilter');
       if (pendingFilter) {
-        console.log('Found pending filter from sessionStorage:', pendingFilter);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Found pending filter from sessionStorage:', pendingFilter);
+        }
         setActiveFilter(pendingFilter);
         // Update URL to match the filter
         window.history.replaceState({}, '', `/offers?filter=${pendingFilter}`);
@@ -54,10 +57,12 @@ export default function OffersPage() {
       const urlObj = new URL(currentUrl);
       const filter = urlObj.searchParams.get('filter');
       
-      console.log('Current URL:', currentUrl);
-      console.log('Current location (wouter):', location);
-      console.log('Parsed filter from URL:', filter);
-      console.log('All URL params:', Object.fromEntries(urlObj.searchParams.entries()));
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Current URL:', currentUrl);
+        console.log('Current location (wouter):', location);
+        console.log('Parsed filter from URL:', filter);
+        console.log('All URL params:', Object.fromEntries(urlObj.searchParams.entries()));
+      }
       
       setActiveFilter(filter);
     };
@@ -81,11 +86,15 @@ export default function OffersPage() {
   const filteredOffers = useMemo(() => {
     const allOffers = [...sentOffers, ...receivedOffers];
     
-    console.log('Filtering with activeFilter:', activeFilter);
-    console.log('All offers count:', allOffers.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Filtering with activeFilter:', activeFilter);
+      console.log('All offers count:', allOffers.length);
+    }
     
     if (!activeFilter) {
-      console.log('No active filter, returning all offers');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No active filter, returning all offers');
+      }
       return allOffers;
     }
     
@@ -96,7 +105,9 @@ export default function OffersPage() {
         const sentLendOffers = sentOffers.filter((offer: any) => offer.offerType === 'lend');
         const receivedBorrowOffers = receivedOffers.filter((offer: any) => offer.offerType === 'borrow');
         filtered = [...sentLendOffers, ...receivedBorrowOffers];
-        console.log('Lent filter - sent lend:', sentLendOffers.length, 'received borrow:', receivedBorrowOffers.length, 'total:', filtered.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Lent filter - sent lend:', sentLendOffers.length, 'received borrow:', receivedBorrowOffers.length, 'total:', filtered.length);
+        }
         return filtered;
       
       case 'borrowed':
@@ -104,7 +115,9 @@ export default function OffersPage() {
         const sentBorrowOffers = sentOffers.filter((offer: any) => offer.offerType === 'borrow');
         const receivedLendOffers = receivedOffers.filter((offer: any) => offer.offerType === 'lend');
         filtered = [...sentBorrowOffers, ...receivedLendOffers];
-        console.log('Borrowed filter - sent borrow:', sentBorrowOffers.length, 'received lend:', receivedLendOffers.length, 'total:', filtered.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Borrowed filter - sent borrow:', sentBorrowOffers.length, 'received lend:', receivedLendOffers.length, 'total:', filtered.length);
+        }
         return filtered;
       
       case 'active':
@@ -112,25 +125,33 @@ export default function OffersPage() {
         filtered = allOffers.filter((offer: any) => 
           offer.status && offer.status !== 'pending' && offer.status !== 'rejected'
         );
-        console.log('Active filter - total:', filtered.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Active filter - total:', filtered.length);
+        }
         return filtered;
       
       case 'pending':
         filtered = allOffers.filter((offer: any) => 
           !offer.status || offer.status === 'pending'
         );
-        console.log('Pending filter - total:', filtered.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Pending filter - total:', filtered.length);
+        }
         return filtered;
       
       case 'completed':
         filtered = allOffers.filter((offer: any) => 
           offer.status === 'completed' || offer.status === 'closed'
         );
-        console.log('Completed filter - total:', filtered.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Completed filter - total:', filtered.length);
+        }
         return filtered;
       
       default:
-        console.log('Unknown filter:', activeFilter, 'returning all offers');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Unknown filter:', activeFilter, 'returning all offers');
+        }
         return allOffers;
     }
   }, [sentOffers, receivedOffers, activeFilter]);
@@ -141,14 +162,18 @@ export default function OffersPage() {
 
   // Clear filter
   const clearFilter = () => {
-    console.log('Clear filter called');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Clear filter called');
+    }
     window.history.pushState({}, '', '/offers');
     setActiveFilter(null);
   };
 
   // Navigate to filter
   const navigateToFilter = (filter: string) => {
-    console.log(`Navigating to filter: ${filter}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Navigating to filter: ${filter}`);
+    }
     window.history.pushState({}, '', `/offers?filter=${filter}`);
     setActiveFilter(filter);
   };
@@ -209,7 +234,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('All filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('All filter clicked');
+                  }
                   clearFilter();
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
@@ -225,7 +252,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Lent filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Lent filter clicked');
+                  }
                   navigateToFilter('lent');
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
@@ -241,7 +270,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Borrowed filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Borrowed filter clicked');
+                  }
                   navigateToFilter('borrowed');
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
@@ -257,7 +288,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Pending filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Pending filter clicked');
+                  }
                   navigateToFilter('pending');
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
@@ -273,7 +306,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Active filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Active filter clicked');
+                  }
                   navigateToFilter('active');
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${
@@ -289,7 +324,9 @@ export default function OffersPage() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Completed filter clicked');
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Completed filter clicked');
+                  }
                   navigateToFilter('completed');
                 }}
                 className={`filter-button flex-shrink-0 whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm cursor-pointer ${

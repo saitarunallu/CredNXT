@@ -29,16 +29,20 @@ export default function Login() {
   const phoneValue = watch("phone");
   if (phoneValue) {
     const digits = phoneValue.replace(/\D/g, '');
-    console.log('Phone validation debug:', {
-      original: phoneValue,
-      digits: digits,
-      length: digits.length,
-      startsWithValid: /^[6-9]/.test(digits),
-      fullMatch: /^[6-9]\d{9}$/.test(digits),
-      shouldPass: digits.length === 10 && /^[6-9]\d{9}$/.test(digits)
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Phone validation debug:', {
+        original: phoneValue,
+        digits: digits,
+        length: digits.length,
+        startsWithValid: /^[6-9]/.test(digits),
+        fullMatch: /^[6-9]\d{9}$/.test(digits),
+        shouldPass: digits.length === 10 && /^[6-9]\d{9}$/.test(digits)
+      });
+    }
   }
-  console.log('Form errors:', errors);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Form errors:', errors);
+  }
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => firebaseAuthService.sendOTP(data.phone),
@@ -69,7 +73,9 @@ export default function Login() {
   });
 
   const onSubmit = (data: LoginRequest) => {
-    console.log('Form submitted with phone:', data.phone);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Form submitted with phone:', data.phone);
+    }
     loginMutation.mutate(data);
   };
 

@@ -47,27 +47,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const currentUser = authService.getUser();
 
   const { data: offerData, isLoading } = useQuery({
-    queryKey: ['/api/offers', offerId],
-    onError: (error: any) => {
-      console.error('ViewOffer query error:', error);
-    },
+    queryKey: ['/api/offers', offerId]
   }) as { data: any, isLoading: boolean };
 
   const { data: scheduleData } = useQuery({
     queryKey: ['/api/offers', offerId, 'schedule'],
-    enabled: !!offerData?.offer,
-    onError: (error: any) => {
-      console.error('Schedule query error:', error);
-    },
+    enabled: !!offerData?.offer
   }) as { data: any };
 
   // Get current payment information
   const { data: paymentInfoData } = useQuery({
     queryKey: ['/api/offers', offerId, 'payment-info'],
-    enabled: !!offerData?.offer && offerData?.offer.status === 'accepted',
-    onError: (error: any) => {
-      console.error('Payment info query error:', error);
-    },
+    enabled: !!offerData?.offer && offerData?.offer.status === 'accepted'
   }) as { data: any };
 
   const {
@@ -302,8 +293,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       
       if (response.ok) {
         const blob = await response.blob();
-        console.log('PDF Blob size:', blob.size, 'bytes');
-        console.log('PDF Blob type:', blob.type);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('PDF Blob size:', blob.size, 'bytes');
+          console.log('PDF Blob type:', blob.type);
+        }
         
         if (blob.size === 0) {
           throw new Error('Downloaded file is empty');
@@ -328,11 +321,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
         });
       } else {
         const errorText = await response.text();
-        console.error('Download failed:', response.status, errorText);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Download failed:', response.status, errorText);
+        }
         throw new Error(`Download failed: ${response.status}`);
       }
     } catch (error) {
-      console.error('Download error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Download error:', error);
+      }
       toast({
         title: "Error",
         description: "Failed to download repayment schedule. Please try again.",
@@ -346,7 +343,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   // Direct payment function for simplified flow
   const handleDirectPayment = (amount: number) => {
     submitPaymentMutation.mutate({
-      amount: amount.toString(),
+      amount: amount,
       paymentMode: "upi", // Default payment mode for direct payments
       refString: undefined
     });
@@ -372,7 +369,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       const date = new Date(timestamp);
       return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
     } catch (error) {
-      console.error('Date formatting error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Date formatting error:', error);
+      }
       return 'Invalid Date';
     }
   };

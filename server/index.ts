@@ -1,12 +1,25 @@
 import express, { type Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeFirebase } from "./firebase-config";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || false
+    : true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -77,11 +90,38 @@ app.use((req, res, next) => {
   // Global error handlers for unhandled promises and exceptions
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // In production, we might want to gracefully shut down
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Application will attempt graceful shutdown...');
+    }
   });
 
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
+    // In production, we might want to gracefully shut down
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Application will attempt graceful shutdown...');
+      process.exit(1);
+    }
   });
+  
+  // Graceful shutdown handlers
+  const gracefulShutdown = (signal: string) => {
+    console.log(`Received ${signal}. Starting graceful shutdown...`);
+    server.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+    
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      console.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+  
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   const server = await registerRoutes(app);
 

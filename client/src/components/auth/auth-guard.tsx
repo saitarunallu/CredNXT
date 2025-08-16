@@ -20,7 +20,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   // Listen for Firebase auth state changes to handle page refresh
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('Firebase auth state changed:', !!user);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Firebase auth state changed:', !!user);
+      }
       setIsAuthenticated(!!user);
       setAuthStateLoading(false);
       
@@ -33,7 +35,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
             // Refresh the token to ensure it's valid for API calls
             firebaseAuthService.refreshToken();
           } catch (error) {
-            console.error('Error restoring user data:', error);
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Error restoring user data:', error);
+            }
           }
         }
       }
@@ -49,9 +53,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       try {
         return await firebaseAuthService.getCurrentUser();
       } catch (error) {
-        console.error('AuthGuard: Error getting current user:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('AuthGuard: Error getting current user:', error);
+        }
         firebaseAuthService.logout().catch(logoutError => {
-          console.error('Error during logout in AuthGuard:', logoutError);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error during logout in AuthGuard:', logoutError);
+          }
         });
         setLocation('/login');
         return null;

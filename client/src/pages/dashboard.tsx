@@ -15,17 +15,11 @@ export default function Dashboard() {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['/api/dashboard/stats'],
     retry: 1,
-    onError: (error: any) => {
-      console.error('Dashboard stats query error:', error);
-    },
   });
 
   const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({
     queryKey: ['/api/offers'],
     retry: 1,
-    onError: (error: any) => {
-      console.error('Dashboard offers query error:', error);
-    },
   });
 
   const stats = (statsData as any)?.stats || {
@@ -35,40 +29,50 @@ export default function Dashboard() {
     pendingOffers: 0
   };
 
-  console.log('Dashboard Stats Debug:', { statsData, stats, statsLoading });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Dashboard Stats Debug:', { statsData, stats, statsLoading });
+  }
 
   // Handle query errors
   useEffect(() => {
-    if (statsError) {
+    if (statsError && process.env.NODE_ENV === 'development') {
       console.error('Dashboard stats error:', statsError);
     }
-    if (offersError) {
+    if (offersError && process.env.NODE_ENV === 'development') {
       console.error('Dashboard offers error:', offersError);
     }
   }, [statsError, offersError]);
 
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {
-    console.log('Navigating to lent filter');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Navigating to lent filter');
+    }
     // Store the filter in sessionStorage before navigation
     sessionStorage.setItem('pendingFilter', 'lent');
     setLocation('/offers');
   };
 
   const handleBorrowedClick = () => {
-    console.log('Navigating to borrowed filter');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Navigating to borrowed filter');
+    }
     sessionStorage.setItem('pendingFilter', 'borrowed');
     setLocation('/offers');
   };
 
   const handleActiveClick = () => {
-    console.log('Navigating to active filter');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Navigating to active filter');
+    }
     sessionStorage.setItem('pendingFilter', 'active');
     setLocation('/offers');
   };
 
   const handlePendingClick = () => {
-    console.log('Navigating to pending filter');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Navigating to pending filter');
+    }
     sessionStorage.setItem('pendingFilter', 'pending');
     setLocation('/offers');
   };
@@ -86,7 +90,9 @@ export default function Dashboard() {
         const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
         return bTime - aTime;
       } catch (error) {
-        console.error('Error sorting offers by date:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error sorting offers by date:', error);
+        }
         return 0; // Default to no change in order if there's an error
       }
     })
