@@ -8,21 +8,88 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
+import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { firebaseAuthService } from "@/lib/firebase-auth";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
 
-  const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
-    retry: 1,
-  });
-
+  // Fetch offers directly from Firebase
   const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({
-    queryKey: ['/api/offers'],
+    queryKey: ['offers', 'firebase'],
+    queryFn: async () => {
+      try {
+        const currentUser = firebaseAuthService.getUser();
+        if (!currentUser?.id) {
+          throw new Error('User not authenticated');
+        }
+
+        const db = getFirestore();
+        
+        // Get sent offers (offers created by current user)
+        const sentQuery = query(
+          collection(db, 'offers'),
+          where('fromUserId', '==', currentUser.id),
+          orderBy('createdAt', 'desc')
+        );
+        const sentSnapshot = await getDocs(sentQuery);
+        const sentOffers = sentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Get received offers (offers where current user is the recipient)
+        // This is trickier since we might not have toUserId, so we'll check by phone
+        const receivedQuery = query(
+          collection(db, 'offers'),
+          where('toUserPhone', '==', currentUser.phone),
+          orderBy('createdAt', 'desc')
+        );
+        const receivedSnapshot = await getDocs(receivedQuery);
+        const receivedOffers = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        return { sentOffers, receivedOffers };
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+        throw error;
+      }
+    },
     retry: 1,
   });
 
-  const stats = (statsData as any)?.stats || {
+  // Calculate stats from offers data
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats', offersData],
+    queryFn: () => {
+      if (!offersData) return null;
+      
+      const { sentOffers, receivedOffers } = offersData;
+      let totalLent = 0;
+      let totalBorrowed = 0;
+      let activeOffers = 0;
+      let pendingOffers = 0;
+      
+      // Calculate from sent offers
+      sentOffers.forEach((offer: any) => {
+        if (offer.offerType === 'lend') {
+          totalLent += parseFloat(offer.amount || 0);
+        }
+        if (offer.status === 'accepted') activeOffers++;
+        if (offer.status === 'pending') pendingOffers++;
+      });
+      
+      // Calculate from received offers
+      receivedOffers.forEach((offer: any) => {
+        if (offer.offerType === 'borrow') {
+          totalBorrowed += parseFloat(offer.amount || 0);
+        }
+        if (offer.status === 'accepted') activeOffers++;
+        if (offer.status === 'pending') pendingOffers++;
+      });
+      
+      return { stats: { totalLent, totalBorrowed, activeOffers, pendingOffers } };
+    },
+    enabled: !!offersData,
+  });
+
+  const stats = statsData?.stats || {
     totalLent: 0,
     totalBorrowed: 0,
     activeOffers: 0,
@@ -35,13 +102,10 @@ export default function Dashboard() {
 
   // Handle query errors
   useEffect(() => {
-    if (statsError && process.env.NODE_ENV === 'development') {
-      console.error('Dashboard stats error:', statsError);
-    }
     if (offersError && process.env.NODE_ENV === 'development') {
       console.error('Dashboard offers error:', offersError);
     }
-  }, [statsError, offersError]);
+  }, [offersError]);
 
   // Click handlers for navigating to filtered offers
   const handleLentClick = () => {

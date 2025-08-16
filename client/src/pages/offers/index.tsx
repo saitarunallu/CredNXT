@@ -8,18 +8,54 @@ import OfferCard from "@/components/offers/offer-card";
 import { Clock, Send, Inbox, Filter, IndianRupee, TrendingUp, FileText, AlertCircle, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
+import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { firebaseAuthService } from "@/lib/firebase-auth";
 
 export default function OffersPage() {
   const [location, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
+  // Fetch offers directly from Firebase
   const { data: offersData, error: offersError } = useQuery({
-    queryKey: ['/api/offers'],
+    queryKey: ['offers', 'firebase'],
+    queryFn: async () => {
+      try {
+        const currentUser = firebaseAuthService.getUser();
+        if (!currentUser?.id) {
+          throw new Error('User not authenticated');
+        }
+
+        const db = getFirestore();
+        
+        // Get sent offers (offers created by current user)
+        const sentQuery = query(
+          collection(db, 'offers'),
+          where('fromUserId', '==', currentUser.id),
+          orderBy('createdAt', 'desc')
+        );
+        const sentSnapshot = await getDocs(sentQuery);
+        const sentOffers = sentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Get received offers (offers where current user is the recipient)
+        const receivedQuery = query(
+          collection(db, 'offers'),
+          where('toUserPhone', '==', currentUser.phone),
+          orderBy('createdAt', 'desc')
+        );
+        const receivedSnapshot = await getDocs(receivedQuery);
+        const receivedOffers = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        return { sentOffers, receivedOffers };
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+        throw error;
+      }
+    },
     retry: 1
   });
 
-  const sentOffers = (offersData as any)?.sentOffers || [];
-  const receivedOffers = (offersData as any)?.receivedOffers || [];
+  const sentOffers = offersData?.sentOffers || [];
+  const receivedOffers = offersData?.receivedOffers || [];
 
   // Debug: Log offers data only in development
   if (process.env.NODE_ENV === 'development') {
