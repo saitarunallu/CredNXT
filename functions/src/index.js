@@ -196,5 +196,251 @@ app.patch('/api/offers/:id', authenticate, async (req, res) => {
   }
 });
 
+// PDF Download endpoints
+app.get('/api/offers/:id/pdf/contract', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.userId;
+    
+    const db = admin.firestore();
+    const offerDoc = await db.collection('offers').doc(id).get();
+    
+    if (!offerDoc.exists) {
+      return res.status(404).json({ message: 'Offer not found' });
+    }
+    
+    const offerData = offerDoc.data();
+    
+    // Authorization check
+    const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+    const currentUser = currentUserDoc.exists ? currentUserDoc.data() : null;
+    
+    const isAuthorized = 
+      offerData.fromUserId === currentUserId ||
+      offerData.toUserId === currentUserId ||
+      (currentUser && offerData.toUserPhone === currentUser.phone);
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Unauthorized to access this contract' });
+    }
+    
+    // Get user data for PDF generation
+    let fromUser = null;
+    if (offerData.fromUserId) {
+      const fromUserDoc = await db.collection('users').doc(offerData.fromUserId).get();
+      if (fromUserDoc.exists) {
+        fromUser = fromUserDoc.data();
+      }
+    }
+    
+    // Simple PDF content generation (you can enhance this)
+    const pdfContent = generateContractPDF(offerData, fromUser);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="contract-${id}.pdf"`);
+    res.send(pdfContent);
+    
+  } catch (error) {
+    console.error('Contract PDF error:', error);
+    return res.status(500).json({ message: 'Failed to generate contract PDF' });
+  }
+});
+
+app.get('/api/offers/:id/pdf/kfs', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.userId;
+    
+    const db = admin.firestore();
+    const offerDoc = await db.collection('offers').doc(id).get();
+    
+    if (!offerDoc.exists) {
+      return res.status(404).json({ message: 'Offer not found' });
+    }
+    
+    const offerData = offerDoc.data();
+    
+    // Authorization check
+    const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+    const currentUser = currentUserDoc.exists ? currentUserDoc.data() : null;
+    
+    const isAuthorized = 
+      offerData.fromUserId === currentUserId ||
+      offerData.toUserId === currentUserId ||
+      (currentUser && offerData.toUserPhone === currentUser.phone);
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Unauthorized to access this KFS' });
+    }
+    
+    // Generate KFS PDF content
+    const pdfContent = generateKFSPDF(offerData);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
+    res.send(pdfContent);
+    
+  } catch (error) {
+    console.error('KFS PDF error:', error);
+    return res.status(500).json({ message: 'Failed to generate KFS PDF' });
+  }
+});
+
+app.get('/api/offers/:id/pdf/schedule', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.userId;
+    
+    const db = admin.firestore();
+    const offerDoc = await db.collection('offers').doc(id).get();
+    
+    if (!offerDoc.exists) {
+      return res.status(404).json({ message: 'Offer not found' });
+    }
+    
+    const offerData = offerDoc.data();
+    
+    // Authorization check
+    const currentUserDoc = await db.collection('users').doc(currentUserId).get();
+    const currentUser = currentUserDoc.exists ? currentUserDoc.data() : null;
+    
+    const isAuthorized = 
+      offerData.fromUserId === currentUserId ||
+      offerData.toUserId === currentUserId ||
+      (currentUser && offerData.toUserPhone === currentUser.phone);
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Unauthorized to access this schedule' });
+    }
+    
+    // Get payments for schedule
+    const paymentsSnapshot = await db.collection('payments')
+      .where('offerId', '==', id)
+      .orderBy('dueDate', 'asc')
+      .get();
+    
+    const payments = paymentsSnapshot.docs.map(doc => doc.data());
+    
+    // Generate schedule PDF content
+    const pdfContent = generateSchedulePDF(offerData, payments);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="schedule-${id}.pdf"`);
+    res.send(pdfContent);
+    
+  } catch (error) {
+    console.error('Schedule PDF error:', error);
+    return res.status(500).json({ message: 'Failed to generate schedule PDF' });
+  }
+});
+
+// Simple PDF generation functions (basic implementation)
+function generateContractPDF(offerData, fromUser) {
+  const content = `
+    LOAN CONTRACT
+    
+    Amount: ₹${offerData.amount}
+    Interest Rate: ${offerData.interestRate}%
+    Duration: ${offerData.duration} ${offerData.durationUnit}
+    Frequency: ${offerData.frequency}
+    
+    Lender: ${fromUser?.name || 'N/A'}
+    Phone: ${fromUser?.phone || offerData.fromUserPhone || 'N/A'}
+    
+    Borrower: ${offerData.toUserName || 'N/A'}
+    Phone: ${offerData.toUserPhone || 'N/A'}
+    
+    Created: ${new Date().toLocaleDateString()}
+    
+    This is a legal agreement between the parties mentioned above.
+  `;
+  
+  return Buffer.from(content, 'utf-8');
+}
+
+function generateKFSPDF(offerData) {
+  const content = `
+    KEY FACT SHEET (KFS)
+    
+    Loan Amount: ₹${offerData.amount}
+    Interest Rate: ${offerData.interestRate}% per annum
+    Loan Duration: ${offerData.duration} ${offerData.durationUnit}
+    Repayment Frequency: ${offerData.frequency}
+    
+    Total Interest: ₹${calculateTotalInterest(offerData)}
+    Total Repayment: ₹${calculateTotalRepayment(offerData)}
+    
+    Monthly EMI: ₹${calculateEMI(offerData)}
+    
+    Terms and Conditions:
+    - Late payment charges may apply
+    - Early repayment is allowed
+    - All disputes subject to local jurisdiction
+    
+    Generated: ${new Date().toLocaleDateString()}
+  `;
+  
+  return Buffer.from(content, 'utf-8');
+}
+
+function generateSchedulePDF(offerData, payments) {
+  let content = `
+    REPAYMENT SCHEDULE
+    
+    Loan Amount: ₹${offerData.amount}
+    Interest Rate: ${offerData.interestRate}%
+    Duration: ${offerData.duration} ${offerData.durationUnit}
+    
+    PAYMENT SCHEDULE:
+    `;
+    
+  payments.forEach((payment, index) => {
+    const dueDate = payment.dueDate?.toDate ? payment.dueDate.toDate() : new Date(payment.dueDate);
+    content += `
+    ${index + 1}. Due: ${dueDate.toLocaleDateString()} - Amount: ₹${payment.amount} - Status: ${payment.status || 'Pending'}`;
+  });
+  
+  content += `
+    
+    Generated: ${new Date().toLocaleDateString()}
+  `;
+  
+  return Buffer.from(content, 'utf-8');
+}
+
+// Helper calculation functions
+function calculateTotalInterest(offerData) {
+  const principal = parseFloat(offerData.amount);
+  const rate = parseFloat(offerData.interestRate) / 100;
+  const duration = parseFloat(offerData.duration);
+  
+  if (offerData.durationUnit === 'months') {
+    return Math.round(principal * rate * (duration / 12));
+  } else {
+    return Math.round(principal * rate * duration);
+  }
+}
+
+function calculateTotalRepayment(offerData) {
+  const principal = parseFloat(offerData.amount);
+  const interest = calculateTotalInterest(offerData);
+  return principal + interest;
+}
+
+function calculateEMI(offerData) {
+  const totalRepayment = calculateTotalRepayment(offerData);
+  const duration = parseFloat(offerData.duration);
+  
+  if (offerData.frequency === 'monthly') {
+    const months = offerData.durationUnit === 'months' ? duration : duration * 12;
+    return Math.round(totalRepayment / months);
+  } else if (offerData.frequency === 'weekly') {
+    const weeks = offerData.durationUnit === 'months' ? duration * 4 : duration * 52;
+    return Math.round(totalRepayment / weeks);
+  } else {
+    return totalRepayment;
+  }
+}
+
 // Export the function
 exports.api = functions.https.onRequest(app);
