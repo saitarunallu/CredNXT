@@ -1303,12 +1303,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           contractKey = await pdfService.generateContract(offerForPdf as any, {
             ...fromUser,
-            name: fromUser.name ?? null,
-            email: fromUser.email ?? null,
-            isVerified: fromUser.isVerified ?? null,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
-          });
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
           console.log(`Generated contract with key: ${contractKey}`);
           
           await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
@@ -1367,12 +1367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           kfsKey = await pdfService.generateKFS(offerForPdf as any, {
             ...fromUser,
-            name: fromUser.name ?? null,
-            email: fromUser.email ?? null,
-            isVerified: fromUser.isVerified ?? null,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
-          });
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
           console.log(`Generated KFS with key: ${kfsKey}`);
           
           await storage.updateOffer(offer.id, { kfsPdfKey: kfsKey });
@@ -1499,12 +1499,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
           scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, {
             ...fromUser,
-            name: fromUser.name ?? null,
-            email: fromUser.email ?? null,
-            isVerified: fromUser.isVerified ?? null,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : null,
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : null
-          });
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
           console.log(`Generated repayment schedule with key: ${scheduleKey}`);
           
           await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
