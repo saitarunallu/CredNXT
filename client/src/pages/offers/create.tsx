@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
@@ -89,21 +90,36 @@ export default function CreateOffer() {
         // Check if user is registered with this phone number
         console.log('Checking phone number:', phoneNumber);
         
-        // Use apiRequest for proper URL handling and configuration
-        const response = await apiRequest('GET', `/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`, undefined, {
-          headers: {}
-        });
+        // Direct Firebase query for contact name fetching
+        const db = getFirestore();
+        const normalizedPhone = phoneNumber.replace(/\D/g, '');
         
-        const data = await response.json();
-        console.log('API response:', data);
+        // Try multiple phone number formats
+        const phoneVariants = [
+          phoneNumber,
+          normalizedPhone,
+          `+91${normalizedPhone}`,
+          normalizedPhone.startsWith('91') && normalizedPhone.length === 12 ? normalizedPhone.substring(2) : normalizedPhone
+        ];
         
-        if (data.exists && data.user && data.user.name) {
-          console.log('Setting contact name:', data.user.name);
-          setContactName(data.user.name);
+        let user = null;
+        
+        for (const phoneVariant of phoneVariants) {
+          const q = query(collection(db, 'users'), where('phone', '==', phoneVariant), limit(1));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            user = querySnapshot.docs[0].data();
+            break;
+          }
+        }
+        
+        if (user && user.name) {
+          console.log('Setting contact name:', user.name);
+          setContactName(user.name);
           setIsContactFound(true);
           toast({
             title: "Contact Found",
-            description: `Found registered user: ${data.user.name}`,
+            description: `Found registered user: ${user.name}`,
           });
         } else {
           console.log('User not found or no name available');
