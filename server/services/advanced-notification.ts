@@ -1,6 +1,6 @@
 import { storage } from '../storage';
 import { notificationService } from './notification';
-import { Notification, User } from '@shared/schema';
+import { Notification, User } from '@shared/firestore-schema';
 
 interface NotificationPreferences {
   type: string;

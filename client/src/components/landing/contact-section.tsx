@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { demoRequestSchema, type DemoRequest } from "@shared/schema";
+import { demoRequestSchema, type DemoRequest } from "@shared/firestore-schema";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 export default function ContactSection() {

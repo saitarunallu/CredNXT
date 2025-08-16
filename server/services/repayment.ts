@@ -1,4 +1,4 @@
-import { Offer } from "@shared/schema";
+import { Offer } from "@shared/firestore-schema";
 import { calculateRepaymentSchedule } from "@shared/calculations";
 import { storage } from "../storage";
 

@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authService } from "@/lib/auth";
-import { insertPaymentSchema, type InsertPayment } from "@shared/schema";
+import { insertPaymentSchema, type InsertPayment } from "@shared/firestore-schema";
 import { 
   ArrowLeft, 
   IndianRupee, 

@@ -1,4 +1,4 @@
-import { Offer, Payment, User } from "@shared/schema";
+import { Offer, Payment, User } from "@shared/firestore-schema";
 import crypto from "crypto";
 
 /**

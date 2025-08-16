@@ -1,4 +1,4 @@
-import { Offer, User } from "@shared/schema";
+import { Offer, User } from "@shared/firestore-schema";
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
