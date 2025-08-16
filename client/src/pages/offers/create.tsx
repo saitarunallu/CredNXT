@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { firebaseAuthService } from "@/lib/firebase-auth";
+import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
 
@@ -86,33 +87,75 @@ export default function CreateOffer() {
       setIsCheckingContact(true);
       
       try {
-        // Check if user is registered using the API endpoint
+        // First try the API endpoint
         console.log('Checking phone number via API:', phoneNumber);
         
-        const response = await fetch(`/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
-        const data = await response.json();
+        try {
+          const response = await fetch(`/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
+          const data = await response.json();
+          
+          if (response.ok && data.exists && data.user?.name) {
+            console.log('Found user via API:', { name: data.user.name, phone: data.user.phone });
+            setContactName(data.user.name);
+            setIsContactFound(true);
+            toast({
+              title: "Contact Found",
+              description: `Found registered user: ${data.user.name}`,
+            });
+            return;
+          }
+        } catch (apiError) {
+          console.log('API endpoint not available, trying direct Firebase query:', apiError);
+        }
         
-        if (response.ok && data.exists && data.user?.name) {
-          console.log('Found user:', { name: data.user.name, phone: data.user.phone });
-          setContactName(data.user.name);
+        // Fallback to direct Firebase query
+        const db = getFirestore();
+        const normalizedPhone = phoneNumber.replace(/\D/g, '');
+        
+        // Try multiple phone number formats
+        const phoneVariants = [
+          phoneNumber,
+          normalizedPhone,
+          `+91${normalizedPhone}`,
+          normalizedPhone.startsWith('91') && normalizedPhone.length === 12 ? normalizedPhone.substring(2) : normalizedPhone
+        ];
+        
+        let user = null;
+        
+        for (const phoneVariant of phoneVariants) {
+          try {
+            const q = query(collection(db, 'users'), where('phone', '==', phoneVariant), limit(1));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              user = querySnapshot.docs[0].data();
+              console.log('Found user via Firebase:', { name: user.name, phone: user.phone });
+              break;
+            }
+          } catch (queryError) {
+            console.log('Query error for variant', phoneVariant, ':', queryError);
+            continue;
+          }
+        }
+        
+        if (user && user.name) {
+          setContactName(user.name);
           setIsContactFound(true);
           toast({
             title: "Contact Found",
-            description: `Found registered user: ${data.user.name}`,
+            description: `Found registered user: ${user.name}`,
           });
         } else {
-          console.log('User not found or no name available');
-          // Clear any previous name if user not found
+          console.log('User not found');
           setContactName("");
           setIsContactFound(false);
         }
+        
       } catch (error) {
         console.error('Error checking phone number:', error);
-        // User not registered - allow manual name entry
         setContactName("");
         setIsContactFound(false);
         
-        // Only show error toast for network or server errors
         toast({
           title: "Error",
           description: "Failed to check contact. Please try again.",
