@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Production Issue</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .log { margin: 5px 0; padding: 5px; background: #333; border-radius: 3px; }
+        .error { background: #660000; }
+        .success { background: #006600; }
+        .info { background: #000066; }
+    </style>
+</head>
+<body>
+    <h1>Production Issue Debug</h1>
+    <div id="logs"></div>
+    
+    <script>
+        const logs = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = new Date().toISOString() + ' - ' + message;
+            logs.appendChild(div);
+            console.log(message);
+        }
+        
+        log('Starting production debug test', 'info');
+        log('Current URL: ' + window.location.href);
+        log('Hostname: ' + window.location.hostname);
+        
+        // Test 1: Check if main page loads
+        fetch('/')
+            .then(response => {
+                log('Main page status: ' + response.status, response.ok ? 'success' : 'error');
+                return response.text();
+            })
+            .then(html => {
+                const hasCredNXT = html.includes('CredNXT');
+                const hasBundle = html.match(/index-([A-Za-z0-9\-]*\.js)/);
+                log('Main page has CredNXT: ' + hasCredNXT, hasCredNXT ? 'success' : 'error');
+                if (hasBundle) {
+                    log('Bundle found: ' + hasBundle[0], 'success');
+                } else {
+                    log('No bundle found in HTML', 'error');
+                }
+            })
+            .catch(err => log('Main page error: ' + err.message, 'error'));
+        
+        // Test 2: Check offer page
+        fetch('/offers/test-offer-123')
+            .then(response => {
+                log('Offer page status: ' + response.status, response.ok ? 'success' : 'error');
+                return response.text();
+            })
+            .then(html => {
+                const hasCredNXT = html.includes('CredNXT');
+                const hasError = html.includes('404') || html.includes('Error');
+                log('Offer page has CredNXT: ' + hasCredNXT, hasCredNXT ? 'success' : 'error');
+                log('Offer page has error: ' + hasError, hasError ? 'error' : 'success');
+            })
+            .catch(err => log('Offer page error: ' + err.message, 'error'));
+        
+        // Test 3: Try to navigate to offer page using history API
+        setTimeout(() => {
+            log('Testing client-side navigation...', 'info');
+            window.history.pushState({}, '', '/offers/test-offer-123');
+            log('URL changed to: ' + window.location.pathname);
+            
+            // Dispatch popstate to trigger router
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            
+            setTimeout(() => {
+                const content = document.body.innerHTML;
+                const hasError = content.includes('404') || content.includes('not found');
+                log('After navigation, page has error: ' + hasError, hasError ? 'error' : 'success');
+            }, 1000);
+        }, 2000);
+        
+        // Test 4: Check if Firebase is accessible
+        setTimeout(() => {
+            log('Testing Firebase access...', 'info');
+            
+            // Test Firebase SDK import
+            import('https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js')
+                .then(() => {
+                    log('Firebase app SDK loaded', 'success');
+                    return import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+                })
+                .then(() => {
+                    log('Firebase Firestore SDK loaded', 'success');
+                })
+                .catch(err => {
+                    log('Firebase SDK error: ' + err.message, 'error');
+                });
+        }, 3000);
+    </script>
+</body>
+</html>
+</html>

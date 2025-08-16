@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Routing Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test { margin: 10px 0; padding: 10px; background: white; border-radius: 5px; }
+        .success { border-left: 4px solid green; }
+        .error { border-left: 4px solid red; }
+        .pending { border-left: 4px solid orange; }
+        .console { background: #333; color: #0f0; font-family: monospace; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>CredNXT Production Routing Diagnostic</h1>
+    <div id="results"></div>
+    <div id="console" class="console">Console logs will appear here...</div>
+    
+    <script>
+        const results = document.getElementById('results');
+        const consoleDiv = document.getElementById('console');
+        
+        function addResult(message, status = 'pending') {
+            const div = document.createElement('div');
+            div.className = `test ${status}`;
+            div.textContent = message;
+            results.appendChild(div);
+            return div;
+        }
+        
+        function addConsoleLog(message) {
+            consoleDiv.innerHTML += message + '\n';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            addConsoleLog('LOG: ' + args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' '));
+            originalLog.apply(console, args);
+        };
+        
+        const originalError = console.error;
+        console.error = function(...args) {
+            addConsoleLog('ERROR: ' + args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' '));
+            originalError.apply(console, args);
+        };
+        
+        async function testRouting() {
+            try {
+                addResult('Testing production routing...', 'pending');
+                addConsoleLog('Starting routing test at ' + new Date().toISOString());
+                
+                // Test 1: Check if we can access the main app
+                const mainTest = addResult('Testing main app access...');
+                try {
+                    const response = await fetch('/');
+                    if (response.ok) {
+                        const html = await response.text();
+                        if (html.includes('CredNXT')) {
+                            mainTest.textContent = '✅ Main app accessible';
+                            mainTest.className = 'test success';
+                            addConsoleLog('Main app HTML contains CredNXT');
+                        } else {
+                            throw new Error('App HTML not found');
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    mainTest.textContent = `❌ Main app failed: ${error.message}`;
+                    mainTest.className = 'test error';
+                }
+                
+                // Test 2: Check offer route specifically
+                const offerTest = addResult('Testing offer route...');
+                try {
+                    const response = await fetch('/offers/test-offer-123');
+                    if (response.ok) {
+                        const html = await response.text();
+                        if (html.includes('CredNXT')) {
+                            offerTest.textContent = `✅ Offer route returns app (${response.status})`;
+                            offerTest.className = 'test success';
+                            addConsoleLog('Offer route HTML contains CredNXT');
+                        } else {
+                            offerTest.textContent = '⚠️ Offer route returns content but not app';
+                            offerTest.className = 'test pending';
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    offerTest.textContent = `❌ Offer route failed: ${error.message}`;
+                    offerTest.className = 'test error';
+                }
+                
+                // Test 3: Check current bundle
+                const bundleTest = addResult('Testing JS bundle...');
+                try {
+                    const response = await fetch('/');
+                    const html = await response.text();
+                    const bundleMatch = html.match(/index-([A-Za-z0-9\-]*\.js)/);
+                    if (bundleMatch) {
+                        const bundle = bundleMatch[0];
+                        bundleTest.textContent = `✅ Current bundle: ${bundle}`;
+                        bundleTest.className = 'test success';
+                        addConsoleLog('Bundle found: ' + bundle);
+                        
+                        // Test if bundle is accessible
+                        const bundleResponse = await fetch(`/assets/${bundle}`);
+                        if (bundleResponse.ok) {
+                            const size = bundleResponse.headers.get('content-length');
+                            addResult(`✅ Bundle accessible (${size} bytes)`, 'success');
+                        } else {
+                            addResult('❌ Bundle not accessible', 'error');
+                        }
+                    } else {
+                        throw new Error('No bundle found in HTML');
+                    }
+                } catch (error) {
+                    bundleTest.textContent = `❌ Bundle test failed: ${error.message}`;
+                    bundleTest.className = 'test error';
+                }
+                
+                addResult('🔗 Test offer URL: https://crednxt-ef673.web.app/offers/test-offer-123', 'pending');
+                addResult('🔗 Debug auth URL: https://crednxt-ef673.web.app/debug-auth', 'pending');
+                
+            } catch (error) {
+                addResult(`❌ Test failed: ${error.message}`, 'error');
+                addConsoleLog('Test error: ' + error.message);
+            }
+        }
+        
+        // Start test
+        testRouting();
+    </script>
+</body>
+</html>
