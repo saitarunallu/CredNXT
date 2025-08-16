@@ -1,4 +1,4 @@
-import { onRequest } from 'firebase-functions/v2/https';
+import * as functions from 'firebase-functions';
 import express from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
@@ -77,9 +77,4 @@ app.get('/api/health', (req, res) => {
 });
 
 // Export as Firebase Function
-export const api = onRequest({
-  region: 'us-central1',
-  memory: '256MiB',
-  timeoutSeconds: 30,
-  maxInstances: 5
-}, app);
+exports.api = functions.https.onRequest(app);

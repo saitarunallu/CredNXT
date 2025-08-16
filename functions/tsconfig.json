@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["es6"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": false,
@@ -9,10 +10,14 @@
     "target": "es2017",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
   },
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
