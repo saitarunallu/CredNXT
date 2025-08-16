@@ -318,7 +318,8 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
       throw new Error('User not authenticated');
     }
     
-    // Try API first with proper authentication
+    // Always try API first, then fallback to direct Firestore
+    console.log('🎯 Trying API first for offer acceptance');
     try {
       const user = await this.getFirebaseUser();
       if (user) {
@@ -336,6 +337,8 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
         if (response.ok) {
           console.log('✅ API offer acceptance successful');
           return await response.json();
+        } else {
+          console.log('⚠️ API failed, falling back to direct Firestore');
         }
       }
     } catch (apiError) {
@@ -346,32 +349,36 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
     console.log('🔥 Using direct Firestore for offer acceptance');
     await this.initFirebase();
     const { updateDoc, doc, serverTimestamp, getDoc } = await import('firebase/firestore');
-    
-    try {
-      const offerRef = doc(this.db, 'offers', offerId);
-      const offerSnap = await getDoc(offerRef);
       
-      if (!offerSnap.exists()) {
-        throw new Error('Offer not found');
+      try {
+        // First verify the offer exists and user has permission
+        const offerRef = doc(this.db, 'offers', offerId);
+        const offerSnap = await getDoc(offerRef);
+        
+        if (!offerSnap.exists()) {
+          throw new Error('Offer not found');
+        }
+        
+        const offerData = offerSnap.data();
+        console.log('📋 Offer data:', { toUserId: offerData.toUserId, currentUserId: currentUser.id });
+        
+        // Check if user is authorized to accept this offer
+        if (offerData.toUserId !== currentUser.id) {
+          throw new Error('Not authorized to accept this offer');
+        }
+        
+        // Update the offer status
+        await updateDoc(offerRef, {
+          status: 'accepted',
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('✅ Offer accepted successfully');
+        return { success: true };
+      } catch (error) {
+        console.error('❌ Direct Firestore offer acceptance error:', error);
+        throw error;
       }
-      
-      const offerData = offerSnap.data();
-      
-      if (offerData.toUserId !== currentUser.id) {
-        throw new Error('Not authorized to accept this offer');
-      }
-      
-      await updateDoc(offerRef, {
-        status: 'accepted',
-        updatedAt: serverTimestamp()
-      });
-      
-      console.log('✅ Offer accepted successfully');
-      return { success: true };
-    } catch (error) {
-      console.error('❌ Direct Firestore offer acceptance error:', error);
-      throw error;
-    }
   }
   
   async rejectOffer(offerId: string): Promise<any> {
@@ -385,7 +392,8 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
       throw new Error('User not authenticated');
     }
     
-    // Try API first with proper authentication
+    // Always try API first, then fallback to direct Firestore
+    console.log('🎯 Trying API first for offer rejection');
     try {
       const user = await this.getFirebaseUser();
       if (user) {
@@ -403,6 +411,8 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
         if (response.ok) {
           console.log('✅ API offer rejection successful');
           return await response.json();
+        } else {
+          console.log('⚠️ API failed, falling back to direct Firestore');
         }
       }
     } catch (apiError) {
@@ -413,31 +423,74 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
     console.log('🔥 Using direct Firestore for offer rejection');
     await this.initFirebase();
     const { updateDoc, doc, serverTimestamp, getDoc } = await import('firebase/firestore');
-    
-    try {
-      const offerRef = doc(this.db, 'offers', offerId);
-      const offerSnap = await getDoc(offerRef);
       
-      if (!offerSnap.exists()) {
-        throw new Error('Offer not found');
+      try {
+        // First verify the offer exists and user has permission
+        const offerRef = doc(this.db, 'offers', offerId);
+        const offerSnap = await getDoc(offerRef);
+        
+        if (!offerSnap.exists()) {
+          throw new Error('Offer not found');
+        }
+        
+        const offerData = offerSnap.data();
+        console.log('📋 Offer data:', { toUserId: offerData.toUserId, currentUserId: currentUser.id });
+        
+        // Check if user is authorized to reject this offer
+        if (offerData.toUserId !== currentUser.id) {
+          throw new Error('Not authorized to reject this offer');
+        }
+        
+        // Update the offer status
+        await updateDoc(offerRef, {
+          status: 'declined',
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('✅ Offer rejected successfully');
+        return { success: true };
+      } catch (error) {
+        console.error('❌ Direct Firestore offer rejection error:', error);
+        throw error;
       }
-      
-      const offerData = offerSnap.data();
-      
-      if (offerData.toUserId !== currentUser.id) {
-        throw new Error('Not authorized to reject this offer');
+    } else {
+      console.log('🛠️ Development: Using API for offer rejection');
+      try {
+        const response = await apiRequest('PATCH', `/api/offers/${offerId}`, { status: 'declined' });
+        return await response.json();
+      } catch (error) {
+        console.error('❌ API offer rejection error:', error);
+        // Fallback to direct Firestore
+        console.log('🔄 API failed, falling back to direct Firestore');
+        await this.initFirebase();
+        const { updateDoc, doc, serverTimestamp, getDoc } = await import('firebase/firestore');
+        
+        try {
+          // Verify the offer exists and user has permission
+          const offerRef = doc(this.db, 'offers', offerId);
+          const offerSnap = await getDoc(offerRef);
+          
+          if (!offerSnap.exists()) {
+            throw new Error('Offer not found');
+          }
+          
+          const offerData = offerSnap.data();
+          if (offerData.toUserId !== currentUser.id) {
+            throw new Error('Not authorized to reject this offer');
+          }
+          
+          await updateDoc(offerRef, {
+            status: 'declined',
+            updatedAt: serverTimestamp()
+          });
+          
+          console.log('✅ Fallback: Offer rejected successfully');
+          return { success: true };
+        } catch (fallbackError) {
+          console.error('❌ Fallback error:', fallbackError);
+          throw fallbackError;
+        }
       }
-      
-      await updateDoc(offerRef, {
-        status: 'declined',
-        updatedAt: serverTimestamp()
-      });
-      
-      console.log('✅ Offer rejected successfully');
-      return { success: true };
-    } catch (error) {
-      console.error('❌ Direct Firestore offer rejection error:', error);
-      throw error;
     }
   }
 
