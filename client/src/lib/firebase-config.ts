@@ -39,25 +39,46 @@ function validateFirebaseConfig() {
 
 const configValid = validateFirebaseConfig();
 
-if (process.env.NODE_ENV === 'development') {
-  if (configValid) {
-    console.log('✅ Firebase config loaded successfully:', {
-      projectId: firebaseConfig.projectId,
-      authDomain: firebaseConfig.authDomain,
-      apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
-    });
-  }
+// Always log Firebase config status for debugging
+if (configValid) {
+  console.log('✅ Firebase config loaded successfully:', {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...'
+  });
+} else {
+  console.error('❌ Firebase config validation failed:', {
+    apiKey: firebaseConfig.apiKey ? '✅' : '❌',
+    authDomain: firebaseConfig.authDomain ? '✅' : '❌',
+    projectId: firebaseConfig.projectId ? '✅' : '❌',
+    storageBucket: firebaseConfig.storageBucket ? '✅' : '❌',
+    messagingSenderId: firebaseConfig.messagingSenderId ? '✅' : '❌',
+    appId: firebaseConfig.appId ? '✅' : '❌'
+  });
 }
 
-// Initialize Firebase only if not already initialized and config is valid
+// Initialize Firebase only if not already initialized
 let app;
 if (!getApps().length) {
   if (configValid) {
     app = initializeApp(firebaseConfig);
     console.log('✅ Firebase app initialized');
   } else {
-    console.error('❌ Cannot initialize Firebase - configuration validation failed');
-    throw new Error('Firebase configuration validation failed');
+    // In production, try to initialize anyway with available config
+    console.warn('⚠️ Firebase config validation failed, attempting initialization anyway');
+    console.log('Config values:', {
+      apiKey: firebaseConfig.apiKey ? 'present' : 'missing',
+      authDomain: firebaseConfig.authDomain ? 'present' : 'missing',
+      projectId: firebaseConfig.projectId ? 'present' : 'missing'
+    });
+    
+    try {
+      app = initializeApp(firebaseConfig);
+      console.log('✅ Firebase app initialized despite validation warnings');
+    } catch (initError) {
+      console.error('❌ Firebase initialization completely failed:', initError);
+      throw new Error(`Firebase initialization failed: ${initError}`);
+    }
   }
 } else {
   app = getApps()[0];

@@ -91,8 +91,12 @@ export default function CreateOffer() {
         console.log('Checking phone number:', phoneNumber);
         
         // Direct Firebase query for contact name fetching
+        console.log('Getting Firestore instance...');
         const db = getFirestore();
+        console.log('Firestore instance obtained:', !!db);
+        
         const normalizedPhone = phoneNumber.replace(/\D/g, '');
+        console.log('Normalized phone:', normalizedPhone);
         
         // Try multiple phone number formats
         const phoneVariants = [
@@ -101,15 +105,25 @@ export default function CreateOffer() {
           `+91${normalizedPhone}`,
           normalizedPhone.startsWith('91') && normalizedPhone.length === 12 ? normalizedPhone.substring(2) : normalizedPhone
         ];
+        console.log('Phone variants to try:', phoneVariants);
         
         let user = null;
         
         for (const phoneVariant of phoneVariants) {
-          const q = query(collection(db, 'users'), where('phone', '==', phoneVariant), limit(1));
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            user = querySnapshot.docs[0].data();
-            break;
+          console.log('Trying phone variant:', phoneVariant);
+          try {
+            const q = query(collection(db, 'users'), where('phone', '==', phoneVariant), limit(1));
+            console.log('Created query for:', phoneVariant);
+            const querySnapshot = await getDocs(q);
+            console.log('Query result:', querySnapshot.empty ? 'empty' : 'found data');
+            
+            if (!querySnapshot.empty) {
+              user = querySnapshot.docs[0].data();
+              console.log('Found user:', { name: user.name, phone: user.phone });
+              break;
+            }
+          } catch (queryError) {
+            console.error('Query error for variant', phoneVariant, ':', queryError);
           }
         }
         
