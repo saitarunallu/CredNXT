@@ -360,7 +360,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const currentUser = authService.getUser();
 
-  console.log('🔍 ViewOffer - Environment:', unifiedDataService.isProduction() ? 'production' : 'development');
+  console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);
   console.log('🔍 ViewOffer - Full hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
 
@@ -368,8 +368,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const { data: offerData, isLoading, error } = useQuery({
     queryKey: ['offer-details', offerId],
     queryFn: async () => {
-      const result = await unifiedDataService.getOfferWithDetails(offerId);
-      console.log('📊 Unified offer data:', result);
+      const result = await firebaseBackend.getOfferWithDetails(offerId);
+      console.log('📊 Firebase offer data:', result);
       return result;
     },
     retry: (failureCount, error) => {
@@ -384,14 +384,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const { data: scheduleData } = useQuery({
     queryKey: ['offer-schedule', offerId],
-    queryFn: () => unifiedDataService.getOfferSchedule(offerId),
+    queryFn: () => firebaseBackend.getOfferSchedule(offerId),
     enabled: !!offerData?.offer
   }) as { data: any };
 
   // Get current payment information
   const { data: paymentInfoData } = useQuery({
     queryKey: ['offer-payment-info', offerId],
-    queryFn: () => unifiedDataService.getOfferPaymentInfo(offerId),
+    queryFn: () => firebaseBackend.getOfferPaymentInfo(offerId),
     enabled: !!offerData?.offer && offerData?.offer.status === 'accepted'
   }) as { data: any };
 

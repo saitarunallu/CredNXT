@@ -452,6 +452,104 @@ export class FirebaseBackendService {
       throw error;
     }
   }
+
+  // Get offer with details (for view page)
+  async getOfferWithDetails(offerId: string): Promise<any> {
+    try {
+      // Try API first if available
+      if (!isProduction()) {
+        try {
+          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}`);
+          if (response.ok) {
+            const data = await response.json();
+            return normalizeFirestoreData(data);
+          }
+        } catch (error) {
+          console.log('API not available, using direct Firestore');
+        }
+      }
+
+      // Direct Firestore access
+      const offerDoc = await getDoc(doc(db, 'offers', offerId));
+      if (!offerDoc.exists()) {
+        throw new Error('Offer not found');
+      }
+
+      const offerData = { id: offerDoc.id, ...offerDoc.data() } as any;
+      
+      // Get related user data
+      const fromUserDoc = await getDoc(doc(db, 'users', offerData.fromUserId));
+      const toUserDoc = offerData.toUserId ? await getDoc(doc(db, 'users', offerData.toUserId)) : null;
+      
+      return {
+        offer: normalizeFirestoreData(offerData),
+        fromUser: fromUserDoc.exists() ? normalizeFirestoreData({ id: fromUserDoc.id, ...fromUserDoc.data() }) : null,
+        toUser: toUserDoc?.exists() ? normalizeFirestoreData({ id: toUserDoc.id, ...toUserDoc.data() }) : null
+      };
+    } catch (error) {
+      console.error('Error getting offer details:', error);
+      throw error;
+    }
+  }
+
+  // Get offer schedule
+  async getOfferSchedule(offerId: string): Promise<any> {
+    try {
+      // Try API first if available
+      if (!isProduction()) {
+        try {
+          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}/schedule`);
+          if (response.ok) {
+            const data = await response.json();
+            return normalizeFirestoreData(data);
+          }
+        } catch (error) {
+          console.log('API not available for schedule');
+        }
+      }
+
+      // Return empty schedule for now - can be enhanced later
+      return { schedule: [] };
+    } catch (error) {
+      console.error('Error getting offer schedule:', error);
+      return { schedule: [] };
+    }
+  }
+
+  // Get offer payment info
+  async getOfferPaymentInfo(offerId: string): Promise<any> {
+    try {
+      // Try API first if available
+      if (!isProduction()) {
+        try {
+          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}/payment-info`);
+          if (response.ok) {
+            const data = await response.json();
+            return normalizeFirestoreData(data);
+          }
+        } catch (error) {
+          console.log('API not available for payment info');
+        }
+      }
+
+      // Get payments for this offer
+      const paymentsQuery = query(
+        collection(db, 'payments'),
+        where('offerId', '==', offerId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+      const payments = paymentsSnapshot.docs.map(doc => 
+        normalizeFirestoreData({ id: doc.id, ...doc.data() })
+      );
+
+      return { payments };
+    } catch (error) {
+      console.error('Error getting payment info:', error);
+      return { payments: [] };
+    }
+  }
 }
 
 // Export singleton instance
