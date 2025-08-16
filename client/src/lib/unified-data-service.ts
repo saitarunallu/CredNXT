@@ -492,7 +492,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
         }
 
         const token = await (user as any).getIdToken();
-        const response = await fetch(`/api/offers/${offerId}/contract`, {
+        const response = await fetch(`/api/offers/${offerId}/pdf/contract`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -512,7 +512,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
     } else {
       console.log('🛠️ Development: Using API for contract download');
       try {
-        const response = await apiRequest('GET', `/api/offers/${offerId}/contract`);
+        const response = await apiRequest('GET', `/api/offers/${offerId}/pdf/contract`);
         return await response.blob();
       } catch (error) {
         console.error('❌ API contract download error:', error);
@@ -533,7 +533,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
         }
 
         const token = await (user as any).getIdToken();
-        const response = await fetch(`/api/offers/${offerId}/kfs`, {
+        const response = await fetch(`/api/offers/${offerId}/pdf/kfs`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -553,7 +553,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
     } else {
       console.log('🛠️ Development: Using API for KFS download');
       try {
-        const response = await apiRequest('GET', `/api/offers/${offerId}/kfs`);
+        const response = await apiRequest('GET', `/api/offers/${offerId}/pdf/kfs`);
         return await response.blob();
       } catch (error) {
         console.error('❌ API KFS download error:', error);
@@ -574,7 +574,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
         }
 
         const token = await (user as any).getIdToken();
-        const response = await fetch(`/api/offers/${offerId}/schedule/download`, {
+        const response = await fetch(`/api/offers/${offerId}/pdf/schedule`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -594,7 +594,7 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
     } else {
       console.log('🛠️ Development: Using API for schedule download');
       try {
-        const response = await apiRequest('GET', `/api/offers/${offerId}/schedule/download`);
+        const response = await apiRequest('GET', `/api/offers/${offerId}/pdf/schedule`);
         return await response.blob();
       } catch (error) {
         console.error('❌ API schedule download error:', error);
