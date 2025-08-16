@@ -18,11 +18,18 @@ export default function Profile() {
   const [user, setUser] = useState(firebaseAuthService.getUser());
   
   // Fetch fresh user data from server
-  const { data: serverUser, isLoading } = useQuery<{user: UserType}>({
+  const { data: serverUser, isLoading, error } = useQuery<{user: UserType}>({
     queryKey: ['/api/auth/me'],
     enabled: !!firebaseAuthService.isAuthenticated(),
     refetchOnWindowFocus: true,
     staleTime: 0, // Always fetch fresh data
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
   
   // Update local user data when server data is available
@@ -32,6 +39,15 @@ export default function Profile() {
       firebaseAuthService.setUser(serverUser.user);
     }
   }, [serverUser]);
+  
+  // Handle authentication errors
+  useEffect(() => {
+    if (error && (error as any)?.response?.status === 401) {
+      console.log('Authentication error, redirecting to login');
+      firebaseAuthService.logout();
+      setLocation('/login');
+    }
+  }, [error, setLocation]);
   // Theme functionality removed - light theme only
 
   const handleLogout = () => {
@@ -44,9 +60,16 @@ export default function Profile() {
     return <LoadingScreen message="Loading profile..." />;
   }
   
-  // Redirect if no user data available
+  // Handle authentication check
+  if (!firebaseAuthService.isAuthenticated()) {
+    setLocation('/login');
+    return null;
+  }
+  
+  // Redirect if no user data available after loading
   if (!user && !isLoading) {
-    setLocation('/');
+    console.log('No user data available, redirecting to complete profile');
+    setLocation('/auth/complete-profile');
     return null;
   }
 

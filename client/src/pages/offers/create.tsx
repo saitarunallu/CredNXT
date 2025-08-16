@@ -15,7 +15,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
 import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
@@ -87,53 +86,19 @@ export default function CreateOffer() {
       setIsCheckingContact(true);
       
       try {
-        // Check if user is registered with this phone number
-        console.log('Checking phone number:', phoneNumber);
+        // Check if user is registered using the API endpoint
+        console.log('Checking phone number via API:', phoneNumber);
         
-        // Direct Firebase query for contact name fetching
-        console.log('Getting Firestore instance...');
-        const db = getFirestore();
-        console.log('Firestore instance obtained:', !!db);
+        const response = await fetch(`/api/users/check-phone?phone=${encodeURIComponent(phoneNumber)}`);
+        const data = await response.json();
         
-        const normalizedPhone = phoneNumber.replace(/\D/g, '');
-        console.log('Normalized phone:', normalizedPhone);
-        
-        // Try multiple phone number formats
-        const phoneVariants = [
-          phoneNumber,
-          normalizedPhone,
-          `+91${normalizedPhone}`,
-          normalizedPhone.startsWith('91') && normalizedPhone.length === 12 ? normalizedPhone.substring(2) : normalizedPhone
-        ];
-        console.log('Phone variants to try:', phoneVariants);
-        
-        let user = null;
-        
-        for (const phoneVariant of phoneVariants) {
-          console.log('Trying phone variant:', phoneVariant);
-          try {
-            const q = query(collection(db, 'users'), where('phone', '==', phoneVariant), limit(1));
-            console.log('Created query for:', phoneVariant);
-            const querySnapshot = await getDocs(q);
-            console.log('Query result:', querySnapshot.empty ? 'empty' : 'found data');
-            
-            if (!querySnapshot.empty) {
-              user = querySnapshot.docs[0].data();
-              console.log('Found user:', { name: user.name, phone: user.phone });
-              break;
-            }
-          } catch (queryError) {
-            console.error('Query error for variant', phoneVariant, ':', queryError);
-          }
-        }
-        
-        if (user && user.name) {
-          console.log('Setting contact name:', user.name);
-          setContactName(user.name);
+        if (response.ok && data.exists && data.user?.name) {
+          console.log('Found user:', { name: data.user.name, phone: data.user.phone });
+          setContactName(data.user.name);
           setIsContactFound(true);
           toast({
             title: "Contact Found",
-            description: `Found registered user: ${user.name}`,
+            description: `Found registered user: ${data.user.name}`,
           });
         } else {
           console.log('User not found or no name available');
@@ -147,14 +112,12 @@ export default function CreateOffer() {
         setContactName("");
         setIsContactFound(false);
         
-        // Only show error toast for actual API errors, not when user is simply not found
-        if (error instanceof Error && !error.message.includes('404')) {
-          toast({
-            title: "Error",
-            description: "Failed to check contact. Please try again.",
-            variant: "destructive",
-          });
-        }
+        // Only show error toast for network or server errors
+        toast({
+          title: "Error",
+          description: "Failed to check contact. Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsCheckingContact(false);
       }
