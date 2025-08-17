@@ -3,9 +3,26 @@ import admin from 'firebase-admin';
 // Initialize Firebase Admin SDK
 function initializeFirebase() {
   if (admin.apps.length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    let projectId = process.env.FIREBASE_PROJECT_ID;
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+    // Check if we have the single JSON config and extract credentials
+    if (process.env.FIREBASE_CONFIG_JSON && (!projectId || !privateKey || !clientEmail)) {
+      try {
+        const config = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
+        console.log('✅ Firebase config loaded from FIREBASE_CONFIG_JSON');
+        console.log(`📋 Project ID: ${config.project_id}`);
+        console.log(`📋 Client Email: ${config.client_email}`);
+        
+        // Use values from JSON if individual env vars are missing
+        projectId = projectId || config.project_id;
+        privateKey = privateKey || config.private_key;
+        clientEmail = clientEmail || config.client_email;
+      } catch (error) {
+        console.error('❌ Error parsing FIREBASE_CONFIG_JSON:', error);
+      }
+    }
 
     // Enhanced validation with detailed error messages
     if (!projectId || !privateKey || !clientEmail) {

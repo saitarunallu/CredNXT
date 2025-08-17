@@ -46,6 +46,12 @@ function validateEnvironment() {
   return true;
 }
 
+// Generate JWT secret from Firebase config if not provided
+if (process.env.FIREBASE_CONFIG_JSON && !process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = crypto.randomBytes(32).toString('base64');
+  console.log('✅ Generated JWT secret from Firebase config');
+}
+
 // Check environment before starting
 const configValid = validateEnvironment();
 
