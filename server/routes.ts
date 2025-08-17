@@ -257,13 +257,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      // Development and production both log OTP (SMS removed)
-      console.log(`OTP for ${phone}: ${code} (In-app notification only - SMS disabled)`);
-      
-      // Note: SMS notifications have been removed. OTP is delivered via:
-      // 1. Console log for debugging
-      // 2. Firebase Auth handles OTP delivery
-      // 3. In-app notifications for other features
+      // Send OTP via SMS for authentication
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`OTP for ${phone}: ${code}`);
+      } else {
+        try {
+          await notificationService.sendSms(phone, `Your CredNXT OTP is: ${code}`);
+        } catch (error) {
+          console.error('Failed to send OTP SMS:', error);
+          console.log(`[FALLBACK] OTP for ${phone}: ${code}`);
+        }
+      }
 
       res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {

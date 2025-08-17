@@ -47,14 +47,14 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 - ✅ **Health Checks**: Updated to exclude JWT-related security checks
 - ✅ **Login Endpoints**: Modified to return user data without custom tokens
 
-**✅ SMS NOTIFICATIONS COMPLETELY REMOVED:**
-- ✅ **SMS Service Deleted**: Removed server/services/sms.ts and server/routes/sms.ts
+**✅ SMS NOTIFICATIONS OPTIMIZED FOR AUTH ONLY:**
+- ✅ **SMS Service Streamlined**: Removed general SMS routes, kept OTP delivery only
 - ✅ **SMS Middleware Removed**: Deleted server/middleware/auth.ts
-- ✅ **Notification Service**: Removed sendSms() method completely
-- ✅ **OTP Delivery**: Changed to console logging only (no SMS)
+- ✅ **Notification Service**: Restored sendSms() method for OTP delivery only
+- ✅ **OTP Delivery**: SMS enabled for authentication, console fallback in development
 - ✅ **Offer Notifications**: Unregistered users no longer receive SMS notifications
-- ✅ **Advanced Notifications**: SMS channel disabled in favor of in-app only
-- ✅ **Route Registration**: Removed SMS router from main application
+- ✅ **Advanced Notifications**: SMS channel disabled except for authentication
+- ✅ **Route Registration**: Removed SMS router, kept OTP functionality in auth routes
 
 **🔧 Technical Improvements:**
 - Unified authentication strategy using Firebase Auth tokens

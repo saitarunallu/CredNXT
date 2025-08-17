@@ -413,9 +413,9 @@ export class AdvancedNotificationService {
 
       switch (channel) {
         case 'sms':
-          // SMS removed - using in-app notifications only
-          console.log(`SMS notification disabled for user ${user.id}: ${notification.message}`);
-          delivered = false; // SMS explicitly disabled
+          // SMS disabled for general notifications (OTP only)
+          console.log(`SMS notification disabled for user ${user.id}: ${notification.message} (Use in-app notifications)`);
+          delivered = false; // SMS disabled for general notifications
           break;
         case 'email':
           if (user.email) {
