@@ -49,8 +49,7 @@ export interface IStorage {
   getNotificationAnalytics(userId: string, days: number): Promise<any>;
 
   // OTP
-  createOtp(phone: string, code: string, expiresAt: Date): Promise<void>;
-  verifyOtp(phone: string, code: string): Promise<boolean>;
+  // OTP methods removed - Firebase Auth handles OTP generation and verification
   deleteExpiredOtps(): Promise<void>;
 }
 
@@ -300,19 +299,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  // OTP
-  async createOtp(phone: string, code: string, expiresAt: Date): Promise<void> {
-    await this.getFirestore().createOTP(phone, code);
-  }
-
-  async verifyOtp(phone: string, code: string): Promise<boolean> {
-    const otp = await this.getFirestore().getValidOTP(phone, code);
-    if (otp) {
-      await this.getFirestore().markOTPAsUsed(otp.id);
-      return true;
-    }
-    return false;
-  }
+  // OTP methods removed - Firebase Auth handles phone verification
 
   async deleteExpiredOtps(): Promise<void> {
     await this.getFirestore().cleanupExpiredOTPs();

@@ -3,12 +3,7 @@ import crypto from 'crypto';
 // Firebase Auth handles all token generation and verification
 // This service now only provides utility functions
 export class AuthService {
-  generateOtp(): string {
-    // Use cryptographically secure random number generation for OTP
-    const buffer = crypto.randomBytes(3);
-    const otp = buffer.readUIntBE(0, 3) % 900000 + 100000;
-    return otp.toString();
-  }
+  // OTP generation removed - Firebase Auth handles this automatically
 
   hashPassword(password: string, salt?: string): { hash: string, salt: string } {
     const passwordSalt = salt || crypto.randomBytes(32).toString('hex');
