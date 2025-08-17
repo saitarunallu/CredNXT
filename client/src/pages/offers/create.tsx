@@ -245,18 +245,23 @@ export default function CreateOffer() {
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="contactPhone">Recipient Phone Number</Label>
-                  <Input
-                    id="contactPhone"
-                    type="tel"
-                    placeholder="Enter phone number"
-                    value={contactPhone}
-                    onChange={(e) => {
-                      setContactPhone(e.target.value);
-                      checkContact(e.target.value);
-                    }}
-                    data-testid="input-contact-phone"
-                    className={phoneError ? "border-red-500" : ""}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <Input
+                      id="contactPhone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      value={contactPhone}
+                      onChange={(e) => {
+                        setContactPhone(e.target.value);
+                        checkContact(e.target.value);
+                      }}
+                      data-testid="input-contact-phone"
+                      className={`pl-10 ${phoneError ? "border-red-500" : ""}`}
+                    />
+                  </div>
                   {phoneError && (
                     <p className="text-sm text-red-500 mt-1">{phoneError}</p>
                   )}
