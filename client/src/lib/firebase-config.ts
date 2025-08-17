@@ -2,25 +2,17 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator, RecaptchaVerifier, type Auth } from 'firebase/auth';
 
-// Extract project ID from Firebase config JSON if available
-let projectIdFromBackend = 'dev-fallback-project';
-try {
-  if (typeof process !== 'undefined' && process.env?.FIREBASE_CONFIG_JSON) {
-    const backendConfig = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
-    projectIdFromBackend = backendConfig.project_id || projectIdFromBackend;
-  }
-} catch (e) {
-  // Fallback to default if parsing fails
-}
+// Use actual project ID from environment or fallback
+const actualProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'crednxt-ef673';
 
-// Development fallback configuration to prevent blank pages
+// Firebase configuration using actual project credentials
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCqXPlBiM9b4tY8nGqL2oCKkP5rJ7dE2wF",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${projectIdFromBackend}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || projectIdFromBackend,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${projectIdFromBackend}.appspot.com`,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:dev-fallback-app-id",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || import.meta.env.FIREBASE_WEB_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${actualProjectId}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || actualProjectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${actualProjectId}.appspot.com`,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "447736552285",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:447736552285:web:d5a3f8b4c2e1a9f6e7b8c9",
 };
 
 // Validate Firebase configuration
