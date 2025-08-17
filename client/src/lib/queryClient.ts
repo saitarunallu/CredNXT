@@ -25,11 +25,20 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: { headers?: Record<string, string> }
 ): Promise<Response> {
-  // Get Firebase auth token
-  const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
   const fullUrl = getApiUrl(url);
   
+  // Dynamic import to avoid circular dependency
+  const { firebaseAuthService } = await import('./firebase-auth');
+  
   try {
+    // Try to get fresh token
+    let token = localStorage.getItem('firebase_auth_token');
+    
+    // If no token or request requires fresh token, try to refresh
+    if (!token || options?.headers?.['X-Force-Token-Refresh']) {
+      console.log('Refreshing Firebase token for API request...');
+      token = await firebaseAuthService.refreshToken();
+    }
     
     const headers = {
       ...(data ? { "Content-Type": "application/json" } : {}),
@@ -43,6 +52,28 @@ export async function apiRequest(
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
+
+    // If 401 and we haven't refreshed yet, try once more with fresh token
+    if (res.status === 401 && !options?.headers?.['X-Force-Token-Refresh']) {
+      console.log('401 error, refreshing token and retrying...');
+      const freshToken = await firebaseAuthService.refreshToken();
+      if (freshToken) {
+        const retryHeaders = {
+          ...headers,
+          "Authorization": `Bearer ${freshToken}`
+        };
+        
+        const retryRes = await fetch(fullUrl, {
+          method,
+          headers: retryHeaders,
+          body: data ? JSON.stringify(data) : undefined,
+          credentials: "include",
+        });
+        
+        await throwIfResNotOk(retryRes);
+        return retryRes;
+      }
+    }
 
     await throwIfResNotOk(res);
     return res;
@@ -58,12 +89,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Get Firebase auth token
-    const token = localStorage.getItem('firebase_auth_token') || localStorage.getItem('auth_token');
     const url = queryKey.join("/") as string;
     const fullUrl = getApiUrl(url);
     
+    // Dynamic import to avoid circular dependency
+    const { firebaseAuthService } = await import('./firebase-auth');
+    
     try {
+      // Try to get fresh token
+      let token = localStorage.getItem('firebase_auth_token');
+      
+      if (!token) {
+        console.log('No token found, attempting to refresh...');
+        token = await firebaseAuthService.refreshToken();
+      }
       
       const res = await fetch(fullUrl, {
         headers: {
