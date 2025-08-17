@@ -201,7 +201,7 @@ export default function CreateOffer() {
       tenureUnit,
       purpose: data.purpose,
       collateral: data.collateral,
-      frequency: repaymentFrequency,
+      frequency: repaymentType === 'lumpsum' ? 'end-of-tenure' : repaymentFrequency,
       offerType,
       interestType,
       repaymentType,
@@ -495,9 +495,18 @@ export default function CreateOffer() {
 
                 <div>
                   <Label>Repayment Frequency</Label>
-                  <Select value={repaymentFrequency} onValueChange={setRepaymentFrequency}>
-                    <SelectTrigger data-testid="select-repayment-frequency">
-                      <SelectValue placeholder="Select frequency" />
+                  <Select 
+                    value={repaymentType === 'lumpsum' ? 'end-of-tenure' : repaymentFrequency} 
+                    onValueChange={repaymentType === 'lumpsum' ? () => {} : setRepaymentFrequency}
+                    disabled={repaymentType === 'lumpsum'}
+                  >
+                    <SelectTrigger 
+                      data-testid="select-repayment-frequency"
+                      className={repaymentType === 'lumpsum' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}
+                    >
+                      <SelectValue 
+                        placeholder={repaymentType === 'lumpsum' ? 'End of tenure' : 'Select frequency'} 
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="weekly">Weekly</SelectItem>
@@ -506,6 +515,11 @@ export default function CreateOffer() {
                       <SelectItem value="yearly">Yearly</SelectItem>
                     </SelectContent>
                   </Select>
+                  {repaymentType === 'lumpsum' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Payment will be made at the end of the tenure period
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -569,7 +583,7 @@ export default function CreateOffer() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || !repaymentFrequency || !interestType || !!phoneError || !contactPhone || !contactName}
+                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || (repaymentType !== 'lumpsum' && !repaymentFrequency) || !interestType || !!phoneError || !contactPhone || !contactName}
                   data-testid="button-create-offer"
                 >
                   {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
