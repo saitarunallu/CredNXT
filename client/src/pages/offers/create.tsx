@@ -479,7 +479,7 @@ export default function CreateOffer() {
                       size="sm"
                       data-testid="button-repayment-emi"
                     >
-                      Equated Instalments
+                      Instalments
                     </Button>
                     <Button
                       type="button"
