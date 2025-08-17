@@ -235,20 +235,20 @@ export default function CreateOffer() {
                     type="button"
                     variant={offerType === 'lend' ? 'default' : 'outline'}
                     onClick={() => setOfferType('lend')}
-                    className="h-20 flex flex-col"
+                    className="h-12 flex items-center justify-center"
                     data-testid="button-offer-type-lend"
                   >
-                    <IndianRupee className="w-6 h-6 mb-2" />
+                    <IndianRupee className="w-4 h-4 mr-2" />
                     I Want to Lend
                   </Button>
                   <Button
                     type="button"
                     variant={offerType === 'borrow' ? 'default' : 'outline'}
                     onClick={() => setOfferType('borrow')}
-                    className="h-20 flex flex-col"
+                    className="h-12 flex items-center justify-center"
                     data-testid="button-offer-type-borrow"
                   >
-                    <IndianRupee className="w-6 h-6 mb-2" />
+                    <IndianRupee className="w-4 h-4 mr-2" />
                     I Want to Borrow
                   </Button>
                 </div>
@@ -283,21 +283,21 @@ export default function CreateOffer() {
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                       type="button"
-                      variant={interestType === 'simple' ? 'default' : 'outline'}
-                      onClick={() => setInterestType('simple')}
+                      variant={interestType === 'fixed' ? 'default' : 'outline'}
+                      onClick={() => setInterestType('fixed')}
                       size="sm"
-                      data-testid="button-interest-simple"
+                      data-testid="button-interest-fixed"
                     >
-                      Simple Interest
+                      Fixed
                     </Button>
                     <Button
                       type="button"
-                      variant={interestType === 'compound' ? 'default' : 'outline'}
-                      onClick={() => setInterestType('compound')}
+                      variant={interestType === 'reducing' ? 'default' : 'outline'}
+                      onClick={() => setInterestType('reducing')}
                       size="sm"
-                      data-testid="button-interest-compound"
+                      data-testid="button-interest-reducing"
                     >
-                      Compound Interest
+                      Reducing
                     </Button>
                   </div>
                 </div>
@@ -358,6 +358,39 @@ export default function CreateOffer() {
                 </div>
 
                 <div>
+                  <Label>Repayment Type</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant={repaymentType === 'interest-only' ? 'default' : 'outline'}
+                      onClick={() => setRepaymentType('interest-only')}
+                      size="sm"
+                      data-testid="button-repayment-interest-only"
+                    >
+                      Interest Only
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={repaymentType === 'emi' ? 'default' : 'outline'}
+                      onClick={() => setRepaymentType('emi')}
+                      size="sm"
+                      data-testid="button-repayment-emi"
+                    >
+                      EMI
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={repaymentType === 'lumpsum' ? 'default' : 'outline'}
+                      onClick={() => setRepaymentType('lumpsum')}
+                      size="sm"
+                      data-testid="button-repayment-lumpsum"
+                    >
+                      Lump Sum
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
                   <Label>Repayment Frequency</Label>
                   <Select value={repaymentFrequency} onValueChange={setRepaymentFrequency}>
                     <SelectTrigger data-testid="select-repayment-frequency">
@@ -368,7 +401,6 @@ export default function CreateOffer() {
                       <SelectItem value="monthly">Monthly</SelectItem>
                       <SelectItem value="quarterly">Quarterly</SelectItem>
                       <SelectItem value="yearly">Yearly</SelectItem>
-                      <SelectItem value="lumpsum">Lump Sum</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -419,10 +451,11 @@ export default function CreateOffer() {
                   <Checkbox
                     id="allowPartPayment"
                     checked={allowPartPayment}
-                    onCheckedChange={setAllowPartPayment}
+                    onCheckedChange={(checked) => setAllowPartPayment(checked === true)}
+                    className="h-4 w-4"
                     data-testid="checkbox-allow-part-payment"
                   />
-                  <Label htmlFor="allowPartPayment">Allow partial payments</Label>
+                  <Label htmlFor="allowPartPayment" className="text-sm">Allow partial payments</Label>
                 </div>
               </CardContent>
             </Card>
@@ -433,7 +466,7 @@ export default function CreateOffer() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentFrequency}
+                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || !repaymentFrequency || !interestType}
                   data-testid="button-create-offer"
                 >
                   {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
