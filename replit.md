@@ -34,6 +34,35 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 
 ## Recent Updates
 
+### August 17, 2025 - AUTHENTICATION & NOTIFICATION SYSTEM CLEANUP ✅
+**Status**: JWT REMOVED, FIREBASE AUTH ONLY, SMS NOTIFICATIONS DISABLED
+**Focus**: Simplified authentication architecture with in-app notifications only
+
+**✅ JWT AUTHENTICATION COMPLETELY REMOVED:**
+- ✅ **JWT Dependencies Uninstalled**: Removed jsonwebtoken and @types/jsonwebtoken packages
+- ✅ **AuthService Simplified**: Removed generateToken() and verifyToken() methods
+- ✅ **Firebase Auth Only**: All authentication now uses Firebase ID tokens exclusively
+- ✅ **WebSocket Authentication**: Updated to use Firebase token verification
+- ✅ **Environment Variables**: Removed JWT_SECRET requirement from validation
+- ✅ **Health Checks**: Updated to exclude JWT-related security checks
+- ✅ **Login Endpoints**: Modified to return user data without custom tokens
+
+**✅ SMS NOTIFICATIONS COMPLETELY REMOVED:**
+- ✅ **SMS Service Deleted**: Removed server/services/sms.ts and server/routes/sms.ts
+- ✅ **SMS Middleware Removed**: Deleted server/middleware/auth.ts
+- ✅ **Notification Service**: Removed sendSms() method completely
+- ✅ **OTP Delivery**: Changed to console logging only (no SMS)
+- ✅ **Offer Notifications**: Unregistered users no longer receive SMS notifications
+- ✅ **Advanced Notifications**: SMS channel disabled in favor of in-app only
+- ✅ **Route Registration**: Removed SMS router from main application
+
+**🔧 Technical Improvements:**
+- Unified authentication strategy using Firebase Auth tokens
+- Simplified notification architecture focusing on in-app delivery
+- Reduced external dependencies and complexity
+- Enhanced security through Firebase's managed authentication
+- Streamlined environment variable requirements
+
 ### August 16, 2025 - COMPREHENSIVE DATABASE TO FRONTEND FIXES ✅
 **Status**: FULL SYSTEM ARCHITECTURE UNIFIED AND DEPLOYED
 **Live URL**: https://crednxt-ef673.web.app ✅ FULLY FUNCTIONAL

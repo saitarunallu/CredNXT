@@ -21,27 +21,7 @@ export class NotificationService {
     }
   }
 
-  async sendSms(to: string, message: string): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV] SMS notification: To: ${to}, Message: ${message.substring(0, 50)}...`);
-      return;
-    }
-
-    // In production, integrate with Twilio or similar
-    const apiKey = process.env.TWILIO_API_KEY || process.env.SMS_API_KEY;
-    if (!apiKey) {
-      console.warn('SMS API key not configured - skipping SMS notification');
-      return; // Don't throw error, just skip sending
-    }
-
-    try {
-      // Implementation with Twilio would go here
-      console.log(`[PROD] SMS sent to ${to}`);
-    } catch (error) {
-      console.error(`SMS sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // Don't throw - notification failures shouldn't break the app
-    }
-  }
+  // SMS functionality removed - using in-app notifications only
 }
 
 export const notificationService = new NotificationService();

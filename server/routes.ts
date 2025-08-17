@@ -10,8 +10,7 @@ import { reminderService } from "./services/reminder";
 import { complianceService } from "./services/compliance";
 import { securityService } from "./services/security";
 import { repaymentService } from "./services/repayment";
-import { smsService } from "./services/sms";
-import { smsRouter } from "./routes/sms";
+// SMS functionality removed - using in-app notifications only
 // Health routes are already integrated in the main routes
 
 import { normalizePhoneNumber, formatPhoneForDisplay, isValidIndianMobile } from "@shared/phone-utils";
@@ -258,12 +257,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      // In development, log the OTP
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`OTP for ${phone}: ${code}`);
-      } else {
-        await notificationService.sendSms(phone, `Your CredNXT OTP is: ${code}`);
-      }
+      // Development and production both log OTP (SMS removed)
+      console.log(`OTP for ${phone}: ${code} (In-app notification only - SMS disabled)`);
+      
+      // Note: SMS notifications have been removed. OTP is delivered via:
+      // 1. Console log for debugging
+      // 2. Firebase Auth handles OTP delivery
+      // 3. In-app notifications for other features
 
       res.json({ success: true, message: 'OTP sent successfully' });
     } catch (error) {
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const token = authService.generateToken(user.id);
+      // Firebase Auth handles token generation - no custom token needed
       
       // Audit successful login
       complianceService.createAuditEntry({
@@ -410,7 +410,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         success: true, 
-        token, 
         user,
         requiresProfile: !user.name 
       });
@@ -808,19 +807,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
         }
       } else {
-        // Send SMS notification to unregistered recipients
-        try {
-          await smsService.sendOfferNotification(normalizedToUserPhone, {
-            senderName: fromUser.name || 'Someone',
-            offerType: offer.offerType,
-            amount: offer.amount,
-            offerId: offer.id
-          });
-          console.log(`SMS notification sent to unregistered user: ${normalizedToUserPhone}`);
-        } catch (error) {
-          console.error('Failed to send SMS notification to unregistered user:', error);
-          // Continue without failing the offer creation
-        }
+        // In-app notifications only - unregistered users won't receive notifications
+        console.log(`Offer sent to unregistered user: ${normalizedToUserPhone}. They can view it when they register.`);
       }
 
       // Always send notification to offer creator about their new offer
@@ -1885,15 +1873,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = JSON.parse(message.toString());
         
         if (data.type === 'authenticate' && data.token) {
-          try {
-            const payload = authService.verifyToken(data.token);
-            clients.set(payload.userId, ws);
-            console.log(`User ${payload.userId} connected via WebSocket`);
-            
-            ws.send(JSON.stringify({ type: 'authenticated', success: true }));
-          } catch (error) {
-            ws.send(JSON.stringify({ type: 'auth_error', message: 'Invalid token' }));
-          }
+          // Use Firebase ID token verification for WebSocket authentication
+          admin.auth().verifyIdToken(data.token)
+            .then((decodedToken) => {
+              clients.set(decodedToken.uid, ws);
+              console.log(`User ${decodedToken.uid} connected via WebSocket`);
+              ws.send(JSON.stringify({ type: 'authenticated', success: true }));
+            })
+            .catch((error) => {
+              console.error('WebSocket authentication error:', error);
+              ws.send(JSON.stringify({ type: 'auth_error', message: 'Invalid Firebase token' }));
+            });
         }
       } catch (error) {
         console.error('WebSocket message error:', error);
@@ -2205,7 +2195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Register SMS routes
-  app.use('/api/sms', smsRouter);
+  // SMS routes removed - using in-app notifications only
 
   return httpServer;
 }
