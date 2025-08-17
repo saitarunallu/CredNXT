@@ -509,6 +509,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test route to create offer and trigger notification (development only)
+  app.post('/api/test-offer', async (req: Request, res) => {
+    try {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      
+      const targetPhone = '9876543210';
+      const senderPhone = '9100754913';
+      
+      // Create or get target user
+      let targetUser = await storage.getUserByPhone(targetPhone);
+      if (!targetUser) {
+        console.log('Creating target user for phone:', targetPhone);
+        targetUser = await storage.createUser({
+          phone: targetPhone,
+          name: 'Test Recipient',
+          email: 'test.recipient@example.com',
+          isVerified: true
+        });
+      }
+      
+      // Create or get sender user
+      let senderUser = await storage.getUserByPhone(senderPhone);
+      if (!senderUser) {
+        console.log('Creating sender user for phone:', senderPhone);
+        senderUser = await storage.createUser({
+          phone: senderPhone,
+          name: 'Test Sender',
+          email: 'test.sender@example.com',
+          isVerified: true
+        });
+      }
+      
+      // Create the offer
+      const offer = await storage.createOffer({
+        fromUserId: senderUser.id,
+        toUserPhone: targetPhone,
+        toUserName: targetUser.name || 'Test Recipient',
+        amount: 25000,
+        interestRate: 12,
+        tenureValue: 12,
+        tenureUnit: 'months',
+        repaymentType: 'emi',
+        repaymentFrequency: 'monthly',
+        purpose: 'Personal loan for education expenses',
+        offerType: 'lend',
+        status: 'pending',
+        allowPartPayment: false
+      });
+      
+      // Create notifications for both users
+      const recipientNotification = await storage.createNotification({
+        userId: targetUser.id,
+        offerId: offer.id,
+        type: 'offer_received',
+        priority: 'high',
+        title: 'New Loan Offer Received! 🎉',
+        message: `${senderUser.name} has sent you a loan offer of ₹25,000 for 12 months at 12% interest. Review and respond to this offer.`,
+        isRead: false
+      });
+      
+      const senderNotification = await storage.createNotification({
+        userId: senderUser.id,
+        offerId: offer.id,
+        type: 'account_update',
+        priority: 'medium',
+        title: 'Loan Offer Sent Successfully ✓',
+        message: `Your loan offer of ₹25,000 has been sent to ${targetUser.name} (${targetPhone}). You'll be notified when they respond.`,
+        isRead: false
+      });
+      
+      res.json({
+        success: true,
+        message: 'Test offer and notifications created successfully',
+        data: {
+          offerId: offer.id,
+          targetUserId: targetUser.id,
+          targetPhone: targetPhone,
+          recipientNotificationId: recipientNotification.id,
+          senderNotificationId: senderNotification.id
+        }
+      });
+      
+    } catch (error) {
+      console.error('Test offer creation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create test offer',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Temporary test route to create a test user (for development only)
   app.post('/api/test-user', async (req: Request, res) => {
     try {
