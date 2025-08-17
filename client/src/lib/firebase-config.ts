@@ -1,14 +1,15 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth, connectAuthEmulator, RecaptchaVerifier } from 'firebase/auth';
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, RecaptchaVerifier, type Auth } from 'firebase/auth';
 
+// Development fallback configuration to prevent blank pages
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "dev-fallback-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "dev-fallback.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "dev-fallback-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "dev-fallback-project.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:dev-fallback-app-id",
 };
 
 // Validate Firebase configuration
@@ -20,18 +21,19 @@ function validateFirebaseConfig() {
   const missing = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
   
   if (missing.length > 0) {
-    console.error('❌ Firebase frontend configuration incomplete');
-    console.error('📋 Missing environment variables:', missing.map(f => `VITE_FIREBASE_${f.toUpperCase()}`));
-    console.error('🔧 Add these to your environment variables or .env file');
-    console.error('📄 Check DEPLOYMENT_CHECKLIST.md for setup instructions');
-    return false;
+    console.warn('⚠️ Firebase frontend configuration incomplete - using development fallbacks');
+    console.warn('📋 Missing environment variables:', missing.map(f => `VITE_FIREBASE_${f.toUpperCase()}`));
+    console.warn('🔧 Add these to your environment variables or .env file for full functionality');
+    console.warn('📄 Check DEPLOYMENT_CHECKLIST.md for setup instructions');
+    // In development, continue with fallback config instead of failing
+    return import.meta.env.DEV ? true : false;
   }
   
-  // Validate API key format
-  if (!firebaseConfig.apiKey?.startsWith('AIza')) {
+  // Validate API key format (skip for development fallback)
+  if (!firebaseConfig.apiKey?.startsWith('AIza') && !firebaseConfig.apiKey?.startsWith('dev-fallback')) {
     console.error('❌ Firebase API key appears to be invalid');
     console.error('🔧 API keys should start with "AIza" - check VITE_FIREBASE_API_KEY');
-    return false;
+    return import.meta.env.DEV ? true : false;
   }
   
   return true;
@@ -58,38 +60,38 @@ if (configValid) {
 }
 
 // Initialize Firebase only if not already initialized
-let app;
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
+
 if (!getApps().length) {
-  if (configValid) {
+  try {
     app = initializeApp(firebaseConfig);
     console.log('✅ Firebase app initialized');
-  } else {
-    // In production, try to initialize anyway with available config
-    console.warn('⚠️ Firebase config validation failed, attempting initialization anyway');
-    console.log('Config values:', {
-      apiKey: firebaseConfig.apiKey ? 'present' : 'missing',
-      authDomain: firebaseConfig.authDomain ? 'present' : 'missing',
-      projectId: firebaseConfig.projectId ? 'present' : 'missing'
-    });
     
-    try {
-      app = initializeApp(firebaseConfig);
-      console.log('✅ Firebase app initialized despite validation warnings');
-    } catch (initError) {
-      console.error('❌ Firebase initialization completely failed:', initError);
-      throw new Error(`Firebase initialization failed: ${initError}`);
-    }
+    // Initialize Firestore and Auth
+    db = getFirestore(app);
+    auth = getAuth(app);
+    
+    console.log('✅ Firebase services initialized successfully');
+  } catch (initError) {
+    console.error('❌ Firebase initialization failed:', initError);
+    console.warn('🔧 The app will continue running with limited functionality');
+    console.warn('📄 See DEPLOYMENT_CHECKLIST.md for proper Firebase setup');
+    
+    // Create mock services that won't break the app
+    app = null;
+    db = null;
+    auth = null;
   }
 } else {
   app = getApps()[0];
+  db = getFirestore(app);
+  auth = getAuth(app);
   console.log('✅ Using existing Firebase app');
 }
 
-// Initialize Firestore
-const db = getFirestore(app);
-
-// Initialize Auth  
-const auth = getAuth(app);
+// Firebase services are now initialized above
 
 // Connect to emulators in development (disabled for now to use production Firebase)
 // if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
@@ -111,7 +113,7 @@ declare global {
 
 // Initialize reCAPTCHA verifier for phone auth
 export function initializeRecaptcha() {
-  if (!window.recaptchaVerifier) {
+  if (!window.recaptchaVerifier && auth) {
     if (process.env.NODE_ENV === 'development') {
       console.log('Initializing reCAPTCHA for domain:', window.location.hostname);
     }
@@ -151,5 +153,6 @@ export function initializeRecaptcha() {
   return window.recaptchaVerifier;
 }
 
+// Export with safe fallbacks
 export { db, auth };
 export default app;

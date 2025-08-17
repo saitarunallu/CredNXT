@@ -19,6 +19,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // Listen for Firebase auth state changes to handle page refresh
   useEffect(() => {
+    if (!auth) {
+      console.warn('Firebase auth not initialized, skipping auth guard');
+      setAuthStateLoading(false);
+      setIsAuthenticated(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (process.env.NODE_ENV === 'development') {
         console.log('Firebase auth state changed:', !!user);
