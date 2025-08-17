@@ -264,10 +264,23 @@ export default function CreateOffer() {
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
                   {isContactFound && contactName && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                      <div className="flex items-center text-sm text-green-700">
-                        <User className="w-4 h-4 mr-2" />
-                        <span className="font-medium">User found: {contactName}</span>
+                    <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-1">
+                            <User className="w-4 h-4 mr-2 text-green-600" />
+                            <span className="text-sm font-medium text-gray-800">Registered User</span>
+                          </div>
+                          <div className="text-sm font-medium text-gray-900 mb-1">
+                            {contactName} - {contactPhone}
+                          </div>
+                          <div className="text-xs text-green-600">
+                            This user is already registered with CredNXT
+                          </div>
+                        </div>
+                        <div className="ml-3 mt-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        </div>
                       </div>
                     </div>
                   )}
