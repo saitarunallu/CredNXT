@@ -15,7 +15,7 @@ import { repaymentService } from "./services/repayment";
 
 import { normalizePhoneNumber, formatPhoneForDisplay, isValidIndianMobile } from "@shared/phone-utils";
 import {
-  loginSchema, verifyOtpSchema, completeProfileSchema, demoRequestSchema,
+  loginSchema, completeProfileSchema, demoRequestSchema,
   insertOfferSchema, insertPaymentSchema
 } from "@shared/firestore-schema";
 import { Timestamp } from 'firebase-admin/firestore';
@@ -239,10 +239,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { phone } = loginSchema.parse(req.body);
       
-      const code = authService.generateOtp();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      
-      await storage.createOtp(phone, code, expiresAt);
+      // Firebase Auth handles OTP generation and SMS delivery automatically
+      // No need for custom OTP generation or storage
       
       // Audit trail for login attempt
       complianceService.createAuditEntry({
@@ -253,23 +251,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         compliance: {
           ruleId: 'AUTHENTICATION',
           status: 'passed',
-          message: 'OTP generated and sent successfully'
+          message: 'Phone authentication initiated via Firebase'
         }
       });
       
-      // Send OTP via SMS for authentication
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`OTP for ${phone}: ${code}`);
-      } else {
-        try {
-          await notificationService.sendSms(phone, `Your CredNXT OTP is: ${code}`);
-        } catch (error) {
-          console.error('Failed to send OTP SMS:', error);
-          console.log(`[FALLBACK] OTP for ${phone}: ${code}`);
-        }
-      }
+      // Firebase Auth handles OTP delivery - no server-side OTP generation needed
+      console.log(`Phone authentication initiated for ${phone} - Firebase Auth will handle OTP delivery`);
 
-      res.json({ success: true, message: 'OTP sent successfully' });
+      res.json({ 
+        success: true, 
+        message: 'Phone authentication initiated. Please check your phone for OTP.',
+        phone: phone
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       // Log security audit for login failure
@@ -300,145 +293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/verify-otp', async (req, res) => {
-    const requestId = (req as any).requestId;
-    const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
-    
-    try {
-      // Security validation
-      const phoneValidation = securityService.validateInput(req.body.phone, 'phone');
-      const codeValidation = securityService.validateInput(req.body.code, 'otp_code');
-      
-      if (!phoneValidation.isValid || !codeValidation.isValid) {
-        return res.status(400).json({ 
-          message: 'Invalid input detected',
-          code: 'SECURITY_VALIDATION_FAILED'
-        });
-      }
-
-      // Rate limiting for OTP verification
-      if (!securityService.checkRateLimit(clientIp, '/api/auth/verify-otp', undefined, 5, 15 * 60 * 1000)) {
-        return res.status(429).json({ 
-          message: 'Too many OTP verification attempts',
-          code: 'OTP_RATE_LIMIT_EXCEEDED'
-        });
-      }
-
-      const { phone, code } = verifyOtpSchema.parse(req.body);
-      
-      // Validate and normalize phone number with +91 prefix
-      if (!isValidIndianMobile(phone)) {
-        return res.status(400).json({ 
-          message: 'Invalid Indian mobile number format',
-          code: 'INVALID_PHONE_FORMAT'
-        });
-      }
-      
-      const normalizedPhone = normalizePhoneNumber(phone);
-      
-      const isValid = await storage.verifyOtp(normalizedPhone, code);
-      if (!isValid) {
-        // Audit failed OTP attempt
-        complianceService.createAuditEntry({
-          operation: 'OTP_VERIFICATION_FAILED',
-          entityType: 'user',
-          entityId: phone,
-          details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
-          compliance: {
-            ruleId: 'AUTHENTICATION',
-            status: 'failed',
-            message: 'Invalid or expired OTP provided'
-          }
-        });
-        
-        return res.status(400).json({ 
-          message: 'Invalid or expired OTP',
-          code: 'OTP_INVALID'
-        });
-      }
-
-      let user = await storage.getUserByPhone(normalizedPhone);
-      if (!user) {
-        user = await storage.createUser({ phone: normalizedPhone, isVerified: true });
-        
-        // Audit new user creation
-        complianceService.createAuditEntry({
-          operation: 'USER_CREATED',
-          entityType: 'user',
-          entityId: user.id,
-          details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
-          compliance: {
-            ruleId: 'USER_REGISTRATION',
-            status: 'passed',
-            message: 'New user account created successfully'
-          }
-        });
-      } else {
-        // Update user verification status
-        await storage.updateUser(user.id, { isVerified: true });
-        user = { ...user, isVerified: true };
-      }
-
-      // Link any existing offers that were created to this phone number before registration
-      try {
-        await storage.linkOffersToUser(user.id, normalizedPhone);
-        console.log(`Linked existing offers to newly registered user: ${user.id}`);
-      } catch (error) {
-        console.warn(`Failed to link offers to user ${user.id}:`, error);
-      }
-
-      // Validate user compliance before issuing token
-      const compliance = await complianceService.validateCompliance('user', user);
-      if (!compliance.isCompliant) {
-        return res.status(403).json({ 
-          message: 'Account does not meet security requirements',
-          code: 'COMPLIANCE_VIOLATION',
-          details: compliance.violations
-        });
-      }
-
-      // Firebase Auth handles token generation - no custom token needed
-      
-      // Audit successful login
-      complianceService.createAuditEntry({
-        operation: 'LOGIN_SUCCESS',
-        entityType: 'user',
-        entityId: user.id,
-        details: { phone: normalizedPhone.substring(0, 3) + '***', clientIp, requestId },
-        compliance: {
-          ruleId: 'AUTHENTICATION',
-          status: 'passed',
-          message: 'User authenticated successfully'
-        }
-      });
-      
-      res.json({ 
-        success: true, 
-        user,
-        requiresProfile: !user.name 
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`AUDIT: OTP verification failed [${requestId}]:`, {
-        error: errorMessage,
-        phone: req.body.phone?.substring(0, 3) + '***',
-        ip: clientIp
-      });
-      
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: 'Invalid request format',
-          code: 'VALIDATION_ERROR',
-          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
-        });
-      }
-      
-      res.status(500).json({ 
-        message: 'Authentication service error',
-        code: 'AUTH_SERVICE_ERROR'
-      });
-    }
-  });
+  // OTP verification removed - Firebase Auth handles phone verification directly
+  // Frontend uses Firebase Phone Auth which automatically verifies OTPs
 
   app.post('/api/auth/complete-profile', authenticate, async (req: AuthenticatedRequest, res) => {
     try {
