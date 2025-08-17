@@ -668,6 +668,48 @@ class FirestoreStorage implements IFirestoreStorage {
       return deletedCount;
     });
   }
+
+  // Pending offer notifications for unregistered users
+  async createPendingOfferNotification(data: any): Promise<any> {
+    return this.executeWithRetry(async () => {
+      const id = this.generateId();
+      
+      const notification = {
+        id,
+        ...data,
+        createdAt: this.dateToTimestamp(data.createdAt) as any,
+        expiresAt: this.dateToTimestamp(data.expiresAt) as any,
+        delivered: false
+      };
+
+      await this.db.collection('pending_offer_notifications').doc(id).set(notification);
+      return notification;
+    });
+  }
+
+  async getPendingOfferNotificationsByPhone(phone: string): Promise<any[]> {
+    return this.executeWithRetry(async () => {
+      const snapshot = await this.db.collection('pending_offer_notifications')
+        .where('recipientPhone', '==', phone)
+        .where('delivered', '==', false)
+        .where('expiresAt', '>', Timestamp.now())
+        .get();
+      
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return this.convertTimestampFields(data);
+      });
+    });
+  }
+
+  async markPendingOfferNotificationAsDelivered(id: string): Promise<void> {
+    return this.executeWithRetry(async () => {
+      await this.db.collection('pending_offer_notifications').doc(id).update({
+        delivered: true,
+        deliveredAt: Timestamp.now()
+      });
+    });
+  }
 }
 
 export { FirestoreStorage };

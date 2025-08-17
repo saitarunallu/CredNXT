@@ -48,6 +48,11 @@ export interface IStorage {
   getScheduledNotifications(beforeDate: Date): Promise<any[]>;
   getNotificationAnalytics(userId: string, days: number): Promise<any>;
 
+  // Pending offer notifications
+  createPendingOfferNotification(data: any): Promise<any>;
+  getPendingOfferNotificationsByPhone(phone: string): Promise<any[]>;
+  markPendingOfferNotificationAsDelivered(id: string): Promise<void>;
+
   // OTP
   // OTP methods removed - Firebase Auth handles OTP generation and verification
   deleteExpiredOtps(): Promise<void>;
@@ -297,6 +302,19 @@ export class DatabaseStorage implements IStorage {
       channelBreakdown: {},
       typeBreakdown: {}
     };
+  }
+
+  // Pending offer notifications
+  async createPendingOfferNotification(data: any): Promise<any> {
+    return this.getFirestore().createPendingOfferNotification(data);
+  }
+
+  async getPendingOfferNotificationsByPhone(phone: string): Promise<any[]> {
+    return this.getFirestore().getPendingOfferNotificationsByPhone(phone);
+  }
+
+  async markPendingOfferNotificationAsDelivered(id: string): Promise<void> {
+    return this.getFirestore().markPendingOfferNotificationAsDelivered(id);
   }
 
   // OTP methods removed - Firebase Auth handles phone verification
