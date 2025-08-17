@@ -569,7 +569,7 @@ export default function CreateOffer() {
                     id="allowPartPayment"
                     checked={allowPartPayment}
                     onCheckedChange={(checked) => setAllowPartPayment(checked === true)}
-                    className="h-0.5 w-0.5 rounded-full border border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    className="h-4 w-4 rounded border border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                     data-testid="checkbox-allow-part-payment"
                   />
                   <Label htmlFor="allowPartPayment" className="text-sm font-medium cursor-pointer">Allow partial payments</Label>
