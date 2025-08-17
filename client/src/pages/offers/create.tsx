@@ -264,9 +264,11 @@ export default function CreateOffer() {
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
                   {isContactFound && contactName && (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
-                      <User className="w-4 h-4" />
-                      <span>Found: {contactName}</span>
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                      <div className="flex items-center text-sm text-green-700">
+                        <User className="w-4 h-4 mr-2" />
+                        <span className="font-medium">User found: {contactName}</span>
+                      </div>
                     </div>
                   )}
                 </div>
