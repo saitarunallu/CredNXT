@@ -29,6 +29,12 @@ export default function CreateOffer() {
   const [contactName, setContactName] = useState("");
   const [isContactFound, setIsContactFound] = useState(false);
   const [isCheckingContact, setIsCheckingContact] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
+
+  // Helper function to normalize phone numbers for comparison
+  const normalizePhone = (phone: string) => {
+    return phone.replace(/\D/g, ''); // Remove non-digits
+  };
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
@@ -61,10 +67,26 @@ export default function CreateOffer() {
   const tenure = watch("tenure");
 
   const checkContact = async (phoneNumber: string) => {
+    // Clear previous errors
+    setPhoneError("");
+    
     if (!phoneNumber || phoneNumber.length < 10) {
       setContactName("");
       setIsContactFound(false);
       return;
+    }
+
+    // Check if user is trying to enter their own phone number
+    if (currentUser?.phone) {
+      const currentUserPhone = normalizePhone(currentUser.phone);
+      const enteredPhone = normalizePhone(phoneNumber);
+      
+      if (currentUserPhone === enteredPhone) {
+        setPhoneError("You cannot create an offer for yourself");
+        setContactName("");
+        setIsContactFound(false);
+        return;
+      }
     }
 
     setIsCheckingContact(true);
@@ -124,6 +146,25 @@ export default function CreateOffer() {
   });
 
   const onSubmit = (data: any) => {
+    // Validate contact information
+    if (phoneError) {
+      toast({
+        title: "Invalid Phone Number",
+        description: phoneError,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!contactPhone || !contactName) {
+      toast({
+        title: "Missing Contact Information",
+        description: "Please provide both phone number and contact name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Calculate due date based on tenure and tenure unit
     const dueDate = new Date(startDate);
     if (tenureUnit === 'days') {
@@ -197,7 +238,11 @@ export default function CreateOffer() {
                       checkContact(e.target.value);
                     }}
                     data-testid="input-contact-phone"
+                    className={phoneError ? "border-red-500" : ""}
                   />
+                  {phoneError && (
+                    <p className="text-sm text-red-500 mt-1">{phoneError}</p>
+                  )}
                   {isCheckingContact && (
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
@@ -209,14 +254,24 @@ export default function CreateOffer() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="contactName">Contact Name</Label>
+                  <Label htmlFor="contactName">
+                    Contact Name
+                    {isContactFound && <span className="text-sm text-gray-500 ml-2">(Auto-filled)</span>}
+                  </Label>
                   <Input
                     id="contactName"
-                    placeholder="Enter contact name"
+                    placeholder={isContactFound ? "Name auto-filled from registered user" : "Enter contact name"}
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     data-testid="input-contact-name"
+                    readOnly={isContactFound}
+                    className={isContactFound ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
+                  {!isContactFound && contactPhone && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Phone number not registered. Please enter the recipient's name.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -466,7 +521,7 @@ export default function CreateOffer() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || !repaymentFrequency || !interestType}
+                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || !repaymentFrequency || !interestType || !!phoneError || !contactPhone || !contactName}
                   data-testid="button-create-offer"
                 >
                   {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
