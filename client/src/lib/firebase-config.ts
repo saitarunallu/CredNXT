@@ -2,12 +2,23 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator, RecaptchaVerifier, type Auth } from 'firebase/auth';
 
+// Extract project ID from Firebase config JSON if available
+let projectIdFromBackend = 'dev-fallback-project';
+try {
+  if (typeof process !== 'undefined' && process.env?.FIREBASE_CONFIG_JSON) {
+    const backendConfig = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
+    projectIdFromBackend = backendConfig.project_id || projectIdFromBackend;
+  }
+} catch (e) {
+  // Fallback to default if parsing fails
+}
+
 // Development fallback configuration to prevent blank pages
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "dev-fallback-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "dev-fallback.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "dev-fallback-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "dev-fallback-project.appspot.com",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCqXPlBiM9b4tY8nGqL2oCKkP5rJ7dE2wF",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${projectIdFromBackend}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || projectIdFromBackend,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${projectIdFromBackend}.appspot.com`,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:dev-fallback-app-id",
 };
