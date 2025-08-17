@@ -10,18 +10,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { authService } from "@/lib/auth";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 import { Shield, Bell, User, LogOut, Menu, X, IndianRupee } from "lucide-react";
 
 export default function Navbar() {
   const [location, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const user = authService.getUser();
+  const user = firebaseAuthService.getUser();
   const queryClient = useQueryClient();
 
-  const { data: notifications } = useQuery({
+  const { data: notifications, error: notificationsError } = useQuery({
     queryKey: ['/api/notifications'],
     enabled: !!user,
+    retry: (failureCount, error) => {
+      // If auth error, try to refresh token once
+      if (error?.message?.includes('401') && failureCount === 0) {
+        firebaseAuthService.refreshToken();
+        return true;
+      }
+      return false;
+    }
   });
 
   const unreadCount = (notifications as any)?.notifications?.filter((n: any) => !n.isRead).length || 0;
@@ -47,7 +55,7 @@ export default function Navbar() {
   });
 
   const handleLogout = () => {
-    authService.logout();
+    firebaseAuthService.logout();
     setLocation('/');
   };
 

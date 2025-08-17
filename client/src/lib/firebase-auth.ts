@@ -22,6 +22,11 @@ export class FirebaseAuthService {
             email: parsedUser.email ? String(parsedUser.email) : undefined,
             phone: parsedUser.phone ? String(parsedUser.phone) : parsedUser.phone
           };
+          
+          // Ensure we have a valid Firebase token
+          this.refreshToken().catch(error => {
+            console.warn('Could not refresh Firebase token on startup:', error);
+          });
         }
       } catch (error) {
         console.error('Failed to parse user data:', error);
