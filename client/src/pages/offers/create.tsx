@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -50,6 +50,7 @@ export default function CreateOffer() {
   const [tenureUnit, setTenureUnit] = useState("");
   const [repaymentFrequency, setRepaymentFrequency] = useState("");
   const [allowPartPayment, setAllowPartPayment] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -71,9 +72,74 @@ export default function CreateOffer() {
     }
   });
 
-  // Watch form values to calculate due date
+  // Watch form values to calculate due date and check if all required fields are filled
   const amount = watch("amount");
   const tenure = watch("tenure");
+  const interestRate = watch("interestRate");
+  const purpose = watch("purpose");
+  const collateral = watch("collateral");
+
+  // Check if all required fields are filled
+  const allRequiredFieldsFilled = () => {
+    return (
+      offerType &&
+      amount &&
+      Number(amount) > 0 &&
+      interestRate &&
+      Number(interestRate) >= 0 &&
+      tenure &&
+      Number(tenure) > 0 &&
+      tenureUnit &&
+      repaymentType &&
+      (repaymentType === 'lumpsum' || repaymentFrequency) &&
+      interestType &&
+      contactPhone &&
+      contactName &&
+      !phoneError
+    );
+  };
+
+  // Calculate due date
+  const calculateDueDate = () => {
+    if (!startDate || !tenure || !tenureUnit) return null;
+    
+    const start = new Date(startDate);
+    let dueDate = new Date(start);
+    
+    const tenureNum = Number(tenure);
+    switch (tenureUnit) {
+      case 'days':
+        dueDate.setDate(start.getDate() + tenureNum);
+        break;
+      case 'weeks':
+        dueDate.setDate(start.getDate() + (tenureNum * 7));
+        break;
+      case 'months':
+        dueDate.setMonth(start.getMonth() + tenureNum);
+        break;
+      case 'years':
+        dueDate.setFullYear(start.getFullYear() + tenureNum);
+        break;
+    }
+    
+    return dueDate;
+  };
+
+  // Format repayment method display
+  const getRepaymentMethodDisplay = () => {
+    if (repaymentType === 'lumpsum') {
+      return 'Lump Sum';
+    }
+    if (repaymentFrequency) {
+      return `${repaymentFrequency.charAt(0).toUpperCase() + repaymentFrequency.slice(1)} Payments`;
+    }
+    return '';
+  };
+
+  // Check if summary should be shown
+  useEffect(() => {
+    setShowSummary(!!allRequiredFieldsFilled());
+  }, [offerType, amount, interestRate, tenure, tenureUnit, repaymentType, repaymentFrequency, interestType, contactPhone, contactName, phoneError]);
 
   const checkContact = async (phoneNumber: string) => {
     // Clear previous errors
@@ -577,19 +643,139 @@ export default function CreateOffer() {
               </CardContent>
             </Card>
 
-            {/* Submit Button */}
-            <Card>
-              <CardContent className="pt-6">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || (repaymentType !== 'lumpsum' && !repaymentFrequency) || !interestType || !!phoneError || !contactPhone || !contactName}
-                  data-testid="button-create-offer"
-                >
-                  {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Loan Summary - shown when all required fields are filled */}
+            {showSummary && (
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-green-800">
+                    <IndianRupee className="w-5 h-5 mr-2" />
+                    Loan Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-white rounded-lg p-4 space-y-4">
+                    {/* Principal Amount and Interest Rate */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Principal Amount</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          ₹{Number(amount).toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Interest Rate</p>
+                        <p className="text-xl font-bold text-gray-900">
+                          {interestRate}%
+                        </p>
+                        <p className="text-xs text-green-600 capitalize">{interestType}</p>
+                      </div>
+                    </div>
+
+                    {/* Loan Duration */}
+                    <div className="text-center border-t pt-3">
+                      <p className="text-sm text-gray-600">Loan Duration</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {tenure} {tenureUnit}
+                      </p>
+                      {calculateDueDate() && (
+                        <p className="text-sm text-green-600">
+                          Due: {calculateDueDate()?.toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Repayment Method */}
+                    <div className="text-center border-t pt-3">
+                      <p className="text-sm text-gray-600">Repayment Method</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {getRepaymentMethodDisplay()}
+                      </p>
+                      {repaymentType !== 'lumpsum' && repaymentFrequency && (
+                        <p className="text-xs text-green-600">
+                          {repaymentFrequency} payments
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Recipient */}
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-sm text-blue-600 text-center">
+                        {offerType === 'lend' ? 'Lending to' : 'Borrowing from'}
+                      </p>
+                      <p className="text-lg font-bold text-blue-900 text-center">
+                        {contactName}
+                      </p>
+                      <p className="text-sm text-blue-700 text-center">
+                        {contactPhone}
+                      </p>
+                    </div>
+
+                    {/* Additional Details - Only show if provided */}
+                    {(purpose || collateral || allowPartPayment) && (
+                      <div className="border-t pt-3 space-y-2">
+                        {purpose && (
+                          <div>
+                            <p className="text-xs text-gray-600">Purpose</p>
+                            <p className="text-sm text-gray-800">{purpose}</p>
+                          </div>
+                        )}
+                        {collateral && (
+                          <div>
+                            <p className="text-xs text-gray-600">Collateral</p>
+                            <p className="text-sm text-gray-800">{collateral}</p>
+                          </div>
+                        )}
+                        {allowPartPayment && (
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                            <p className="text-sm text-gray-800">Partial payments allowed</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-4 space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowSummary(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      disabled={createOfferMutation.isPending || !allRequiredFieldsFilled()}
+                    >
+                      {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Submit Button - shown when summary is not displayed */}
+            {!showSummary && (
+              <Card>
+                <CardContent className="pt-6">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={createOfferMutation.isPending || !offerType || !tenureUnit || !repaymentType || (repaymentType !== 'lumpsum' && !repaymentFrequency) || !interestType || !!phoneError || !contactPhone || !contactName}
+                    data-testid="button-create-offer"
+                  >
+                    {createOfferMutation.isPending ? 'Creating Offer...' : 'Create Offer'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </form>
         </div>
       </div>
