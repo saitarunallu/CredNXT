@@ -476,6 +476,11 @@ class FirestoreStorage implements IFirestoreStorage {
 
   async getPaymentsByOfferId(offerId: string): Promise<Payment[]> {
     return this.executeWithRetry(async () => {
+      if (!offerId || offerId === 'undefined') {
+        console.warn('Invalid offerId provided to getPaymentsByOfferId:', offerId);
+        return [];
+      }
+      
       const snapshot = await this.db.collection('payments')
         .where('offerId', '==', offerId)
         .get();
