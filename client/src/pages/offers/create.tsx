@@ -272,14 +272,14 @@ export default function CreateOffer() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="contactName">Contact Name</Label>
+                  <Label htmlFor="contactName">Recipient Name</Label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
                       <User className={`w-4 h-4 ${isContactFound ? 'text-gray-400' : 'text-gray-500'}`} />
                     </div>
                     <Input
                       id="contactName"
-                      placeholder="Enter contact name"
+                      placeholder="Enter recipient name"
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
                       data-testid="input-contact-name"
@@ -479,7 +479,7 @@ export default function CreateOffer() {
                       size="sm"
                       data-testid="button-repayment-emi"
                     >
-                      EMI
+                      Equated Instalments
                     </Button>
                     <Button
                       type="button"
