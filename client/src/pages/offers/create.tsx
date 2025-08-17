@@ -36,7 +36,13 @@ export default function CreateOffer() {
 
   // Helper function to normalize phone numbers for comparison
   const normalizePhone = (phone: string) => {
-    return phone.replace(/\D/g, ''); // Remove non-digits
+    // Remove all non-digits and strip country code if present
+    const cleaned = phone.replace(/\D/g, '');
+    // If starts with 91 (India country code), remove it
+    if (cleaned.startsWith('91') && cleaned.length === 12) {
+      return cleaned.substring(2);
+    }
+    return cleaned;
   };
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
@@ -258,33 +264,23 @@ export default function CreateOffer() {
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
                   {isContactFound && contactName && (
-                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <User className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="ml-3">
-                          <p className="text-sm font-medium text-green-800">User Found</p>
-                          <p className="text-sm text-green-600">{contactName}</p>
-                        </div>
-                      </div>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                      <User className="w-4 h-4" />
+                      <span>Found: {contactName}</span>
                     </div>
                   )}
                 </div>
                 
                 <div>
-                  <Label htmlFor="contactName">
-                    Contact Name
-                    {isContactFound && <span className="text-sm text-green-600 ml-2">(Auto-filled)</span>}
-                  </Label>
+                  <Label htmlFor="contactName">Contact Name</Label>
                   <Input
                     id="contactName"
-                    placeholder={isContactFound ? "Name auto-filled from registered user" : "Enter contact name"}
+                    placeholder="Enter contact name"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     data-testid="input-contact-name"
                     readOnly={isContactFound}
-                    className={isContactFound ? "bg-green-50 border-green-200 cursor-not-allowed text-green-800" : ""}
+                    className={isContactFound ? "bg-gray-50 cursor-not-allowed" : ""}
                   />
                   {!isContactFound && contactPhone && (
                     <p className="text-sm text-gray-500 mt-1">
