@@ -31,6 +31,9 @@ export default function CreateOffer() {
   const [isCheckingContact, setIsCheckingContact] = useState(false);
   const [phoneError, setPhoneError] = useState("");
 
+  // Debug current user data
+  console.log('Current user data:', currentUser);
+
   // Helper function to normalize phone numbers for comparison
   const normalizePhone = (phone: string) => {
     return phone.replace(/\D/g, ''); // Remove non-digits
@@ -80,6 +83,14 @@ export default function CreateOffer() {
     if (currentUser?.phone) {
       const currentUserPhone = normalizePhone(currentUser.phone);
       const enteredPhone = normalizePhone(phoneNumber);
+      
+      console.log('Phone validation:', {
+        currentUserPhone,
+        enteredPhone,
+        currentUserFullPhone: currentUser.phone,
+        enteredFullPhone: phoneNumber,
+        match: currentUserPhone === enteredPhone
+      });
       
       if (currentUserPhone === enteredPhone) {
         setPhoneError("You cannot create an offer for yourself");
@@ -247,16 +258,24 @@ export default function CreateOffer() {
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
                   {isContactFound && contactName && (
-                    <Badge variant="secondary" className="mt-2">
-                      Found: {contactName}
-                    </Badge>
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <User className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-green-800">User Found</p>
+                          <p className="text-sm text-green-600">{contactName}</p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
                 
                 <div>
                   <Label htmlFor="contactName">
                     Contact Name
-                    {isContactFound && <span className="text-sm text-gray-500 ml-2">(Auto-filled)</span>}
+                    {isContactFound && <span className="text-sm text-green-600 ml-2">(Auto-filled)</span>}
                   </Label>
                   <Input
                     id="contactName"
@@ -265,7 +284,7 @@ export default function CreateOffer() {
                     onChange={(e) => setContactName(e.target.value)}
                     data-testid="input-contact-name"
                     readOnly={isContactFound}
-                    className={isContactFound ? "bg-gray-100 cursor-not-allowed" : ""}
+                    className={isContactFound ? "bg-green-50 border-green-200 cursor-not-allowed text-green-800" : ""}
                   />
                   {!isContactFound && contactPhone && (
                     <p className="text-sm text-gray-500 mt-1">
