@@ -1,48 +1,27 @@
 export class NotificationService {
+  /**
+   * Email functionality removed - only used for Firebase Auth if configured
+   * All app notifications are delivered via in-app notifications only
+   */
   async sendEmail(to: string, subject: string, body: string): Promise<void> {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV] Email notification: To: ${to}, Subject: ${subject}`);
-      return;
-    }
-
-    // In production, integrate with SendGrid or similar
-    const apiKey = process.env.SENDGRID_API_KEY || process.env.EMAIL_API_KEY;
-    if (!apiKey) {
-      console.warn('Email API key not configured - skipping email notification');
-      return; // Don't throw error, just skip sending
-    }
-
-    try {
-      // Implementation with SendGrid would go here
-      console.log(`[PROD] Email sent to ${to}: ${subject}`);
-    } catch (error) {
-      console.error(`Email sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // Don't throw - notification failures shouldn't break the app
-    }
+    console.log(`[DISABLED] Email notifications are disabled - only in-app notifications are used`);
+    console.log(`[DISABLED] Email would have been: To: ${to}, Subject: ${subject}`);
   }
 
+  /**
+   * SMS is ONLY used for OTP delivery during login/signup via Firebase Auth
+   * All other notifications are delivered via in-app notifications only
+   */
   async sendSms(to: string, message: string): Promise<void> {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV] SMS (OTP): To: ${to}, Message: ${message}`);
+      console.log(`[DEV] SMS (OTP ONLY): To: ${to}, Message: ${message}`);
       return;
     }
 
-    // In production, integrate with SMS service for OTP delivery
-    const apiKey = process.env.TWILIO_API_KEY || process.env.SMS_API_KEY;
-    if (!apiKey) {
-      console.warn('SMS API key not configured - OTP will only be logged');
-      console.log(`[PROD] SMS (OTP): To: ${to}, Message: ${message}`);
-      return; // Don't throw error, just log OTP
-    }
-
-    try {
-      // TODO: Implement actual SMS service integration (Twilio, etc.)
-      console.log(`[PROD] SMS (OTP) sent to ${to}: ${message}`);
-    } catch (error) {
-      console.error(`SMS (OTP) sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      // Don't throw - log OTP as fallback
-      console.log(`[FALLBACK] OTP for ${to}: ${message}`);
-    }
+    // In production, SMS integration is handled by Firebase Auth for OTP
+    // This method should not be called for regular notifications
+    console.warn('SMS service called - should only be used by Firebase Auth for OTP');
+    console.log(`[OTP-ONLY] SMS: To: ${to}, Message: ${message}`);
   }
 }
 

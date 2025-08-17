@@ -60,11 +60,11 @@ export class AdvancedNotificationService {
   ]);
 
   private deliveryCosts = new Map([
-    ['sms', 0.05], // ₹0.05 per SMS
-    ['email', 0.01], // ₹0.01 per email
-    ['whatsapp', 0.03], // ₹0.03 per WhatsApp message
-    ['push', 0.001], // ₹0.001 per push notification
-    ['app', 0] // Free in-app notifications
+    ['sms', 0], // SMS disabled for notifications (only Firebase Auth OTP)
+    ['email', 0], // Email disabled for notifications
+    ['whatsapp', 0.03], // ₹0.03 per WhatsApp message (future use)
+    ['push', 0.001], // ₹0.001 per push notification (future use)
+    ['app', 0] // Free in-app notifications (PRIMARY METHOD)
   ]);
 
   /**
@@ -139,14 +139,14 @@ export class AdvancedNotificationService {
       case 'payment_reminder':
         return {
           ...baseDefaults,
-          channels: ['app', 'sms'],
+          channels: ['app'],
           maxDailyNotifications: 5,
           type
         };
       case 'security_alert':
         return {
           ...baseDefaults,
-          channels: ['app', 'sms', 'email'],
+          channels: ['app'],
           batchingEnabled: false, // Security alerts should be immediate
           maxDailyNotifications: 20,
           type
@@ -154,7 +154,7 @@ export class AdvancedNotificationService {
       case 'offer_received':
         return {
           ...baseDefaults,
-          channels: ['app', 'sms'],
+          channels: ['app'],
           maxDailyNotifications: 3,
           type
         };
@@ -162,7 +162,7 @@ export class AdvancedNotificationService {
       case 'payment_rejected':
         return {
           ...baseDefaults,
-          channels: ['app', 'sms'],
+          channels: ['app'],
           batchingEnabled: false, // Payment status should be immediate
           type
         };
@@ -415,29 +415,14 @@ export class AdvancedNotificationService {
 
       switch (channel) {
         case 'sms':
-          // Enable SMS for critical offer-related notifications
-          if (notification.type === 'offer_received' || notification.type === 'offer_accepted' || 
-              notification.type === 'offer_declined' || notification.priority === 'urgent') {
-            try {
-              if (user.phone) {
-                await notificationService.sendSms(user.phone, `${notification.title}: ${notification.message}`);
-                delivered = true;
-                console.log(`SMS sent to user ${user.id} for ${notification.type}`);
-              }
-            } catch (error) {
-              console.log(`SMS delivery failed for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-              delivered = false;
-            }
-          } else {
-            console.log(`SMS notification skipped for non-critical type ${notification.type} (Use in-app notifications)`);
-            delivered = false;
-          }
+          // SMS disabled for notifications (only used for OTP)
+          console.log(`SMS notifications disabled - only in-app notifications are used`);
+          delivered = false;
           break;
         case 'email':
-          if (user.email) {
-            await notificationService.sendEmail(user.email, notification.title, notification.message);
-            delivered = true;
-          }
+          // Email disabled for notifications (only used for OTP)
+          console.log(`Email notifications disabled - only in-app notifications are used`);
+          delivered = false;
           break;
         case 'app':
           // In-app notifications are always delivered immediately

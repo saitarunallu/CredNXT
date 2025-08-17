@@ -68,23 +68,8 @@ export class OfferDeliveryService {
         result.deliveryChannels.push('future_delivery');
       }
 
-      // Step 3: Attempt SMS delivery for critical offers
-      if (options.priority === 'urgent' || options.priority === 'high') {
-        const smsResult = await this.attemptSMSDelivery(
-          recipientPhone,
-          offerType,
-          amount,
-          fromUserName,
-          options
-        );
-        
-        if (smsResult.success) {
-          result.deliveryChannels.push('sms');
-        } else {
-          result.failedChannels.push('sms');
-          result.errors.push(smsResult.error || 'SMS delivery failed');
-        }
-      }
+      // SMS delivery removed - only in-app notifications are used
+      console.log('SMS delivery disabled - offers delivered via in-app notifications only');
 
       result.success = result.deliveryChannels.length > 0;
       
@@ -200,28 +185,9 @@ export class OfferDeliveryService {
   }
 
   /**
-   * Attempt SMS delivery for critical offers
+   * SMS delivery removed - notifications are delivered via in-app only
+   * SMS is only used for OTP during login/signup
    */
-  private async attemptSMSDelivery(
-    recipientPhone: string,
-    offerType: string,
-    amount: string,
-    fromUserName: string,
-    options: DeliveryOptions
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const message = `New ${offerType} offer: ₹${amount} from ${fromUserName}. Visit CredNxt to view details.`;
-      
-      await notificationService.sendSms(recipientPhone, message);
-      
-      console.log(`SMS notification sent successfully to ${recipientPhone.substring(0, 3)}***`);
-      return { success: true };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'SMS service unavailable';
-      console.warn(`SMS delivery failed for ${recipientPhone.substring(0, 3)}***: ${errorMessage}`);
-      return { success: false, error: errorMessage };
-    }
-  }
 
   /**
    * Deliver pending notifications when user registers
