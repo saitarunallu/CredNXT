@@ -35,8 +35,12 @@ export default function OfferCard({
   const outstanding = amount - paid;
 
   const acceptOfferMutation = useMutation({
-    mutationFn: () => firebaseBackend.updateOfferStatus(offer.id, 'accepted'),
-    onSuccess: () => {
+    mutationFn: () => {
+      console.log('🔄 Accepting offer:', offer.id);
+      return firebaseBackend.updateOfferStatus(offer.id, 'accepted');
+    },
+    onSuccess: (data) => {
+      console.log('✅ Offer accepted successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
       toast({
@@ -45,18 +49,22 @@ export default function OfferCard({
       });
     },
     onError: (error) => {
-      console.error('Accept offer error in card:', error);
+      console.error('❌ Accept offer error in card:', error);
       toast({
         title: "Error",
-        description: "Failed to accept offer. Please try again.",
+        description: `Failed to accept offer: ${error.message}`,
         variant: "destructive",
       });
     }
   });
 
   const rejectOfferMutation = useMutation({
-    mutationFn: () => firebaseBackend.updateOfferStatus(offer.id, 'declined'),
-    onSuccess: () => {
+    mutationFn: () => {
+      console.log('🔄 Declining offer:', offer.id);
+      return firebaseBackend.updateOfferStatus(offer.id, 'declined');
+    },
+    onSuccess: (data) => {
+      console.log('✅ Offer declined successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
       toast({
@@ -65,10 +73,10 @@ export default function OfferCard({
       });
     },
     onError: (error) => {
-      console.error('Reject offer error in card:', error);
+      console.error('❌ Decline offer error in card:', error);
       toast({
         title: "Error",
-        description: "Failed to decline offer. Please try again.",
+        description: `Failed to decline offer: ${error.message}`,
         variant: "destructive",
       });
     }
