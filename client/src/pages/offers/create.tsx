@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
-import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign, Users } from "lucide-react";
+import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, Users } from "lucide-react";
 
 export default function CreateOffer() {
   const [, setLocation] = useLocation();
@@ -328,7 +328,7 @@ export default function CreateOffer() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <DollarSign className="w-5 h-5 mr-2" />
+                  <IndianRupee className="w-5 h-5 mr-2" />
                   Offer Type
                 </CardTitle>
               </CardHeader>
