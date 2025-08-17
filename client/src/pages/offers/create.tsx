@@ -564,15 +564,15 @@ export default function CreateOffer() {
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Checkbox
                     id="allowPartPayment"
                     checked={allowPartPayment}
                     onCheckedChange={(checked) => setAllowPartPayment(checked === true)}
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded-sm border-2 border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                     data-testid="checkbox-allow-part-payment"
                   />
-                  <Label htmlFor="allowPartPayment" className="text-sm">Allow partial payments</Label>
+                  <Label htmlFor="allowPartPayment" className="text-sm font-medium cursor-pointer">Allow partial payments</Label>
                 </div>
               </CardContent>
             </Card>
