@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { insertOfferSchema, type InsertOffer } from "@shared/firestore-schema";
-import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign } from "lucide-react";
+import { ArrowLeft, FileText, IndianRupee, Calendar, User, Percent, Clock, Info, Phone, Contact as ContactIcon, DollarSign, Users } from "lucide-react";
 
 export default function CreateOffer() {
   const [, setLocation] = useLocation();
@@ -269,6 +269,9 @@ export default function CreateOffer() {
                 <div>
                   <Label htmlFor="contactName">Contact Name</Label>
                   <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                      <User className={`w-4 h-4 ${isContactFound ? 'text-gray-400' : 'text-gray-500'}`} />
+                    </div>
                     <Input
                       id="contactName"
                       placeholder="Enter contact name"
@@ -276,11 +279,13 @@ export default function CreateOffer() {
                       onChange={(e) => setContactName(e.target.value)}
                       data-testid="input-contact-name"
                       readOnly={isContactFound}
-                      className={isContactFound ? "bg-green-50 border-green-200 cursor-not-allowed" : ""}
+                      className={`pl-10 ${isContactFound ? 'bg-green-50 border-green-200 cursor-not-allowed text-gray-500' : ''}`}
                     />
                     {isContactFound && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -291,21 +296,21 @@ export default function CreateOffer() {
                   )}
                   {isContactFound && contactName && (
                     <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-lg">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start">
                         <div className="flex-1">
                           <div className="flex items-center mb-1">
-                            <User className="w-4 h-4 mr-2 text-green-600" />
+                            <Users className="w-4 h-4 mr-2 text-green-600" />
                             <span className="text-sm font-medium text-gray-800">Registered User</span>
                           </div>
-                          <div className="text-sm font-medium text-gray-900 mb-1">
-                            {contactName} - {contactPhone}
+                          <div className="text-sm font-medium text-gray-900 mb-1 flex items-center">
+                            <User className="w-4 h-4 mr-2 text-gray-600" />
+                            {contactName} - 
+                            <Phone className="w-4 h-4 ml-2 mr-1 text-gray-600" />
+                            {contactPhone}
                           </div>
                           <div className="text-xs text-green-600">
                             This user is already registered with CredNXT
                           </div>
-                        </div>
-                        <div className="ml-3 mt-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         </div>
                       </div>
                     </div>
