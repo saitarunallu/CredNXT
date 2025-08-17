@@ -645,30 +645,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('PDF generation failed, continuing without contract PDF:', error);
       }
       
-      // Send notification to recipient if they're registered
-      if (recipientUser) {
-        await storage.createNotification({
-          userId: recipientUser.id,
-          offerId: offer.id,
-          type: 'offer_received',
-          title: 'New Offer Received',
-          message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`,
-          priority: 'high',
-          isRead: false
-        });
+      // Use improved offer delivery service for comprehensive notification delivery
+      try {
+        const { offerDeliveryService } = await import('./services/offer-delivery');
+        const deliveryResult = await offerDeliveryService.deliverOfferNotification(
+          offer.id,
+          recipientUser?.id || null,
+          normalizedToUserPhone,
+          offer.offerType,
+          offer.amount.toString(),
+          fromUser.name || 'Unknown',
+          { 
+            priority: 'high',
+            metadata: {
+              offerAmount: offer.amount,
+              lenderName: fromUser.name,
+              offerType: offer.offerType
+            }
+          }
+        );
 
-        // Send WebSocket notification to recipient
-        const recipientClient = clients.get(recipientUser.id);
-        if (recipientClient && recipientClient.readyState === WebSocket.OPEN) {
-          recipientClient.send(JSON.stringify({
-            type: 'offer_received',
-            offerId: offer.id,
-            message: `New ${offer.offerType} offer for ₹${offer.amount}`
-          }));
+        console.log(`Offer delivery completed:`, deliveryResult);
+
+        // Send WebSocket notification to recipient if they're online
+        if (recipientUser) {
+          const recipientClient = clients.get(recipientUser.id);
+          if (recipientClient && recipientClient.readyState === WebSocket.OPEN) {
+            recipientClient.send(JSON.stringify({
+              type: 'offer_received',
+              offerId: offer.id,
+              message: `New ${offer.offerType} offer for ₹${offer.amount}`,
+              deliveryStatus: deliveryResult
+            }));
+          }
         }
-      } else {
-        // In-app notifications only - unregistered users won't receive notifications
-        console.log(`Offer sent to unregistered user: ${normalizedToUserPhone}. They can view it when they register.`);
+      } catch (deliveryError) {
+        console.error('Enhanced offer delivery failed, falling back to basic notification:', deliveryError);
+        
+        // Fallback to basic notification system
+        if (recipientUser) {
+          await storage.createNotification({
+            userId: recipientUser.id,
+            offerId: offer.id,
+            type: 'offer_received',
+            title: 'New Offer Received',
+            message: `You have received a new ${offer.offerType} offer for ₹${offer.amount}`,
+            priority: 'high',
+            isRead: false
+          });
+
+          const recipientClient = clients.get(recipientUser.id);
+          if (recipientClient && recipientClient.readyState === WebSocket.OPEN) {
+            recipientClient.send(JSON.stringify({
+              type: 'offer_received',
+              offerId: offer.id,
+              message: `New ${offer.offerType} offer for ₹${offer.amount}`
+            }));
+          }
+        } else {
+          console.log(`Offer sent to unregistered user: ${normalizedToUserPhone}. They can view it when they register.`);
+        }
       }
 
       // Always send notification to offer creator about their new offer
@@ -713,6 +749,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
+      
+      // Get offer first to check authorization
+      const existingOffer = await storage.getOffer(id);
+      if (!existingOffer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Check authorization based on action
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      // Authorization logic for different status updates
+      if (status === 'accepted' || status === 'declined') {
+        // Only the recipient can accept/decline
+        const isRecipient = 
+          existingOffer.toUserId === currentUserId ||
+          (currentUser && existingOffer.toUserPhone === currentUser.phone);
+        
+        if (!isRecipient) {
+          return res.status(403).json({ 
+            message: 'Only the offer recipient can accept or decline offers',
+            code: 'UNAUTHORIZED_STATUS_UPDATE'
+          });
+        }
+      } else if (status === 'cancelled') {
+        // Only the sender can cancel
+        if (existingOffer.fromUserId !== currentUserId) {
+          return res.status(403).json({ 
+            message: 'Only the offer sender can cancel offers',
+            code: 'UNAUTHORIZED_STATUS_UPDATE'
+          });
+        }
+      } else {
+        // For other status updates, require either sender or recipient
+        const isAuthorized = 
+          existingOffer.fromUserId === currentUserId ||
+          existingOffer.toUserId === currentUserId ||
+          (currentUser && existingOffer.toUserPhone === currentUser.phone);
+        
+        if (!isAuthorized) {
+          return res.status(403).json({ 
+            message: 'Unauthorized to update this offer',
+            code: 'UNAUTHORIZED_STATUS_UPDATE'
+          });
+        }
+      }
       
       const offer = await storage.updateOffer(id, { status });
       
@@ -785,6 +867,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offer = await storage.getOffer(paymentData.offerId);
       if (!offer) {
         return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Check if user is authorized to make payments for this offer
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      // Only the borrower (recipient) can submit payments
+      const isBorrower = 
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!isBorrower) {
+        return res.status(403).json({ 
+          message: 'Only the borrower can submit payments for this offer',
+          code: 'UNAUTHORIZED_PAYMENT_SUBMISSION'
+        });
+      }
+
+      // Check if offer is in accepted status
+      if (offer.status !== 'accepted') {
+        return res.status(400).json({ 
+          message: 'Payments can only be made for accepted offers',
+          code: 'OFFER_NOT_ACCEPTED'
+        });
       }
 
       // Import calculation functions (dynamic import for server compatibility)
@@ -1412,6 +1518,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const offer = await storage.getOffer(id);
       if (!offer) {
         return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Check authorization - only borrower can submit payments
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      const isBorrower = 
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!isBorrower) {
+        return res.status(403).json({ 
+          message: 'Only the borrower can submit payments',
+          code: 'UNAUTHORIZED_PAYMENT_SUBMISSION'
+        });
+      }
+
+      // Check if offer is accepted
+      if (offer.status !== 'accepted') {
+        return res.status(400).json({ 
+          message: 'Payments can only be submitted for accepted offers',
+          code: 'OFFER_NOT_ACCEPTED'
+        });
       }
       
       // Create payment record - always as pending for lender approval

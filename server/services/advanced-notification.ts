@@ -273,14 +273,15 @@ export class AdvancedNotificationService {
     // Create notification with batch reference
     const notification = await storage.createNotification({
       userId: data.userId,
-      offerId: data.offerId || null,
+      offerId: data.offerId || undefined,
       type: data.type as any,
       priority: data.priority as any,
       title: data.title,
       message: data.message,
       scheduledFor: data.scheduledFor || new Date(),
       expiresAt: data.expiresAt,
-      metadata: JSON.stringify(data.metadata || {})
+      metadata: data.metadata || {},
+      isRead: false
     });
 
     // Process batch if ready
@@ -312,7 +313,7 @@ export class AdvancedNotificationService {
       summary: this.generateBatchSummary(notifications),
       notificationCount: notifications.length,
       scheduledFor: new Date(),
-      metadata: JSON.stringify({ notifications: notifications.map(n => n.id) })
+      metadata: { notifications: notifications.map(n => n.id) }
     });
 
     // Update notifications with batch ID
@@ -365,14 +366,15 @@ export class AdvancedNotificationService {
     // Create notification record
     const notification = await storage.createNotification({
       userId: data.userId,
-      offerId: data.offerId || null,
+      offerId: data.offerId || undefined,
       type: data.type as any,
       priority: data.priority as any,
       title: data.title,
       message: data.message,
       scheduledFor: data.scheduledFor || new Date(),
       expiresAt: data.expiresAt,
-      metadata: JSON.stringify(data.metadata || {})
+      metadata: data.metadata || {},
+      isRead: false
     });
 
     // Deliver across preferred channels
@@ -413,9 +415,23 @@ export class AdvancedNotificationService {
 
       switch (channel) {
         case 'sms':
-          // SMS disabled for general notifications (OTP only)
-          console.log(`SMS notification disabled for user ${user.id}: ${notification.message} (Use in-app notifications)`);
-          delivered = false; // SMS disabled for general notifications
+          // Enable SMS for critical offer-related notifications
+          if (notification.type === 'offer_received' || notification.type === 'offer_accepted' || 
+              notification.type === 'offer_declined' || notification.priority === 'urgent') {
+            try {
+              if (user.phone) {
+                await notificationService.sendSms(user.phone, `${notification.title}: ${notification.message}`);
+                delivered = true;
+                console.log(`SMS sent to user ${user.id} for ${notification.type}`);
+              }
+            } catch (error) {
+              console.log(`SMS delivery failed for user ${user.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              delivered = false;
+            }
+          } else {
+            console.log(`SMS notification skipped for non-critical type ${notification.type} (Use in-app notifications)`);
+            delivered = false;
+          }
           break;
         case 'email':
           if (user.email) {
@@ -471,14 +487,15 @@ export class AdvancedNotificationService {
   private async scheduleNotification(data: SmartNotificationData): Promise<string> {
     return storage.createNotification({
       userId: data.userId,
-      offerId: data.offerId || null,
+      offerId: data.offerId || undefined,
       type: data.type as any,
       priority: data.priority as any,
       title: data.title,
       message: data.message,
       scheduledFor: data.scheduledFor || new Date(),
       expiresAt: data.expiresAt,
-      metadata: JSON.stringify(data.metadata || {})
+      metadata: data.metadata || {},
+      isRead: false
     }).then(n => n.id);
   }
 
@@ -502,10 +519,11 @@ export class AdvancedNotificationService {
       title: batch.title,
       message: batchMessage,
       batchId: batch.id,
-      metadata: JSON.stringify({
+      metadata: {
         originalNotifications: notifications.length,
         batchType: batch.batchType
-      })
+      },
+      isRead: false
     });
 
     await this.deliverToChannels(batchNotification, preferences.channels);
