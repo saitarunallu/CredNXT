@@ -263,6 +263,32 @@ export default function CreateOffer() {
                   {isCheckingContact && (
                     <p className="text-sm text-gray-500 mt-1">Checking contact...</p>
                   )}
+
+                </div>
+                
+                <div>
+                  <Label htmlFor="contactName">Contact Name</Label>
+                  <div className="relative">
+                    <Input
+                      id="contactName"
+                      placeholder="Enter contact name"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      data-testid="input-contact-name"
+                      readOnly={isContactFound}
+                      className={isContactFound ? "bg-green-50 border-green-200 cursor-not-allowed" : ""}
+                    />
+                    {isContactFound && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
+                  {!isContactFound && contactPhone && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Phone number not registered. Please enter the recipient's name.
+                    </p>
+                  )}
                   {isContactFound && contactName && (
                     <div className="mt-3 p-3 bg-green-50 border border-green-100 rounded-lg">
                       <div className="flex items-start justify-between">
@@ -283,24 +309,6 @@ export default function CreateOffer() {
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="contactName">Contact Name</Label>
-                  <Input
-                    id="contactName"
-                    placeholder="Enter contact name"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    data-testid="input-contact-name"
-                    readOnly={isContactFound}
-                    className={isContactFound ? "bg-gray-50 cursor-not-allowed" : ""}
-                  />
-                  {!isContactFound && contactPhone && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Phone number not registered. Please enter the recipient's name.
-                    </p>
                   )}
                 </div>
               </CardContent>
