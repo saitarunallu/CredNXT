@@ -413,10 +413,9 @@ export class AdvancedNotificationService {
 
       switch (channel) {
         case 'sms':
-          if (user.phone) {
-            await notificationService.sendSms(user.phone, notification.message);
-            delivered = true;
-          }
+          // SMS removed - using in-app notifications only
+          console.log(`SMS notification disabled for user ${user.id}: ${notification.message}`);
+          delivered = false; // SMS explicitly disabled
           break;
         case 'email':
           if (user.email) {

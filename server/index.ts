@@ -10,7 +10,6 @@ const app = express();
 // Validate critical environment variables
 function validateEnvironment() {
   const requiredVars = [
-    'JWT_SECRET',
     'FIREBASE_PROJECT_ID',
     'FIREBASE_PRIVATE_KEY', 
     'FIREBASE_CLIENT_EMAIL'
@@ -19,7 +18,7 @@ function validateEnvironment() {
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
   if (missing.length > 0) {
-    console.error('❌ CRITICAL: Missing required environment variables:', missing);
+    console.error('❌ CRITICAL: Missing required Firebase environment variables:', missing);
     console.error('📋 Please check DEPLOYMENT_CHECKLIST.md for setup instructions');
     console.error('📄 Copy .env.example to .env and configure all variables');
     
@@ -32,26 +31,10 @@ function validateEnvironment() {
     }
   }
   
-  // Validate JWT secret
-  if (process.env.JWT_SECRET === 'fallback-secret-please-change-in-production') {
-    console.warn('WARNING: Using default JWT secret in development. Set JWT_SECRET environment variable.');
-  } else if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('🚫 JWT_SECRET must be at least 32 characters in production');
-      process.exit(1);
-    } else {
-      console.warn('⚠️  Development mode: JWT secret may be too short');
-    }
-  }
-  
   return true;
 }
 
-// Generate JWT secret from Firebase config if not provided
-if (process.env.FIREBASE_CONFIG_JSON && !process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = crypto.randomBytes(32).toString('base64');
-  console.log('✅ Generated JWT secret from Firebase config');
-}
+// Firebase Auth handles all authentication - no JWT secret needed
 
 // Check environment before starting
 const configValid = validateEnvironment();

@@ -109,16 +109,14 @@ router.get('/health/detailed', async (req, res) => {
   const requiredEnvVars = [
     'FIREBASE_PROJECT_ID', 
     'FIREBASE_PRIVATE_KEY', 
-    'FIREBASE_CLIENT_EMAIL',
-    'JWT_SECRET'
+    'FIREBASE_CLIENT_EMAIL'
+    // JWT_SECRET removed - using Firebase Auth only
   ];
   const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
   
   // Check for insecure defaults
-  const insecureDefaults = [];
-  if (process.env.JWT_SECRET === 'fallback-secret-please-change-in-production') {
-    insecureDefaults.push('JWT_SECRET using default value');
-  }
+  const insecureDefaults: string[] = [];
+  // JWT_SECRET check removed - using Firebase Auth only
   
   let envStatus = 'healthy';
   let envDetails = 'All required environment variables are properly configured';
