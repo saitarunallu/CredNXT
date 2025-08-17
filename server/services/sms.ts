@@ -60,21 +60,14 @@ class SMSService {
 
       this.config = result.data;
       
-      // Initialize Firebase Admin if not already initialized
+      // Use existing Firebase Admin instance
       const apps = admin.apps || [];
-      if (apps.length === 0) {
-        const serviceAccount = {
-          type: 'service_account',
-          project_id: config.projectId,
-          private_key: config.privateKey,
-          client_email: config.clientEmail,
-        };
-        
-        this.app = admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-        });
-      } else {
+      if (apps.length > 0) {
         this.app = apps[0] as admin.app.App;
+      } else {
+        // Firebase Admin should already be initialized by server/firebase-config.ts
+        console.warn('Firebase Admin not initialized yet. SMS service will retry on first use.');
+        return;
       }
       
       this.isConfigured = true;
@@ -89,6 +82,12 @@ class SMSService {
   }
 
   public async sendSMS(params: SMSMessage): Promise<SMSResult> {
+    // Retry initialization if Firebase was not ready before
+    if (!this.isEnabled() && admin.apps.length > 0) {
+      this.app = admin.apps[0] as admin.app.App;
+      this.isConfigured = this.config !== null;
+    }
+
     if (!this.isEnabled()) {
       return {
         success: false,

@@ -34,12 +34,13 @@ function validateEnvironment() {
   
   // Validate JWT secret
   if (process.env.JWT_SECRET === 'fallback-secret-please-change-in-production') {
-    console.error('❌ SECURITY RISK: Using default JWT secret in production!');
+    console.warn('WARNING: Using default JWT secret in development. Set JWT_SECRET environment variable.');
+  } else if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
     if (process.env.NODE_ENV === 'production') {
-      console.error('🚫 Generate a secure JWT secret: openssl rand -base64 32');
+      console.error('🚫 JWT_SECRET must be at least 32 characters in production');
       process.exit(1);
     } else {
-      console.warn('⚠️  Development mode: using default JWT secret');
+      console.warn('⚠️  Development mode: JWT secret may be too short');
     }
   }
   

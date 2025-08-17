@@ -550,6 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         toUserName: targetUser.name || 'Test Recipient',
         amount: 25000,
         interestRate: 12,
+        interestType: 'reducing',
         tenureValue: 12,
         tenureUnit: 'months',
         repaymentType: 'emi',
@@ -557,7 +558,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         purpose: 'Personal loan for education expenses',
         offerType: 'lend',
         status: 'pending',
-        allowPartPayment: false
+        allowPartPayment: false,
+        gracePeriodDays: 5,
+        prepaymentPenalty: 0,
+        latePaymentPenalty: 2,
+        startDate: new Date(),
+        dueDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+        currentInstallmentNumber: 1
       });
       
       // Create notifications for both users

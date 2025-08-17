@@ -38,6 +38,14 @@ function initializeFirebase() {
       console.error('   3. Add the credentials to your environment variables');
       console.error('   4. Check DEPLOYMENT_CHECKLIST.md for detailed instructions');
       console.error('');
+      
+      // In development, continue without Firebase for basic functionality
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️  Development mode: continuing without Firebase credentials');
+        console.warn('   Some features (notifications, SMS) will be limited');
+        return false;
+      }
+      
       return false;
     }
 
