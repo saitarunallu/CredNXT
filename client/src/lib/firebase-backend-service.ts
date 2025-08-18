@@ -23,10 +23,10 @@ const FIREBASE_FUNCTIONS_BASE = 'https://us-central1-crednxt-ef673.cloudfunction
 const API_BASE_URL = `${FIREBASE_FUNCTIONS_BASE}/api`;
 const PDF_SERVICE_URL = `${FIREBASE_FUNCTIONS_BASE}/pdfService`;
 
-// Environment-aware PDF service URL
+// Environment-aware PDF service URL - Use main API for all PDF operations
 const getPdfServiceUrl = () => {
   if (isProduction()) {
-    return PDF_SERVICE_URL; // Firebase Functions PDF API
+    return API_BASE_URL; // Use main Firebase Functions API for PDFs
   }
   // Use current domain for Replit development environment
   const currentOrigin = window.location.origin;
