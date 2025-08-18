@@ -637,12 +637,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found' });
       }
       
-      // Generate PDF contract (skip for now if service not available)
+      // Generate ALL PDFs immediately when offer is created (contract, KFS, and schedule)
       try {
-        const pdfKey = await pdfService.generateContract(offer as any, fromUser as any);
-        await storage.updateOffer(offer.id, { contractPdfKey: pdfKey });
+        console.log('🔄 Generating all PDFs for new offer:', offer.id);
+        
+        // Generate contract PDF
+        const contractKey = await pdfService.generateContract(offer as any, fromUser as any);
+        console.log('✅ Contract PDF generated:', contractKey);
+        
+        // Generate KFS PDF
+        const kfsKey = await pdfService.generateKFS(offer as any, fromUser as any);
+        console.log('✅ KFS PDF generated:', kfsKey);
+        
+        // Generate repayment schedule PDF
+        const scheduleKey = await pdfService.generateRepaymentSchedule(offer as any, fromUser as any);
+        console.log('✅ Schedule PDF generated:', scheduleKey);
+        
+        // Update offer with all PDF keys
+        await storage.updateOffer(offer.id, { 
+          contractPdfKey: contractKey,
+          kfsPdfKey: kfsKey,
+          schedulePdfKey: scheduleKey 
+        });
+        
+        console.log('🎉 All PDFs generated and stored successfully for offer:', offer.id);
       } catch (error) {
-        console.warn('PDF generation failed, continuing without contract PDF:', error);
+        console.warn('⚠️ PDF generation failed, continuing without PDFs:', error);
       }
       
       // Use improved offer delivery service for comprehensive notification delivery
@@ -1654,52 +1674,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this contract' });
       }
 
-      let contractKey = offer.contractPdfKey;
-
-      // If no contract exists or file is missing, generate it
-      if (!contractKey || !await pdfService.contractExists(contractKey)) {
-        const offerId = offer.id || id; // Use route param if offer.id is missing
-        console.log(`Generating contract for offer ${offerId}, current contractKey: ${contractKey}`);
-        
-        const fromUser = await storage.getUser(offer.fromUserId);
-        if (!fromUser) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-
-        console.log(`Found user for contract generation: ${fromUser.name} (${fromUser.phone})`);
-        
-        try {
-          // Convert offer for PDF service compatibility
-          const offerForPdf = {
-            ...offer,
-            id: offerId, // Ensure ID is properly set
-            toUserId: offer.toUserId || null,
-            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
-            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
-            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
-            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
-            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
-              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
-          };
-          contractKey = await pdfService.generateContract(offerForPdf as any, {
-            ...fromUser,
-            name: fromUser.name ?? undefined,
-            email: fromUser.email ?? undefined,
-            isVerified: fromUser.isVerified ?? undefined,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
-          } as any);
-          console.log(`Generated contract with key: ${contractKey}`);
-          
-          await storage.updateOffer(offerId, { contractPdfKey: contractKey });
-          console.log(`Updated offer ${offerId} with contract key`);
-        } catch (genError) {
-          console.error('Contract generation failed:', genError);
-          return res.status(500).json({ message: 'Failed to generate contract' });
-        }
+      // Check if contract PDF was pre-generated
+      if (!offer.contractPdfKey) {
+        console.log('❌ Contract PDF not available for offer:', id);
+        return res.status(404).json({ message: 'Contract PDF not available' });
       }
 
-      const pdfBuffer = await pdfService.downloadContract(contractKey);
+      console.log('📥 Downloading pre-generated contract PDF:', offer.contractPdfKey);
+      const pdfBuffer = await pdfService.downloadContract(offer.contractPdfKey);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="contract-${offer.id}.pdf"`);
@@ -1733,52 +1715,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this KFS document' });
       }
 
-      let kfsKey = offer.kfsPdfKey;
-
-      // If no KFS exists or file is missing, generate it
-      if (!kfsKey || !await pdfService.kfsExists(kfsKey)) {
-        const offerId = offer.id || id; // Use route param if offer.id is missing
-        console.log(`Generating KFS for offer ${offerId}, current kfsKey: ${kfsKey}`);
-        
-        const fromUser = await storage.getUser(offer.fromUserId);
-        if (!fromUser) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-
-        console.log(`Found user for KFS generation: ${fromUser.name} (${fromUser.phone})`);
-        
-        try {
-          // Convert offer for PDF service compatibility
-          const offerForPdf = {
-            ...offer,
-            id: offerId, // Ensure ID is properly set
-            toUserId: offer.toUserId || null,
-            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
-            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
-            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
-            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
-            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
-              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
-          };
-          kfsKey = await pdfService.generateKFS(offerForPdf as any, {
-            ...fromUser,
-            name: fromUser.name ?? undefined,
-            email: fromUser.email ?? undefined,
-            isVerified: fromUser.isVerified ?? undefined,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
-          } as any);
-          console.log(`Generated KFS with key: ${kfsKey}`);
-          
-          await storage.updateOffer(offerId, { kfsPdfKey: kfsKey });
-          console.log(`Updated offer ${offerId} with KFS key`);
-        } catch (genError) {
-          console.error('KFS generation failed:', genError);
-          return res.status(500).json({ message: 'Failed to generate KFS document' });
-        }
+      // Check if KFS PDF was pre-generated
+      if (!offer.kfsPdfKey) {
+        console.log('❌ KFS PDF not available for offer:', id);
+        return res.status(404).json({ message: 'KFS PDF not available' });
       }
 
-      const pdfBuffer = await pdfService.downloadKFS(kfsKey);
+      console.log('📥 Downloading pre-generated KFS PDF:', offer.kfsPdfKey);
+      const pdfBuffer = await pdfService.downloadKFS(offer.kfsPdfKey);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="kfs-${offer.id}.pdf"`);
@@ -1812,52 +1756,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this schedule' });
       }
 
-      let scheduleKey = offer.schedulePdfKey;
-
-      // If no schedule exists or file is missing, generate it
-      if (!scheduleKey || !await pdfService.scheduleExists(scheduleKey)) {
-        const offerId = offer.id || id; // Use route param if offer.id is missing
-        console.log(`Generating repayment schedule for offer ${offerId}, current scheduleKey: ${scheduleKey}`);
-        
-        const fromUser = await storage.getUser(offer.fromUserId);
-        if (!fromUser) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-
-        console.log(`Found user for schedule generation: ${fromUser.name} (${fromUser.phone})`);
-        
-        try {
-          // Convert offer for PDF service compatibility
-          const offerForPdf = {
-            ...offer,
-            id: offerId, // Ensure ID is properly set
-            toUserId: offer.toUserId || null,
-            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
-            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
-            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
-            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
-            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
-              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
-          };
-          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, {
-            ...fromUser,
-            name: fromUser.name ?? undefined,
-            email: fromUser.email ?? undefined,
-            isVerified: fromUser.isVerified ?? undefined,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
-          } as any);
-          console.log(`Generated repayment schedule with key: ${scheduleKey}`);
-          
-          await storage.updateOffer(offerId, { schedulePdfKey: scheduleKey });
-          console.log(`Updated offer ${offerId} with schedule key`);
-        } catch (genError) {
-          console.error('Repayment schedule generation failed:', genError);
-          return res.status(500).json({ message: 'Failed to generate repayment schedule' });
-        }
+      // Check if schedule PDF was pre-generated
+      if (!offer.schedulePdfKey) {
+        console.log('❌ Schedule PDF not available for offer:', id);
+        return res.status(404).json({ message: 'Schedule PDF not available' });
       }
 
-      const pdfBuffer = await pdfService.downloadRepaymentSchedule(scheduleKey);
+      console.log('📥 Downloading pre-generated schedule PDF:', offer.schedulePdfKey);
+      const pdfBuffer = await pdfService.downloadRepaymentSchedule(offer.schedulePdfKey);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${offer.id}.pdf"`);
@@ -1868,84 +1774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Download repayment schedule PDF
-  app.get('/api/offers/:id/schedule/download', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { id } = req.params;
-      const offer = await storage.getOffer(id);
-      
-      if (!offer) {
-        return res.status(404).json({ message: 'Offer not found' });
-      }
 
-      // Authorization check - ensure user has access to this offer
-      const currentUserId = req.userId!;
-      const currentUser = await storage.getUser(currentUserId);
-      
-      const hasAccess = 
-        offer.fromUserId === currentUserId ||
-        offer.toUserId === currentUserId ||
-        (currentUser && offer.toUserPhone === currentUser.phone);
-      
-      if (!hasAccess) {
-        return res.status(403).json({ message: 'Unauthorized to access this schedule' });
-      }
-
-      let scheduleKey = offer.schedulePdfKey;
-
-      // If no schedule exists or file is missing, generate it
-      if (!scheduleKey || !await pdfService.scheduleExists(scheduleKey)) {
-        const offerId = offer.id || id; // Use route param if offer.id is missing
-        console.log(`Generating repayment schedule for offer ${offerId}, current scheduleKey: ${scheduleKey}`);
-        
-        const fromUser = await storage.getUser(offer.fromUserId);
-        if (!fromUser) {
-          return res.status(404).json({ message: 'User not found' });
-        }
-
-        console.log(`Found user for schedule generation: ${fromUser.name} (${fromUser.phone})`);
-        
-        try {
-          // Convert offer for PDF service compatibility
-          const offerForPdf = {
-            ...offer,
-            id: offerId, // Ensure ID is properly set
-            toUserId: offer.toUserId || null,
-            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
-            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
-            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
-            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
-            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
-              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
-          };
-          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, {
-            ...fromUser,
-            name: fromUser.name ?? undefined,
-            email: fromUser.email ?? undefined,
-            isVerified: fromUser.isVerified ?? undefined,
-            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
-            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
-          } as any);
-          console.log(`Generated repayment schedule with key: ${scheduleKey}`);
-          
-          await storage.updateOffer(offerId, { schedulePdfKey: scheduleKey });
-          console.log(`Updated offer ${offerId} with schedule key`);
-        } catch (genError) {
-          console.error('Repayment schedule generation failed:', genError);
-          return res.status(500).json({ message: 'Failed to generate repayment schedule' });
-        }
-      }
-
-      const pdfBuffer = await pdfService.downloadRepaymentSchedule(scheduleKey);
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${offer.id}.pdf"`);
-      res.send(pdfBuffer);
-    } catch (error) {
-      console.error('Repayment schedule download error:', error);
-      res.status(500).json({ message: 'Failed to generate or download repayment schedule' });
-    }
-  });
 
   // Lender can allow/disallow partial payments
   app.patch('/api/offers/:id/allow-partial-payment', authenticate, async (req: AuthenticatedRequest, res) => {
