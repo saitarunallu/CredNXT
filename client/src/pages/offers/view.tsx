@@ -436,12 +436,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     enabled: !!offerData?.offer
   }) as { data: any };
 
-  // Get current payment information
-  const { data: paymentInfoData } = useQuery({
-    queryKey: ['offer-payment-info', offerId],
-    queryFn: () => firebaseBackend.getOfferPaymentInfo(offerId),
-    enabled: !!offerData?.offer && offerData?.offer.status === 'accepted'
-  }) as { data: any };
+
 
   const {
     register,
@@ -1103,105 +1098,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
-            {/* Current Payment Information */}
-            {offer.status === 'accepted' && paymentInfoData && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Current Payment Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Current Installment Info */}
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-blue-800">Current Installment #{paymentInfoData.installmentNumber}</span>
-                        <Badge variant={paymentInfoData.isOverdue ? "destructive" : "default"}>
-                          {paymentInfoData.isOverdue ? "Overdue" : "Due"}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Amount Due:</span>
-                          <p className="font-semibold">₹{(paymentInfoData.expectedAmount || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Due Date:</span>
-                          <p className="font-semibold">{formatFirebaseDate(paymentInfoData.dueDate)}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Days {paymentInfoData.isOverdue ? 'Overdue' : 'Remaining'}:</span>
-                          <p className={`font-semibold ${paymentInfoData.isOverdue ? 'text-red-600' : 'text-green-600'}`}>
-                            {Math.abs(paymentInfoData.daysOverdue || paymentInfoData.daysRemaining)}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Remaining Balance:</span>
-                          <p className="font-semibold">₹{(paymentInfoData.remainingBalance || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Payment submission form for borrower */}
-                    {currentUser?.id === offer.toUserId && (
-                      <div className="p-4 border rounded-lg">
-                        <h4 className="font-medium mb-3">Submit Payment</h4>
-                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label htmlFor="amount">Amount *</Label>
-                              <Input
-                                id="amount"
-                                type="number"
-                                step="0.01"
-                                placeholder={paymentInfoData.expectedAmount?.toString()}
-                                {...register("amount")}
-                                data-testid="input-payment-amount"
-                              />
-                              {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
-                            </div>
-                            <div>
-                              <Label htmlFor="paymentMode">Payment Mode</Label>
-                              <Select onValueChange={(value) => setValue("paymentMode", value)}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select mode" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="upi">UPI</SelectItem>
-                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                  <SelectItem value="cash">Cash</SelectItem>
-                                  <SelectItem value="cheque">Cheque</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="refString">Reference/Transaction ID</Label>
-                            <Input
-                              id="refString"
-                              placeholder="Enter transaction ID or reference"
-                              {...register("refString")}
-                              data-testid="input-payment-ref"
-                            />
-                            {errors.refString && <p className="text-red-500 text-xs mt-1">{errors.refString.message}</p>}
-                          </div>
-                          <Button 
-                            type="submit" 
-                            className="w-full"
-                            disabled={submitPaymentMutation.isPending}
-                            data-testid="button-submit-payment"
-                          >
-                            {submitPaymentMutation.isPending ? "Submitting..." : "Submit Payment"}
-                          </Button>
-                        </form>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Enhanced Loan Analytics Card */}
             {offer.status === 'accepted' && scheduleData?.schedule && (
@@ -1305,32 +1202,33 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </Card>
             )}
 
-            {/* Next Payment Due Section - Only show when payment is actually due */}
-            {offer.status === 'accepted' && (dueAmount > 0.01 || overDueAmount > 0.01) && isReceiver && (
+            {/* Payment Management Section - Unified payment system */}
+            {offer.status === 'accepted' && isReceiver && (
               <Card className="border-2 border-blue-300 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
                   <CardTitle className="flex items-center text-blue-900">
                     <Calendar className="w-6 h-6 mr-2 text-blue-700" />
-                    Next Payment Due
+                    Payment Management
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <div className="bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 p-6 border-2 border-blue-300 rounded-lg m-4 shadow-sm">
-                    <div className="flex justify-between items-start mb-6">
+                <CardContent className="p-6 space-y-6">
+                  {/* Current Payment Status */}
+                  <div className="bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 p-6 rounded-lg border border-blue-200 shadow-sm">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
                         <div className="font-bold text-blue-900 text-xl mb-2">
-                          {offer.repaymentType === 'emi' ? 'EMI' : 'Installment'} Payment
+                          Current Loan Status
                         </div>
                         <p className="text-blue-700 font-medium">
-                          {overDueAmount > 0 ? 'Overdue + Due Amount' : 'Current Due Amount'}
+                          {outstanding > 0 ? (overDueAmount > 0 ? 'Payment Overdue' : 'Active Loan') : 'Loan Completed'}
                         </p>
                       </div>
                       <div className="text-right bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
-                        <div className="font-black text-blue-900 text-3xl">
+                        <div className="font-black text-blue-900 text-2xl">
                           ₹{(outstanding || 0).toLocaleString()}
                         </div>
                         <div className="text-sm text-blue-700 mt-1 font-medium">
-                          Principal Outstanding: ₹{(outstandingPrincipal || 0).toLocaleString()}
+                          Outstanding Balance
                         </div>
                         {overDueAmount > 0 && (
                           <div className="text-sm text-red-700 mt-2 font-bold bg-red-50 px-2 py-1 rounded border border-red-200">
@@ -1339,9 +1237,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Check if there's already a pending payment */}
-                    {payments.some((p: any) => p.status === 'pending') ? (
+                  </div>
+                  
+                  {/* Payment Action Section */}
+                  {outstanding > 0 && (
+                    payments.some((p: any) => p.status === 'pending') ? (
                       <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-5 rounded-xl border-2 border-yellow-300 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div>
@@ -1356,67 +1256,75 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         </div>
                       </div>
                     ) : (
-                      <Button 
-                        onClick={() => {
-                          // Calculate correct payment amount based on repayment type
-                          let paymentAmount;
-                          if (scheduleData?.schedule?.emiAmount) {
-                            // For EMI-based repayment types
-                            paymentAmount = scheduleData?.schedule?.emiAmount || 0;
-                          } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
-                            // For interest-only, find the next payment that is actually due or partially paid
-                            const today = new Date();
-                            let remainingPaid = totalPaid;
-                            
-                            const nextPayment = (scheduleData?.schedule?.schedule || []).find((p: any) => {
-                              const paidForThisPayment = Math.min(remainingPaid, p.totalAmount);
-                              const remainingForThisPayment = p.totalAmount - paidForThisPayment;
-                              const paymentDueDate = new Date(p.dueDate);
-                              const isDue = paymentDueDate <= today;
-                              const isPartiallyPaid = paidForThisPayment > 0.01;
-                              
-                              remainingPaid = Math.max(0, remainingPaid - paidForThisPayment);
-                              
-                              // Return this payment if it's due or partially paid
-                              return (isDue || isPartiallyPaid) && remainingForThisPayment > 0.01;
-                            });
-                            
-                            paymentAmount = nextPayment ? nextPayment.totalAmount : outstanding;
-                          } else {
-                            // Fallback for other repayment types
-                            paymentAmount = Math.min(outstanding, 10000);
-                          }
-                          handleDirectPayment(paymentAmount);
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-lg"
-                        disabled={submitPaymentMutation.isPending}
-                      >
-                        {submitPaymentMutation.isPending ? (
-                          <div className="flex items-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                            Processing Payment...
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-gray-900 text-lg">Make Payment</h4>
+                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="amount">Payment Amount *</Label>
+                              <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                placeholder={(() => {
+                                  // Calculate suggested amount
+                                  if (scheduleData?.schedule?.emiAmount) {
+                                    return scheduleData.schedule.emiAmount.toString();
+                                  } else if (dueAmount > 0) {
+                                    return dueAmount.toString();
+                                  } else {
+                                    return outstanding.toString();
+                                  }
+                                })()}
+                                {...register("amount")}
+                                data-testid="input-payment-amount"
+                              />
+                              {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+                            </div>
+                            <div>
+                              <Label htmlFor="paymentMode">Payment Mode *</Label>
+                              <Select onValueChange={(value) => setValue("paymentMode", value)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select payment method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="upi">UPI</SelectItem>
+                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="cheque">Cheque</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                        ) : (
-                          (() => {
-                            // Calculate display amount using the same logic
-                            let displayAmount;
-                            if (scheduleData?.schedule?.emiAmount) {
-                              displayAmount = scheduleData?.schedule?.emiAmount || 0;
-                            } else if (offer.repaymentType === 'interest_only' && scheduleData?.schedule?.schedule?.length > 0) {
-                              const nextPayment = (scheduleData?.schedule?.schedule || []).find((p: any) => {
-                                const totalPaidForPayment = Math.min(totalPaid, p.totalAmount);
-                                return (p.totalAmount - totalPaidForPayment) > 0.01;
-                              });
-                              displayAmount = nextPayment ? nextPayment.totalAmount : outstanding;
-                            } else {
-                              displayAmount = Math.min(outstanding, 10000);
-                            }
-                            return `Pay ₹${(displayAmount || 0).toLocaleString()}`;
-                          })()
-                        )}
-                      </Button>
-                    )}
-                  </div>
+                          <div>
+                            <Label htmlFor="refString">Reference/Transaction ID</Label>
+                            <Input
+                              id="refString"
+                              placeholder="Enter transaction ID or reference number"
+                              {...register("refString")}
+                              data-testid="input-payment-ref"
+                            />
+                            {errors.refString && <p className="text-red-500 text-xs mt-1">{errors.refString.message}</p>}
+                          </div>
+                          <Button 
+                            type="submit" 
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg"
+                            disabled={submitPaymentMutation.isPending}
+                            data-testid="button-submit-payment"
+                          >
+                            {submitPaymentMutation.isPending ? (
+                              <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                                Processing Payment...
+                              </div>
+                            ) : (
+                              'Submit Payment'
+                            )}
+                          </Button>
+                        </form>
+                      </div>
+                    )
+                  )}
                 </CardContent>
               </Card>
             )}
