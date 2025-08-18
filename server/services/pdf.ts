@@ -83,7 +83,7 @@ export class PdfService {
         doc.fontSize(12).font('Helvetica');
         doc.text(`Principal Amount: ₹${offer.amount.toLocaleString()}`);
         doc.text(`Interest Rate: ${offer.interestRate}% per annum`);
-        doc.text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`);
+        doc.text(`Tenure: ${(offer as any).tenure || offer.tenureValue || 12} ${offer.tenureUnit}`);
         doc.text(`Repayment Type: ${offer.repaymentType}`);
         
         if (offer.repaymentFrequency) {
@@ -342,7 +342,7 @@ export class PdfService {
         currentY += rowHeight;
 
         // Row 3
-        doc.text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`, col1X, currentY);
+        doc.text(`Tenure: ${(offer as any).tenure || offer.tenureValue || 12} ${offer.tenureUnit}`, col1X, currentY);
         doc.text(`Total Interest: ₹${schedule.totalInterest.toLocaleString()}`, col2X, currentY);
         doc.text(`Repayment Type: ${offer.repaymentType.replace('_', ' ')}`, col3X, currentY);
         currentY += rowHeight;
@@ -403,7 +403,7 @@ export class PdfService {
           principal: parseFloat(String(offer.amount)),
           interestRate: parseFloat(String(offer.interestRate)),
           interestType: offer.interestType as 'fixed' | 'reducing',
-          tenureValue: offer.tenureValue,
+          tenureValue: (offer as any).tenure || offer.tenureValue || 12,
           tenureUnit: offer.tenureUnit as 'months' | 'years',
           repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
           repaymentFrequency: offer.repaymentFrequency || undefined,
@@ -421,7 +421,7 @@ export class PdfService {
 
         // Calculate APR (approximate)
         const annualRate = parseFloat(String(offer.interestRate));
-        const tenureInMonths = this.getTenureInMonths(offer.tenureValue, offer.tenureUnit);
+        const tenureInMonths = this.getTenureInMonths((offer as any).tenure || offer.tenureValue || 12, offer.tenureUnit);
         const processingFee = Math.min(principal * 0.04, 100); // 4% or ₹100 max
         const gst = processingFee * 0.18; // 18% GST
         const totalFees = processingFee + gst;
@@ -502,7 +502,7 @@ export class PdfService {
     // Row 5: Loan term
     doc.text('5', leftCol, y);
     doc.text('Loan term (in months)', leftCol + 20, y);
-    doc.text(this.getTenureInMonths(offer.tenureValue, offer.tenureUnit).toString(), rightCol, y);
+    doc.text(this.getTenureInMonths((offer as any).tenure || offer.tenureValue || 12, offer.tenureUnit).toString(), rightCol, y);
     y += 20;
 
     // Row 6: Instalment details
