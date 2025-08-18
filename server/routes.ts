@@ -1583,6 +1583,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download repayment schedule PDF - alias route for compatibility
+  app.get('/api/offers/:id/pdf/schedule', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      let scheduleKey = offer.schedulePdfKey;
+
+      // If no schedule exists or file is missing, generate it
+      if (!scheduleKey || !await pdfService.scheduleExists(scheduleKey)) {
+        console.log(`Generating repayment schedule for offer ${offer.id}, current scheduleKey: ${scheduleKey}`);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log(`Found user for schedule generation: ${fromUser.name} (${fromUser.phone})`);
+        
+        try {
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          scheduleKey = await pdfService.generateRepaymentSchedule(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
+          console.log(`Generated repayment schedule with key: ${scheduleKey}`);
+          
+          await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
+          console.log(`Updated offer with schedule key`);
+        } catch (genError) {
+          console.error('Repayment schedule generation failed:', genError);
+          return res.status(500).json({ message: 'Failed to generate repayment schedule' });
+        }
+      }
+
+      const pdfBuffer = await pdfService.downloadRepaymentSchedule(scheduleKey);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${offer.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Repayment schedule download error:', error);
+      res.status(500).json({ message: 'Failed to generate or download repayment schedule' });
+    }
+  });
+
   // Download repayment schedule PDF
   app.get('/api/offers/:id/schedule/download', authenticate, async (req: AuthenticatedRequest, res) => {
     try {

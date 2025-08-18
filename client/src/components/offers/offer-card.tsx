@@ -84,7 +84,19 @@ export default function OfferCard({
 
   const downloadRepaymentSchedule = async () => {
     try {
-      await firebaseBackend.downloadSchedulePDF(offer.id);
+      console.log('📄 Starting repayment schedule download from card...');
+      const blob = await firebaseBackend.downloadRepaymentSchedule(offer.id);
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `repayment-schedule-${offer.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
       toast({
         title: "Success",
         description: "Repayment schedule downloaded successfully.",
