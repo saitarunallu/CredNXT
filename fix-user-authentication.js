@@ -1,4 +1,4 @@
-// Fix user authentication by updating existing users or creating test accounts
+// Direct fix for user authentication issue
 import admin from 'firebase-admin';
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
@@ -9,66 +9,71 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-async function fixUserAuth() {
+async function fixUserAuthentication() {
   try {
-    console.log('🔧 Fixing user authentication issues...');
+    console.log('🔧 Analyzing user authentication issue...');
     
-    // Get all existing users from Firestore
-    const usersSnapshot = await db.collection('users').get();
-    console.log(`Found ${usersSnapshot.size} users in Firestore`);
+    const targetUserId = 'xt8OK1z2PifGrAkeDA2OUVjSlLW2';
+    const targetPhone = '+919676561932';
     
-    const firebaseUsers = [];
-    
-    // List all Firebase Auth users
-    const listUsersResult = await admin.auth().listUsers();
-    console.log(`Found ${listUsersResult.users.length} users in Firebase Auth`);
-    
-    listUsersResult.users.forEach(userRecord => {
-      firebaseUsers.push({
-        uid: userRecord.uid,
-        phone: userRecord.phoneNumber,
-        email: userRecord.email
+    // Get user data from Firestore
+    const userDoc = await db.collection('users').doc(targetUserId).get();
+    if (userDoc.exists) {
+      console.log('👤 User data:', userDoc.data());
+    } else {
+      console.log('❌ User document not found, creating it...');
+      
+      await db.collection('users').doc(targetUserId).set({
+        name: 'Sai Tarun Allu',
+        phone: targetPhone,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        isActive: true
       });
-      console.log(`Auth user: ${userRecord.uid}, phone: ${userRecord.phoneNumber}`);
+      
+      console.log('✅ User document created');
+    }
+    
+    // Get all offers for this user
+    const offersSnapshot = await db.collection('offers').get();
+    const allOffers = offersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    console.log(`📊 Total offers: ${allOffers.length}`);
+    
+    // Find matching offers
+    const userOffers = allOffers.filter(offer => {
+      return offer.fromUserId === targetUserId || 
+             offer.toUserId === targetUserId ||
+             offer.toUserPhone === '9676561932' ||  // Phone without +91
+             offer.toUserPhone === targetPhone;
     });
     
-    // Check if Firestore users match Auth users
-    const firestoreUsers = [];
-    usersSnapshot.docs.forEach(doc => {
-      const userData = doc.data();
-      firestoreUsers.push({
-        id: doc.id,
-        name: userData.name,
-        phone: userData.phone,
-        email: userData.email
-      });
-      console.log(`Firestore user: ${doc.id}, name: ${userData.name}, phone: ${userData.phone}`);
+    console.log(`🎯 User's offers: ${userOffers.length}`);
+    
+    userOffers.forEach(offer => {
+      console.log(`- ${offer.id}: from ${offer.fromUserId} to ${offer.toUserId || offer.toUserPhone} (${offer.status})`);
     });
     
-    // Create Firebase Auth users for existing Firestore users if they don't exist
-    for (const firestoreUser of firestoreUsers) {
-      const authUser = firebaseUsers.find(u => u.uid === firestoreUser.id);
-      if (!authUser && firestoreUser.phone) {
-        try {
-          console.log(`Creating Auth user for: ${firestoreUser.id} (${firestoreUser.phone})`);
-          await admin.auth().createUser({
-            uid: firestoreUser.id,
-            phoneNumber: firestoreUser.phone,
-            email: firestoreUser.email || undefined,
-            displayName: firestoreUser.name || undefined
-          });
-          console.log(`✅ Created Auth user: ${firestoreUser.id}`);
-        } catch (error) {
-          console.log(`⚠️ Could not create Auth user for ${firestoreUser.id}:`, error.message);
-        }
+    // Update offers to ensure proper toUserId mapping if needed
+    for (const offer of userOffers) {
+      if (offer.toUserPhone === '9676561932' && !offer.toUserId) {
+        console.log(`🔧 Updating offer ${offer.id} to set toUserId`);
+        
+        await db.collection('offers').doc(offer.id).update({
+          toUserId: targetUserId
+        });
+        
+        console.log(`✅ Updated offer ${offer.id}`);
       }
     }
     
-    console.log('✅ User authentication fix completed');
+    console.log('🎉 Authentication fix complete');
     
   } catch (error) {
-    console.error('❌ Error fixing user auth:', error);
+    console.error('❌ Fix error:', error);
   }
 }
 
-fixUserAuth();
+fixUserAuthentication();
