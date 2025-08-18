@@ -60,6 +60,7 @@ export default function OffersPage() {
           const knownUserIds = ['OXryhvycCzXImCJGGyZXCk89yaY2', 'bVWBKaib0IbS3VSkLKoSeOQ4YY03', 'xt8OK1z2PifGrAkeDA2OUVjSlLW2'];
           console.log('🔍 Known production user IDs:', knownUserIds);
           console.log('🔍 Current user matches known ID:', knownUserIds.includes(currentUser.id));
+          console.log('🔍 Current user full details:', JSON.stringify(currentUser, null, 2));
           
           // In production, temporarily show sample data if no user-specific offers found
           let shouldShowSampleData = false;
@@ -148,8 +149,82 @@ export default function OffersPage() {
             userPhone: currentUser.phone
           });
           
-          // If no offers found and we're in production, show sample data temporarily
-          if (sentOffers.length === 0 && receivedOffers.length === 0 && window.location.hostname.includes('web.app')) {
+          // Always show actual offers if user matches known production accounts
+          const isKnownUser = knownUserIds.includes(currentUser.id);
+          console.log('🔍 Is known user:', isKnownUser);
+          
+          // If no user-specific offers found, check if user ID matches production accounts
+          if ((sentOffers.length === 0 && receivedOffers.length === 0) && window.location.hostname.includes('web.app')) {
+            if (isKnownUser) {
+              console.log('🔧 Known user with no offers, trying alternative queries');
+              
+              // For known users, try all possible queries
+              const allOffersQuery = query(collection(db, 'offers'));
+              const allOffersSnapshot = await getDocs(allOffersQuery);
+              const allOffers = allOffersSnapshot.docs.map(doc => ({
+                id: doc.id, 
+                ...doc.data()
+              }));
+              
+              // Find offers for this specific user by any means
+              const phoneVariants = currentUser.phone ? [
+                currentUser.phone,
+                currentUser.phone.replace(/^\+91/, ''),
+                currentUser.phone.replace(/\D/g, ''),
+                `+91${currentUser.phone.replace(/\D/g, '')}`
+              ] : [];
+              
+              console.log('📱 Phone variants to check:', phoneVariants);
+              
+              const userOffers = allOffers.filter(offer => {
+                const matchesFromUser = offer.fromUserId === currentUser.id;
+                const matchesToUser = offer.toUserId === currentUser.id;
+                const matchesToPhone = phoneVariants.some(variant => 
+                  offer.toUserPhone === variant || 
+                  offer.toUserPhone === variant.replace(/^\+91/, '') ||
+                  offer.toUserPhone === variant.replace(/\D/g, '') ||
+                  `+91${offer.toUserPhone}` === variant
+                );
+                
+                const isMatch = matchesFromUser || matchesToUser || matchesToPhone;
+                
+                if (isMatch) {
+                  console.log(`✅ Matched offer ${offer.id}:`, {
+                    fromUserId: offer.fromUserId,
+                    toUserId: offer.toUserId,
+                    toUserPhone: offer.toUserPhone,
+                    matchesFromUser,
+                    matchesToUser,
+                    matchesToPhone,
+                    status: offer.status
+                  });
+                }
+                
+                return isMatch;
+              });
+              
+              const userSentOffers = userOffers.filter(offer => offer.fromUserId === currentUser.id);
+              const userReceivedOffers = userOffers.filter(offer => 
+                offer.toUserId === currentUser.id || 
+                (currentUser.phone && [
+                  currentUser.phone,
+                  currentUser.phone.replace(/^\+91/, ''),
+                  currentUser.phone.replace(/\D/g, ''),
+                  `+91${currentUser.phone.replace(/\D/g, '')}`
+                ].includes(offer.toUserPhone))
+              );
+              
+              console.log(`🎯 Found ${userOffers.length} offers for known user ${currentUser.id}`);
+              console.log(`📤 User sent offers: ${userSentOffers.length}`);
+              console.log(`📥 User received offers: ${userReceivedOffers.length}`);
+              
+              if (userOffers.length > 0) {
+                return { 
+                  sentOffers: userSentOffers.map(convertFirebaseTimestamps), 
+                  receivedOffers: userReceivedOffers.map(convertFirebaseTimestamps)
+                };
+              }
+            }
             console.log('🔧 No user-specific offers found in production, querying all offers for demo');
             
             // Get all offers as sample data
