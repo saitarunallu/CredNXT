@@ -191,6 +191,9 @@ class FirebaseBackendService {
       
       const token = await getAuthToken();
       if (!token) {
+        console.error('❌ No authentication token available');
+        console.log('🔐 Auth current user:', !!auth?.currentUser);
+        console.log('🔐 Auth state:', auth?.currentUser ? 'logged in' : 'not logged in');
         throw new Error('Authentication required. Please log in again.');
       }
       
@@ -200,23 +203,32 @@ class FirebaseBackendService {
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
       console.log('🔑 Token available:', !!token);
+      console.log('🔑 Token preview:', token.substring(0, 20) + '...');
       console.log('🌐 Current hostname:', window.location.hostname);
+      console.log('🔐 User ID:', auth?.currentUser?.uid);
+      console.log('🔐 User email:', auth?.currentUser?.email);
       
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/pdf'
+          'Accept': 'application/pdf',
+          'Origin': window.location.origin
         }
       });
+
+      console.log('📡 PDF API Response status:', response.status);
+      console.log('📡 PDF API Response headers:', response.headers.get('content-type'));
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}`;
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
+          console.error('📡 PDF API Error JSON:', errorData);
         } catch {
           errorMessage = await response.text() || errorMessage;
+          console.error('📡 PDF API Error text:', errorMessage);
         }
         console.error('PDF download error response:', errorMessage);
         throw new Error(`Failed to download contract: ${errorMessage}`);
