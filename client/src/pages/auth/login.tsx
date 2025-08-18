@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +15,11 @@ import { Shield, IndianRupee } from "lucide-react";
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Clear any pending auth data when landing on login page
+  useEffect(() => {
+    localStorage.removeItem('pending_phone');
+  }, []);
 
   const {
     register,
@@ -48,8 +53,9 @@ export default function Login() {
     mutationFn: (data: LoginRequest) => firebaseAuthService.sendOTP(data.phone),
     onSuccess: (result) => {
       if (result.success) {
-        const phone = document.querySelector<HTMLInputElement>('input[name="phone"]')?.value;
-        localStorage.setItem('pending_phone', phone || '');
+        // Use the cleaned phone number from form data instead of DOM query
+        const phoneInput = phoneValue?.replace(/\D/g, '') || '';
+        localStorage.setItem('pending_phone', phoneInput);
         setLocation('/verify-otp');
         toast({
           title: "OTP Sent",
@@ -76,7 +82,12 @@ export default function Login() {
     if (process.env.NODE_ENV === 'development') {
       console.log('Form submitted with phone:', data.phone);
     }
-    loginMutation.mutate(data);
+    
+    // Clean phone number before sending (ensure only digits)
+    const cleanedPhone = data.phone.replace(/\D/g, '');
+    const cleanedData = { ...data, phone: cleanedPhone };
+    
+    loginMutation.mutate(cleanedData);
   };
 
   return (

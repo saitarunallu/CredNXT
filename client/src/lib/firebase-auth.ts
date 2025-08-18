@@ -75,7 +75,11 @@ export class FirebaseAuthService {
       // Store phone number for verification step
       localStorage.setItem('pending_phone', cleanPhone);
       
-      // Send OTP
+      // Send OTP - check if auth is available
+      if (!auth) {
+        return { success: false, error: 'Authentication service not available. Please refresh the page and try again.' };
+      }
+      
       this.confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, freshRecaptcha);
       
       console.log('OTP sent successfully');
@@ -101,21 +105,35 @@ export class FirebaseAuthService {
       if (error.code === 'auth/too-many-requests') {
         return { 
           success: false, 
-          error: 'Too many SMS requests. Please wait before requesting another OTP.' 
+          error: 'Too many SMS requests. Please wait a few minutes before requesting another OTP.' 
         };
       }
       
       if (error.code === 'auth/app-not-authorized') {
         return { 
           success: false, 
-          error: 'Domain not authorized. Please contact administrator.' 
+          error: 'This domain is not authorized. Please contact support or try again later.' 
         };
       }
       
-      if (error.message?.includes('reCAPTCHA')) {
+      if (error.code === 'auth/quota-exceeded') {
+        return { 
+          success: false, 
+          error: 'SMS quota exceeded. Please try again later or contact support.' 
+        };
+      }
+      
+      if (error.message?.includes('reCAPTCHA') || error.code === 'auth/captcha-check-failed') {
         return { 
           success: false, 
           error: 'Security verification failed. Please refresh the page and try again.' 
+        };
+      }
+      
+      if (error.code === 'auth/missing-app-credential') {
+        return { 
+          success: false, 
+          error: 'Authentication configuration error. Please contact support.' 
         };
       }
       
@@ -137,6 +155,10 @@ export class FirebaseAuthService {
       const firebaseUser = result.user;
 
       // Check if user exists in Firestore
+      if (!db) {
+        return { success: false, error: 'Database service not available. Please refresh the page and try again.' };
+      }
+      
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       
       if (userDoc.exists()) {
@@ -158,19 +180,58 @@ export class FirebaseAuthService {
         await this.setUser(newUser);
         return { success: true, user: newUser, needsProfile: true };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying OTP:', error);
+      
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/invalid-verification-code') {
+        return { 
+          success: false, 
+          error: 'Invalid OTP code. Please check the code and try again.' 
+        };
+      }
+      
+      if (error.code === 'auth/code-expired') {
+        return { 
+          success: false, 
+          error: 'OTP code has expired. Please request a new code.' 
+        };
+      }
+      
+      if (error.code === 'auth/session-expired') {
+        return { 
+          success: false, 
+          error: 'Verification session expired. Please start over.' 
+        };
+      }
+      
+      if (error.code === 'auth/too-many-requests') {
+        return { 
+          success: false, 
+          error: 'Too many failed attempts. Please wait before trying again.' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Failed to verify OTP' 
+        error: 'Failed to verify OTP. Please check the code and try again.' 
       };
     }
   }
 
   async completeProfile(name: string, email: string): Promise<{ success: boolean; error?: string }> {
     try {
-      if (!auth.currentUser || !this.user) {
-        return { success: false, error: 'User not authenticated' };
+      if (!auth || !auth.currentUser || !this.user) {
+        return { success: false, error: 'User not authenticated. Please log in again.' };
+      }
+      
+      if (!db) {
+        return { success: false, error: 'Database service not available. Please refresh the page and try again.' };
+      }
+      
+      // Validate name
+      if (!name || name.trim().length < 2) {
+        return { success: false, error: 'Please provide a valid name (at least 2 characters).' };
       }
 
       // Ensure name and email are stored as strings, not objects
@@ -210,6 +271,8 @@ export class FirebaseAuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
+    if (!auth || !db) return null;
+    
     const firebaseUser = auth.currentUser;
     if (!firebaseUser) return null;
 
@@ -295,6 +358,8 @@ export class FirebaseAuthService {
   }
 
   async refreshToken() {
+    if (!auth) return null;
+    
     const firebaseUser = auth.currentUser;
     if (firebaseUser) {
       try {
@@ -319,7 +384,9 @@ export class FirebaseAuthService {
     localStorage.removeItem('pending_phone');
     
     try {
-      await auth.signOut();
+      if (auth) {
+        await auth.signOut();
+      }
     } catch (error) {
       console.error('Error during Firebase logout:', error);
       // Don't re-throw to prevent unhandled rejections
@@ -327,7 +394,7 @@ export class FirebaseAuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!auth.currentUser;
+    return !!(auth && auth.currentUser);
   }
 
   requiresProfile(): boolean {
