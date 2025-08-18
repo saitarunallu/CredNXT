@@ -640,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate PDF contract (skip for now if service not available)
       try {
         const pdfKey = await pdfService.generateContract(offer as any, fromUser as any);
-        await storage.updateOffer(offer.id, { contractPdfKey: pdfKey });
+        await storage.updateOffer(offerId, { contractPdfKey: pdfKey });
       } catch (error) {
         console.warn('PDF generation failed, continuing without contract PDF:', error);
       }
@@ -804,6 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert Firebase Timestamp to compatible format for repayment service
           const offerForRepayment = {
             ...offer,
+            id: offerId, // Ensure ID is properly set
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
             startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
@@ -1391,6 +1392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1409,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated contract with key: ${contractKey}`);
           
-          await storage.updateOffer(offer.id, { contractPdfKey: contractKey });
+          await storage.updateOffer(offerId, { contractPdfKey: contractKey });
           console.log(`Updated offer with contract key`);
         } catch (genError) {
           console.error('Contract generation failed:', genError);
@@ -1455,6 +1457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1473,7 +1476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated KFS with key: ${kfsKey}`);
           
-          await storage.updateOffer(offer.id, { kfsPdfKey: kfsKey });
+          await storage.updateOffer(offerId, { kfsPdfKey: kfsKey });
           console.log(`Updated offer with KFS key`);
         } catch (genError) {
           console.error('KFS generation failed:', genError);
@@ -1644,7 +1647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If no schedule exists or file is missing, generate it
       if (!scheduleKey || !await pdfService.scheduleExists(scheduleKey)) {
-        console.log(`Generating repayment schedule for offer ${offer.id}, current scheduleKey: ${scheduleKey}`);
+        const offerId = offer.id || id; // Use route param if offer.id is missing
+        console.log(`Generating repayment schedule for offer ${offerId}, current scheduleKey: ${scheduleKey}`);
         
         const fromUser = await storage.getUser(offer.fromUserId);
         if (!fromUser) {
@@ -1657,6 +1661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1675,8 +1680,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated repayment schedule with key: ${scheduleKey}`);
           
-          await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
-          console.log(`Updated offer with schedule key`);
+          await storage.updateOffer(offerId, { schedulePdfKey: scheduleKey });
+          console.log(`Updated offer ${offerId} with schedule key`);
         } catch (genError) {
           console.error('Repayment schedule generation failed:', genError);
           return res.status(500).json({ message: 'Failed to generate repayment schedule' });
@@ -1721,7 +1726,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If no schedule exists or file is missing, generate it
       if (!scheduleKey || !await pdfService.scheduleExists(scheduleKey)) {
-        console.log(`Generating repayment schedule for offer ${offer.id}, current scheduleKey: ${scheduleKey}`);
+        const offerId = offer.id || id; // Use route param if offer.id is missing
+        console.log(`Generating repayment schedule for offer ${offerId}, current scheduleKey: ${scheduleKey}`);
         
         const fromUser = await storage.getUser(offer.fromUserId);
         if (!fromUser) {
@@ -1734,6 +1740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1752,8 +1759,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated repayment schedule with key: ${scheduleKey}`);
           
-          await storage.updateOffer(offer.id, { schedulePdfKey: scheduleKey });
-          console.log(`Updated offer with schedule key`);
+          await storage.updateOffer(offerId, { schedulePdfKey: scheduleKey });
+          console.log(`Updated offer ${offerId} with schedule key`);
         } catch (genError) {
           console.error('Repayment schedule generation failed:', genError);
           return res.status(500).json({ message: 'Failed to generate repayment schedule' });
