@@ -829,14 +829,38 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
   
-  // Enhanced role-based authorization checks
-  const canViewOffer = isReceiver || isSender || currentUser?.phone === offer.toUserPhone;
+  // Enhanced role-based authorization checks - with phone number normalization
+  const normalizePhone = (phone: string | undefined) => {
+    if (!phone) return '';
+    return phone.replace(/^\+91/, '').replace(/\D/g, '');
+  };
+  
+  const phoneMatch = normalizePhone(currentUser?.phone) === normalizePhone(offer.toUserPhone);
+  const canViewOffer = isReceiver || isSender || phoneMatch;
   const canAcceptOffer = isReceiver && offer.status === 'pending';
   const canRejectOffer = isReceiver && offer.status === 'pending';
   const canSubmitPayment = isReceiver && offer.status === 'accepted';
   const canApprovePayment = isSender && offer.status === 'accepted';
   const canCloseLoan = isSender && offer.status === 'accepted';
   const canDownloadDocuments = canViewOffer && offer.status === 'accepted';
+
+  // Debug authorization
+  console.log('🔐 View Offer Authorization Debug:', {
+    offerId,
+    currentUserId: currentUser?.id,
+    currentUserPhone: currentUser?.phone,
+    normalizedCurrentPhone: normalizePhone(currentUser?.phone),
+    offerToUserId: offer.toUserId,
+    offerFromUserId: offer.fromUserId,
+    offerToUserPhone: offer.toUserPhone,
+    normalizedOfferPhone: normalizePhone(offer.toUserPhone),
+    isReceiver,
+    isSender,
+    phoneMatch,
+    canViewOffer,
+    canAcceptOffer,
+    offerStatus: offer.status
+  });
 
   // Security check - if user is not authorized to view this offer, redirect
   if (!canViewOffer && currentUser) {
