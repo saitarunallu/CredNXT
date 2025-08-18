@@ -361,49 +361,44 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     if (!timestamp) return 'N/A';
     
     try {
-      // Handle Firebase Timestamp objects
+      let date: Date;
+      
+      // Handle Firebase Timestamp objects with _seconds
       if (timestamp._seconds !== undefined) {
-        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
-        return date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
+        date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
       }
-      
       // Handle Firestore toDate() method
-      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
+      else if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
       }
-      
       // Handle Date objects
-      if (timestamp instanceof Date) {
-        return timestamp.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
+      else if (timestamp instanceof Date) {
+        date = timestamp;
+      }
+      // Handle ISO strings and epoch timestamps
+      else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+        date = new Date(timestamp);
+      }
+      // Fallback - try to convert whatever it is
+      else {
+        console.warn('Unexpected timestamp format:', typeof timestamp, timestamp);
+        date = new Date(timestamp);
       }
       
-      // Handle ISO strings
-      if (typeof timestamp === 'string') {
-        const date = new Date(timestamp);
-        if (!isNaN(date.getTime())) {
-          return date.toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-          });
-        }
+      // Validate the date
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date detected:', timestamp);
+        return 'Invalid Date';
       }
       
-      return 'Invalid Date';
+      return date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      
     } catch (error) {
-      console.error('Date formatting error:', error);
+      console.error('Date formatting error:', error, 'for timestamp:', timestamp);
       return 'Invalid Date';
     }
   };
@@ -930,10 +925,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   <div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600 mb-1">
                       <IndianRupee className="w-4 h-4" />
-                      <span>Amount</span>
+                      <span>Loan Amount</span>
                     </div>
-                    <div className="font-semibold text-2xl text-navy-600">
-                      ₹{(amount || 0).toLocaleString()}
+                    <div className="font-semibold text-2xl text-blue-600">
+                      ₹{(amount || 0).toLocaleString('en-IN')}
                     </div>
                   </div>
                 </div>
@@ -941,7 +936,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Interest Rate</div>
-                    <div className="font-semibold">{offer.interestRate}% ({offer.interestType})</div>
+                    <div className="font-semibold">{offer.interestRate}% per annum ({offer.interestType})</div>
                   </div>
                   
                   <div>
@@ -958,6 +953,34 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   </div>
                 </div>
 
+                {/* Additional Financial Information */}
+                {scheduleData?.schedule && (
+                  <div className="grid md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 mb-1">Total Interest</div>
+                      <div className="font-bold text-lg text-red-600">
+                        ₹{(scheduleData?.schedule?.totalInterest || 0).toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 mb-1">Total Repayment</div>
+                      <div className="font-bold text-lg text-green-600">
+                        ₹{(scheduleData?.schedule?.totalAmount || 0).toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    
+                    {scheduleData?.schedule?.emiAmount && (
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-1">EMI Amount</div>
+                        <div className="font-bold text-lg text-blue-600">
+                          ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Tenure</div>
@@ -966,7 +989,12 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   
                   <div>
                     <div className="text-sm text-gray-600 mb-1">Repayment Type</div>
-                    <div className="font-semibold">{offer.repaymentType.replace('_', ' ')}</div>
+                    <div className="font-semibold">
+                      {offer.repaymentType === 'emi' ? 'Equal Monthly Installments (EMI)' :
+                       offer.repaymentType === 'full_payment' ? 'Lump Sum Payment' :
+                       offer.repaymentType === 'interest_only' ? 'Interest Only Payments' :
+                       offer.repaymentType.replace('_', ' ').toUpperCase()}
+                    </div>
                   </div>
                 </div>
 
@@ -1038,24 +1066,24 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     {/* Summary */}
                     <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
                       <div className="border-r border-blue-200 pr-4">
-                        <div className="text-sm text-gray-600 font-medium mb-1">Total Amount</div>
-                        <div className="font-bold text-xl text-gray-900">₹{(scheduleData?.schedule?.totalAmount || 0).toLocaleString()}</div>
+                        <div className="text-sm text-gray-600 font-medium mb-1">Principal Amount</div>
+                        <div className="font-bold text-xl text-blue-700">₹{(scheduleData?.schedule?.principal || amount || 0).toLocaleString('en-IN')}</div>
                       </div>
                       <div className="pl-4">
                         <div className="text-sm text-gray-600 font-medium mb-1">Total Interest</div>
-                        <div className="font-bold text-xl text-green-700">₹{(scheduleData?.schedule?.totalInterest || 0).toLocaleString()}</div>
+                        <div className="font-bold text-xl text-red-600">₹{(scheduleData?.schedule?.totalInterest || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="border-r border-blue-200 pr-4 pt-4 border-t border-blue-200">
+                        <div className="text-sm text-gray-600 font-medium mb-1">Total Repayment</div>
+                        <div className="font-bold text-xl text-green-700">₹{(scheduleData?.schedule?.totalAmount || 0).toLocaleString('en-IN')}</div>
                       </div>
                       {scheduleData?.schedule?.emiAmount && (
-                        <>
-                          <div className="border-r border-blue-200 pr-4 pt-4 border-t border-blue-200">
-                            <div className="text-sm text-gray-600 font-medium mb-1">EMI Amount</div>
-                            <div className="font-bold text-xl text-blue-700">₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString()}</div>
+                        <div className="pl-4 pt-4 border-t border-blue-200">
+                          <div className="text-sm text-gray-600 font-medium mb-1">
+                            {offer.repaymentType === 'emi' ? 'EMI Amount' : 'Payment Amount'}
                           </div>
-                          <div className="pl-4 pt-4 border-t border-blue-200">
-                            <div className="text-sm text-gray-600 font-medium mb-1">Number of EMIs</div>
-                            <div className="font-bold text-xl text-gray-900">{scheduleData?.schedule?.numberOfPayments || 0}</div>
-                          </div>
-                        </>
+                          <div className="font-bold text-xl text-purple-700">₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}</div>
+                        </div>
                       )}
                     </div>
 
@@ -1067,15 +1095,23 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           {(scheduleData?.schedule?.schedule || []).map((installment: any, index: number) => (
                             <div key={index} className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                               <div>
-                                <div className="font-semibold text-gray-800">EMI #{installment.installmentNumber}</div>
+                                <div className="font-semibold text-gray-800">
+                                  {offer.repaymentType === 'emi' ? `EMI #${installment.installmentNumber}` : `Payment #${installment.installmentNumber}`}
+                                </div>
                                 <div className="text-sm text-gray-600 mt-1">
                                   Due: {formatFirebaseDate(installment.dueDate)}
                                 </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Balance: ₹{(installment.remainingBalance || 0).toLocaleString('en-IN')}
+                                </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-bold text-lg text-gray-900">₹{(installment.totalAmount || 0).toLocaleString()}</div>
+                                <div className="font-bold text-lg text-gray-900">₹{(installment.totalAmount || 0).toLocaleString('en-IN')}</div>
                                 <div className="text-xs text-gray-600 mt-1">
-                                  Principal: ₹{(installment.principalAmount || 0).toLocaleString()} | Interest: ₹{(installment.interestAmount || 0).toLocaleString()}
+                                  Principal: ₹{(installment.principalAmount || 0).toLocaleString('en-IN')}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Interest: ₹{(installment.interestAmount || 0).toLocaleString('en-IN')}
                                 </div>
                               </div>
                             </div>
@@ -1088,9 +1124,40 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     {offer.repaymentType === 'emi' && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length > 12 && (
                       <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                         <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
-                        <p className="text-gray-800 font-semibold text-lg">
-                          {scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString()} each
+                        <p className="text-gray-800 font-semibold text-lg mb-2">
+                          {scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} each
                         </p>
+                        <p className="text-sm text-gray-600">
+                          Download the detailed schedule for complete payment breakdown
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Full payment display */}
+                    {offer.repaymentType === 'full_payment' && scheduleData?.schedule?.schedule && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800 text-lg">Payment Details</h4>
+                        <div className="border border-gray-200 rounded-lg">
+                          {scheduleData.schedule.schedule.map((payment: any, index: number) => (
+                            <div key={index} className="flex justify-between items-center p-4 hover:bg-gray-50 transition-colors">
+                              <div>
+                                <div className="font-semibold text-gray-800">Lump Sum Payment</div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  Due: {formatFirebaseDate(payment.dueDate)}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-lg text-gray-900">₹{(payment.totalAmount || 0).toLocaleString('en-IN')}</div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Principal: ₹{(payment.principalAmount || 0).toLocaleString('en-IN')}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Interest: ₹{(payment.interestAmount || 0).toLocaleString('en-IN')}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
