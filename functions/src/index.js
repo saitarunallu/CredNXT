@@ -32,12 +32,12 @@ const authenticate = async (req, res, next) => {
 };
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'firebase-functions' });
 });
 
 // Phone check endpoint
-app.post('/api/check-phone', async (req, res) => {
+app.post('/check-phone', async (req, res) => {
   try {
     const { phone } = req.body;
     
@@ -66,7 +66,7 @@ app.post('/api/check-phone', async (req, res) => {
 });
 
 // Get offer by ID endpoint
-app.get('/api/offers/:id', authenticate, async (req, res) => {
+app.get('/offers/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const currentUserId = req.userId;
@@ -132,7 +132,7 @@ app.get('/api/offers/:id', authenticate, async (req, res) => {
 });
 
 // Get user's offers
-app.get('/api/offers', authenticate, async (req, res) => {
+app.get('/offers', authenticate, async (req, res) => {
   try {
     const currentUserId = req.userId;
     const db = admin.firestore();
@@ -164,7 +164,7 @@ app.get('/api/offers', authenticate, async (req, res) => {
 });
 
 // Update offer status (accept/decline)
-app.patch('/api/offers/:id', authenticate, async (req, res) => {
+app.patch('/offers/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -198,7 +198,7 @@ app.patch('/api/offers/:id', authenticate, async (req, res) => {
 });
 
 // PDF Download endpoints
-app.get('/api/offers/:id/pdf/contract', authenticate, async (req, res) => {
+app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const currentUserId = req.userId;
@@ -247,7 +247,7 @@ app.get('/api/offers/:id/pdf/contract', authenticate, async (req, res) => {
   }
 });
 
-app.get('/api/offers/:id/pdf/kfs', authenticate, async (req, res) => {
+app.get('/offers/:id/pdf/kfs', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const currentUserId = req.userId;
@@ -287,7 +287,7 @@ app.get('/api/offers/:id/pdf/kfs', authenticate, async (req, res) => {
   }
 });
 
-app.get('/api/offers/:id/pdf/schedule', authenticate, async (req, res) => {
+app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const currentUserId = req.userId;
