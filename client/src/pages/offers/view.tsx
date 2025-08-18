@@ -721,7 +721,13 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     );
   }
 
-  if (!offerData?.offer) {
+  // Handle both nested (API response) and flat (direct Firebase) data structures
+  const offer = offerData?.offer || offerData; // Support both structures
+  const fromUser = offerData?.fromUser;
+  const contact = offerData?.contact;
+  const payments = offerData?.payments || [];
+
+  if (!offer || !offer.id) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Navbar />
@@ -739,12 +745,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       </div>
     );
   }
-
-  // Handle the nested structure from /api/offers/:id endpoint
-  const offer = offerData.offer;
-  const fromUser = offerData.fromUser;
-  const contact = offerData.contact;
-  const payments = offerData.payments || [];
   
   const totalPaid = payments
     .filter((p: any) => p.status === 'paid')
