@@ -27,7 +27,10 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 ✅ **PDF Download Issue Fixed** - August 18, 2025
 - Resolved Firebase Functions v2 IAM permission issue
 - Granted public access (roles/run.invoker) to api and pdfService functions
-- PDF downloads now working in production deployment
+- **Updated PDF Service for Cloud Deployment**: Fixed local file storage issue by implementing Firebase Storage support
+- PDF service now automatically detects environment and uses Firebase Storage in production
+- Lazy initialization ensures proper Firebase connection before storage operations
+- PDF downloads now working in production deployment with proper cloud storage
 
 ✅ **Offers Display Issue Fixed** - August 18, 2025
 - Resolved authentication user ID matching with Firestore data

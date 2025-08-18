@@ -2,37 +2,97 @@ import { Offer, User } from "@shared/firestore-schema";
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { admin } from '../firebase-config';
 import { calculateRepaymentSchedule, PaymentScheduleItem } from "@shared/calculations";
 
 export class PdfService {
   private contractsDir = path.join(process.cwd(), 'contracts');
   private kfsDir = path.join(process.cwd(), 'kfs');
   private schedulesDir = path.join(process.cwd(), 'schedules');
+  private bucket: any;
+  private useCloudStorage: boolean;
+  private bucketInitialized: boolean = false;
 
   constructor() {
-    // Ensure directories exist
-    if (!fs.existsSync(this.contractsDir)) {
-      fs.mkdirSync(this.contractsDir, { recursive: true });
+    // Determine if we're in a cloud environment
+    this.useCloudStorage = process.env.NODE_ENV === 'production' || 
+                          !!process.env.FIREBASE_CONFIG_JSON || 
+                          process.env.FUNCTIONS_EMULATOR !== 'true';
+    
+    console.log(`📁 PDF Service: Storage mode - ${this.useCloudStorage ? 'Cloud (Firebase Storage)' : 'Local'}`);
+    
+    // For local development or fallback, ensure directories exist
+    if (!this.useCloudStorage) {
+      if (!fs.existsSync(this.contractsDir)) {
+        fs.mkdirSync(this.contractsDir, { recursive: true });
+      }
+      if (!fs.existsSync(this.kfsDir)) {
+        fs.mkdirSync(this.kfsDir, { recursive: true });
+      }
+      if (!fs.existsSync(this.schedulesDir)) {
+        fs.mkdirSync(this.schedulesDir, { recursive: true });
+      }
     }
-    if (!fs.existsSync(this.kfsDir)) {
-      fs.mkdirSync(this.kfsDir, { recursive: true });
+  }
+
+  private async initializeBucket(): Promise<void> {
+    if (!this.useCloudStorage || this.bucketInitialized) {
+      return;
     }
-    if (!fs.existsSync(this.schedulesDir)) {
-      fs.mkdirSync(this.schedulesDir, { recursive: true });
+
+    try {
+      this.bucket = admin.storage().bucket();
+      this.bucketInitialized = true;
+      console.log('✅ PDF Service: Firebase Storage initialized');
+    } catch (error) {
+      console.warn('⚠️  PDF Service: Failed to initialize Firebase Storage, falling back to local storage:', error);
+      this.useCloudStorage = false;
+      // Ensure local directories exist as fallback
+      if (!fs.existsSync(this.contractsDir)) {
+        fs.mkdirSync(this.contractsDir, { recursive: true });
+      }
+      if (!fs.existsSync(this.kfsDir)) {
+        fs.mkdirSync(this.kfsDir, { recursive: true });
+      }
+      if (!fs.existsSync(this.schedulesDir)) {
+        fs.mkdirSync(this.schedulesDir, { recursive: true });
+      }
     }
   }
 
   async generateContract(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `${offer.id}-${Date.now()}.pdf`;
     const contractKey = `contracts/${fileName}`;
-    const filePath = path.join(this.contractsDir, fileName);
     
     try {
+      await this.initializeBucket();
       const pdfBuffer = await this.createPdfContract(offer, fromUser);
-      fs.writeFileSync(filePath, pdfBuffer);
+      
+      if (this.useCloudStorage && this.bucketInitialized) {
+        // Upload to Firebase Storage
+        const file = this.bucket.file(contractKey);
+        await file.save(pdfBuffer, {
+          metadata: {
+            contentType: 'application/pdf',
+            metadata: {
+              offerId: offer.id,
+              type: 'contract',
+              generatedAt: new Date().toISOString()
+            }
+          }
+        });
+        console.log(`✅ Contract uploaded to Firebase Storage: ${contractKey}`);
+      } else {
+        // Save to local file system
+        const filePath = path.join(this.contractsDir, fileName);
+        fs.writeFileSync(filePath, pdfBuffer);
+        console.log(`✅ Contract saved locally: ${filePath}`);
+      }
+      
       return contractKey;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Failed to generate contract PDF: ${errorMessage}`);
       throw new Error(`Failed to generate contract PDF: ${errorMessage}`);
     }
   }
@@ -156,22 +216,37 @@ export class PdfService {
 
   async contractExists(contractKey: string): Promise<boolean> {
     try {
-      const filePath = path.join(process.cwd(), contractKey);
-      return fs.existsSync(filePath);
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(contractKey);
+        const [exists] = await file.exists();
+        return exists;
+      } else {
+        const filePath = path.join(process.cwd(), contractKey);
+        return fs.existsSync(filePath);
+      }
     } catch (error) {
+      console.error(`Error checking contract existence: ${error}`);
       return false;
     }
   }
 
   async downloadContract(contractKey: string): Promise<Buffer> {
     try {
-      const filePath = path.join(process.cwd(), contractKey);
-      
-      if (!fs.existsSync(filePath)) {
-        throw new Error('Contract file not found');
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(contractKey);
+        const [buffer] = await file.download();
+        return buffer;
+      } else {
+        const filePath = path.join(process.cwd(), contractKey);
+        
+        if (!fs.existsSync(filePath)) {
+          throw new Error('Contract file not found');
+        }
+        
+        return fs.readFileSync(filePath);
       }
-      
-      return fs.readFileSync(filePath);
     } catch (error) {
       console.error('PDF download failed:', error);
       throw new Error('Failed to download contract PDF');
@@ -181,43 +256,75 @@ export class PdfService {
   async generateKFS(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `kfs-${offer.id}-${Date.now()}.pdf`;
     const kfsKey = `kfs/${fileName}`;
-    const filePath = path.join(this.kfsDir, fileName);
     
     try {
-      console.log(`Creating KFS document at: ${filePath}`);
-      
+      await this.initializeBucket();
       const pdfBuffer = await this.createKFSDocument(offer, fromUser);
-      fs.writeFileSync(filePath, pdfBuffer);
       
-      console.log(`Generated KFS document: ${kfsKey}, file size: ${pdfBuffer.length} bytes`);
+      if (this.useCloudStorage && this.bucketInitialized) {
+        // Upload to Firebase Storage
+        const file = this.bucket.file(kfsKey);
+        await file.save(pdfBuffer, {
+          metadata: {
+            contentType: 'application/pdf',
+            metadata: {
+              offerId: offer.id,
+              type: 'kfs',
+              generatedAt: new Date().toISOString()
+            }
+          }
+        });
+        console.log(`✅ KFS uploaded to Firebase Storage: ${kfsKey}`);
+      } else {
+        // Save to local file system
+        const filePath = path.join(this.kfsDir, fileName);
+        fs.writeFileSync(filePath, pdfBuffer);
+        console.log(`✅ KFS saved locally: ${filePath}`);
+      }
       
       return kfsKey;
     } catch (error) {
-      console.error('KFS generation failed:', error);
-      throw new Error('Failed to generate KFS document');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Failed to generate KFS PDF: ${errorMessage}`);
+      throw new Error(`Failed to generate KFS document: ${errorMessage}`);
     }
   }
 
   async kfsExists(kfsKey: string): Promise<boolean> {
     try {
-      const filePath = path.join(process.cwd(), kfsKey);
-      return fs.existsSync(filePath);
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(kfsKey);
+        const [exists] = await file.exists();
+        return exists;
+      } else {
+        const filePath = path.join(process.cwd(), kfsKey);
+        return fs.existsSync(filePath);
+      }
     } catch (error) {
+      console.error(`Error checking KFS existence: ${error}`);
       return false;
     }
   }
 
   async downloadKFS(kfsKey: string): Promise<Buffer> {
     try {
-      const filePath = path.join(process.cwd(), kfsKey);
-      
-      if (!fs.existsSync(filePath)) {
-        throw new Error('KFS file not found');
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(kfsKey);
+        const [buffer] = await file.download();
+        return buffer;
+      } else {
+        const filePath = path.join(process.cwd(), kfsKey);
+        
+        if (!fs.existsSync(filePath)) {
+          throw new Error('KFS file not found');
+        }
+        
+        return fs.readFileSync(filePath);
       }
-      
-      return fs.readFileSync(filePath);
     } catch (error) {
-      // Log error through proper error handling
+      console.error('KFS download failed:', error);
       throw new Error('Failed to download KFS document');
     }
   }
@@ -225,42 +332,75 @@ export class PdfService {
   async generateRepaymentSchedule(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `schedule-${offer.id}-${Date.now()}.pdf`;
     const scheduleKey = `schedules/${fileName}`;
-    const filePath = path.join(this.schedulesDir, fileName);
     
     try {
-      console.log(`Creating repayment schedule document at: ${filePath}`);
-      
+      await this.initializeBucket();
       const pdfBuffer = await this.createRepaymentScheduleDocument(offer, fromUser);
-      fs.writeFileSync(filePath, pdfBuffer);
       
-      console.log(`Generated repayment schedule document: ${scheduleKey}, file size: ${pdfBuffer.length} bytes`);
+      if (this.useCloudStorage && this.bucketInitialized) {
+        // Upload to Firebase Storage
+        const file = this.bucket.file(scheduleKey);
+        await file.save(pdfBuffer, {
+          metadata: {
+            contentType: 'application/pdf',
+            metadata: {
+              offerId: offer.id,
+              type: 'schedule',
+              generatedAt: new Date().toISOString()
+            }
+          }
+        });
+        console.log(`✅ Repayment schedule uploaded to Firebase Storage: ${scheduleKey}`);
+      } else {
+        // Save to local file system
+        const filePath = path.join(this.schedulesDir, fileName);
+        fs.writeFileSync(filePath, pdfBuffer);
+        console.log(`✅ Repayment schedule saved locally: ${filePath}`);
+      }
       
       return scheduleKey;
     } catch (error) {
-      console.error('Repayment schedule generation failed:', error);
-      throw new Error('Failed to generate repayment schedule document');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Failed to generate repayment schedule PDF: ${errorMessage}`);
+      throw new Error(`Failed to generate repayment schedule document: ${errorMessage}`);
     }
   }
 
   async scheduleExists(scheduleKey: string): Promise<boolean> {
     try {
-      const filePath = path.join(process.cwd(), scheduleKey);
-      return fs.existsSync(filePath);
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(scheduleKey);
+        const [exists] = await file.exists();
+        return exists;
+      } else {
+        const filePath = path.join(process.cwd(), scheduleKey);
+        return fs.existsSync(filePath);
+      }
     } catch (error) {
+      console.error(`Error checking schedule existence: ${error}`);
       return false;
     }
   }
 
   async downloadRepaymentSchedule(scheduleKey: string): Promise<Buffer> {
     try {
-      const filePath = path.join(process.cwd(), scheduleKey);
-      
-      if (!fs.existsSync(filePath)) {
-        throw new Error('Repayment schedule file not found');
+      await this.initializeBucket();
+      if (this.useCloudStorage && this.bucketInitialized) {
+        const file = this.bucket.file(scheduleKey);
+        const [buffer] = await file.download();
+        return buffer;
+      } else {
+        const filePath = path.join(process.cwd(), scheduleKey);
+        
+        if (!fs.existsSync(filePath)) {
+          throw new Error('Repayment schedule file not found');
+        }
+        
+        return fs.readFileSync(filePath);
       }
-      
-      return fs.readFileSync(filePath);
     } catch (error) {
+      console.error('Repayment schedule download failed:', error);
       throw new Error('Failed to download repayment schedule document');
     }
   }
@@ -295,7 +435,9 @@ export class PdfService {
           interestType: offer.interestType as 'fixed' | 'reducing',
           tenureValue: (offer as any).tenure || offer.tenureValue || 12, // Use tenure from database or tenureValue
           tenureUnit: offer.tenureUnit as 'months' | 'years',
-          repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
+          repaymentType: (offer.repaymentType === 'interest_only' ? 'interest-only' : 
+                          offer.repaymentType === 'full_payment' ? 'full-payment' : 
+                          offer.repaymentType) as 'emi' | 'interest-only' | 'full-payment',
           repaymentFrequency: (offer as any).frequency || offer.repaymentFrequency || 'monthly', // Use frequency from database
           startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any)
         };
@@ -405,7 +547,9 @@ export class PdfService {
           interestType: offer.interestType as 'fixed' | 'reducing',
           tenureValue: (offer as any).tenure || offer.tenureValue || 12,
           tenureUnit: offer.tenureUnit as 'months' | 'years',
-          repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
+          repaymentType: (offer.repaymentType === 'interest_only' ? 'interest-only' : 
+                          offer.repaymentType === 'full_payment' ? 'full-payment' : 
+                          offer.repaymentType) as 'emi' | 'interest-only' | 'full-payment',
           repaymentFrequency: offer.repaymentFrequency || undefined,
           startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any)
         };
