@@ -27,7 +27,9 @@ const getPdfServiceUrl = () => {
   if (isProduction()) {
     return `${FUNCTIONS_BASE_URL}/pdfService`; // Firebase Functions PDF API
   }
-  return 'http://localhost:5000/api'; // Local development
+  // Use current domain for Replit development environment
+  const currentOrigin = window.location.origin;
+  return `${currentOrigin}/api`; // Local development
 };
 
 // Check if we're in production (Firebase hosting)
@@ -185,20 +187,35 @@ class FirebaseBackendService {
       console.log('📄 Starting contract download...');
       
       const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+      
       const pdfServiceUrl = getPdfServiceUrl();
       const url = `${pdfServiceUrl}/offers/${offerId}/pdf/contract`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
+      console.log('🔑 Token available:', !!token);
       
       const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('PDF download error response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = await response.text() || errorMessage;
+        }
+        console.error('PDF download error response:', errorMessage);
+        throw new Error(`Failed to download contract: ${errorMessage}`);
       }
 
       const blob = await response.blob();
@@ -210,6 +227,8 @@ class FirebaseBackendService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ Contract PDF downloaded successfully');
     } catch (error) {
       console.error('Contract download failed:', error);
       throw error;
@@ -221,20 +240,35 @@ class FirebaseBackendService {
       console.log('📄 Starting KFS download...');
       
       const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+      
       const pdfServiceUrl = getPdfServiceUrl();
       const url = `${pdfServiceUrl}/offers/${offerId}/pdf/kfs`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
+      console.log('🔑 Token available:', !!token);
       
       const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('PDF download error response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = await response.text() || errorMessage;
+        }
+        console.error('PDF download error response:', errorMessage);
+        throw new Error(`Failed to download KFS: ${errorMessage}`);
       }
 
       const blob = await response.blob();
@@ -246,34 +280,61 @@ class FirebaseBackendService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ KFS PDF downloaded successfully');
     } catch (error) {
       console.error('KFS download failed:', error);
       throw error;
     }
   }
 
-  async downloadRepaymentSchedule(offerId: string): Promise<Blob> {
+  async downloadRepaymentSchedule(offerId: string): Promise<void> {
     try {
       console.log('📄 Starting repayment schedule download...');
       
       const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+      
       const pdfServiceUrl = getPdfServiceUrl();
       const url = `${pdfServiceUrl}/offers/${offerId}/pdf/schedule`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
+      console.log('🔑 Token available:', !!token);
       
       const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('PDF download error response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = await response.text() || errorMessage;
+        }
+        console.error('PDF download error response:', errorMessage);
+        throw new Error(`Failed to download repayment schedule: ${errorMessage}`);
       }
 
-      return await response.blob();
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `repayment-schedule-${offerId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ Repayment schedule PDF downloaded successfully');
     } catch (error) {
       console.error('Repayment schedule download failed:', error);
       throw error;
