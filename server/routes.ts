@@ -1583,14 +1583,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Lightweight authentication for PDF downloads (less strict than full compliance)
+  const authenticateForPDF = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) {
+        return res.status(401).json({ 
+          message: 'Authentication required',
+          code: 'AUTH_TOKEN_MISSING'
+        });
+      }
+
+      // Verify Firebase ID token
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      const userId = decodedToken.uid;
+      
+      // Basic user existence check (no compliance validation for PDFs)
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ 
+          message: 'User account not found',
+          code: 'AUTH_USER_NOT_FOUND'
+        });
+      }
+
+      req.userId = userId;
+      next();
+    } catch (error) {
+      return res.status(401).json({ 
+        message: 'Invalid authentication token',
+        code: 'AUTH_TOKEN_INVALID'
+      });
+    }
+  };
+
   // Download repayment schedule PDF - alias route for compatibility
-  app.get('/api/offers/:id/pdf/schedule', authenticate, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/offers/:id/pdf/schedule', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
       const offer = await storage.getOffer(id);
       
       if (!offer) {
         return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Authorization check - ensure user has access to this offer
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      const hasAccess = 
+        offer.fromUserId === currentUserId ||
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'Unauthorized to access this schedule' });
       }
 
       let scheduleKey = offer.schedulePdfKey;
@@ -1648,13 +1695,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download repayment schedule PDF
-  app.get('/api/offers/:id/schedule/download', authenticate, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/offers/:id/schedule/download', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
       const offer = await storage.getOffer(id);
       
       if (!offer) {
         return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Authorization check - ensure user has access to this offer
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      const hasAccess = 
+        offer.fromUserId === currentUserId ||
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'Unauthorized to access this schedule' });
       }
 
       let scheduleKey = offer.schedulePdfKey;
