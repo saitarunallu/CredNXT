@@ -1,4 +1,5 @@
-import * as functions from 'firebase-functions';
+import { onRequest } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import * as express from 'express';
 import * as cors from 'cors';
@@ -692,5 +693,12 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => 
   }
 });
 
-// Export the main API function for Firebase Functions
-export const api = functions.https.onRequest(app);
+// Set global options for Firebase Functions v2
+setGlobalOptions({
+  region: 'us-central1',
+  memory: '1GiB',
+  timeoutSeconds: 300,
+});
+
+// Export the main API function for Firebase Functions v2
+export const api = onRequest(app);

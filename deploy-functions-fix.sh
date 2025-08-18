@@ -1,3 +1,13 @@
+#!/bin/bash
+
+# Fix Firebase Functions deployment
+
+echo "🔧 Fixing Firebase Functions deployment..."
+
+cd functions
+
+# Create a fresh package.json with correct dependencies
+cat > package.json << EOF
 {
   "name": "functions",
   "description": "Cloud Functions for Firebase",
@@ -29,3 +39,10 @@
   },
   "private": true
 }
+EOF
+
+# Remove lock file and node_modules to force clean install
+rm -rf package-lock.json node_modules
+
+echo "✅ Package.json updated, dependencies will be installed during deployment"
+echo "🚀 Deploy with: firebase deploy --only functions"
