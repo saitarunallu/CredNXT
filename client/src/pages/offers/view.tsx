@@ -637,7 +637,19 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const downloadRepaymentSchedule = async () => {
     try {
-      await firebaseBackend.downloadSchedulePDF(offerId);
+      console.log('📄 Starting repayment schedule download...');
+      const blob = await firebaseBackend.downloadRepaymentSchedule(offerId);
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `repayment-schedule-${offerId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
       toast({
         title: "Success",
         description: "Repayment schedule downloaded successfully.",
