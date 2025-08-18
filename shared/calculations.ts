@@ -298,15 +298,22 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   const totalCharges = processingFee + otherCharges;
   
   // Calculate payment frequency and number of payments
+  console.log(`DEBUG: repaymentFrequency="${repaymentFrequency}", tenureInMonths=${tenureInMonths}`);
   const paymentsPerYear = getPaymentsPerYear(repaymentFrequency);
+  console.log(`DEBUG: paymentsPerYear=${paymentsPerYear}`);
   const periodicRate = annualRate / paymentsPerYear;
-  const totalPayments = Math.ceil(tenureInMonths / getPaymentFrequencyInMonths(repaymentFrequency));
+  const paymentFreqInMonths = getPaymentFrequencyInMonths(repaymentFrequency);
+  console.log(`DEBUG: paymentFreqInMonths=${paymentFreqInMonths}`);
+  const totalPayments = Math.ceil(tenureInMonths / paymentFreqInMonths);
+  console.log(`DEBUG: totalPayments=${totalPayments}`);
   
   // Use standard monthly compounding for effective rate calculation
   const compoundingPerYear = 12; // Standard banking practice
   
   // Calculate due dates
+  console.log(`DEBUG: About to calculate due dates with frequency=${repaymentFrequency}, totalPayments=${totalPayments}`);
   const dueDates = calculateDueDates(startDate, repaymentFrequency, totalPayments);
+  console.log(`DEBUG: dueDates calculated, length=${dueDates.length}`);
   
   let schedule: PaymentScheduleItem[] = [];
   let totalInterest = 0;
