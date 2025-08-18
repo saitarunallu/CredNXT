@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Production Offers</title>
+</head>
+<body>
+    <h1>Debug Production Offers</h1>
+    <div id="status">Testing authentication and offers...</div>
+    <div id="results"></div>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getAuth, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2Wt0CtkNmxJPuJGGJQqNbUJZvxLi_KD8",
+            authDomain: "crednxt-ef673.firebaseapp.com",
+            projectId: "crednxt-ef673",
+            storageBucket: "crednxt-ef673.appspot.com",
+            messagingSenderId: "647998044717",
+            appId: "1:647998044717:web:0eba0c413e7b4d588c030f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+
+        async function debugOffers() {
+            try {
+                statusDiv.innerHTML = 'Testing direct Firestore access...';
+                
+                // Try to get all offers (basic test)
+                const offersRef = collection(db, 'offers');
+                const snapshot = await getDocs(offersRef);
+                
+                console.log('Total offers in database:', snapshot.docs.length);
+                resultsDiv.innerHTML = `<p>Total offers found: ${snapshot.docs.length}</p>`;
+                
+                if (snapshot.docs.length > 0) {
+                    const offers = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    console.log('Offers:', offers);
+                    resultsDiv.innerHTML += `<h3>Sample offers:</h3><pre>${JSON.stringify(offers.slice(0, 3), null, 2)}</pre>`;
+                    
+                    // Check specific user IDs
+                    const userIds = [...new Set(offers.map(o => o.fromUserId).filter(Boolean))];
+                    console.log('Unique fromUserIds:', userIds);
+                    resultsDiv.innerHTML += `<p>Unique fromUserIds: ${userIds.join(', ')}</p>`;
+                    
+                    const toUserIds = [...new Set(offers.map(o => o.toUserId).filter(Boolean))];
+                    console.log('Unique toUserIds:', toUserIds);
+                    resultsDiv.innerHTML += `<p>Unique toUserIds: ${toUserIds.join(', ')}</p>`;
+                } else {
+                    resultsDiv.innerHTML += '<p style="color: red;">No offers found in database!</p>';
+                }
+                
+                statusDiv.innerHTML = 'Debug complete!';
+                
+            } catch (error) {
+                console.error('Debug error:', error);
+                statusDiv.innerHTML = `Error: ${error.message}`;
+                resultsDiv.innerHTML = `<pre style="color: red;">${JSON.stringify(error, null, 2)}</pre>`;
+            }
+        }
+        
+        debugOffers();
+    </script>
+</body>
+</html>
