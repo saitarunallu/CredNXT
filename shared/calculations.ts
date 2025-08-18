@@ -4,7 +4,7 @@ export interface LoanTerms {
   interestType: 'fixed' | 'reducing';
   tenureValue: number;
   tenureUnit: 'months' | 'years';
-  repaymentType: 'emi' | 'interest_only' | 'full_payment';
+  repaymentType: 'emi' | 'interest-only' | 'full-payment';
   repaymentFrequency?: 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly';
   startDate: Date;
   gracePeriodDays?: number;
@@ -298,29 +298,22 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
   const totalCharges = processingFee + otherCharges;
   
   // Calculate payment frequency and number of payments
-  console.log(`DEBUG: repaymentFrequency="${repaymentFrequency}", tenureInMonths=${tenureInMonths}`);
   const paymentsPerYear = getPaymentsPerYear(repaymentFrequency);
-  console.log(`DEBUG: paymentsPerYear=${paymentsPerYear}`);
   const periodicRate = annualRate / paymentsPerYear;
-  const paymentFreqInMonths = getPaymentFrequencyInMonths(repaymentFrequency);
-  console.log(`DEBUG: paymentFreqInMonths=${paymentFreqInMonths}`);
-  const totalPayments = Math.ceil(tenureInMonths / paymentFreqInMonths);
-  console.log(`DEBUG: totalPayments=${totalPayments}`);
+  const totalPayments = Math.ceil(tenureInMonths / getPaymentFrequencyInMonths(repaymentFrequency));
   
   // Use standard monthly compounding for effective rate calculation
   const compoundingPerYear = 12; // Standard banking practice
   
   // Calculate due dates
-  console.log(`DEBUG: About to calculate due dates with frequency=${repaymentFrequency}, totalPayments=${totalPayments}`);
   const dueDates = calculateDueDates(startDate, repaymentFrequency, totalPayments);
-  console.log(`DEBUG: dueDates calculated, length=${dueDates.length}`);
   
   let schedule: PaymentScheduleItem[] = [];
   let totalInterest = 0;
   let emiAmount = 0;
   
   // Implementation for different repayment types
-  if (repaymentType === 'full_payment') {
+  if (repaymentType === 'full-payment') {
     // Bullet payment at maturity
     totalInterest = interestType === 'fixed' 
       ? principal * annualRate * (tenureInDays / 365)
@@ -357,7 +350,7 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
     schedule = generateEMISchedule(principal, periodicRate, totalPayments, dueDates, emiAmount, gracePeriodDays, latePaymentPenalty);
     totalInterest = schedule.reduce((sum, payment) => sum + payment.interestAmount, 0);
   }
-  else if (repaymentType === 'interest_only') {
+  else if (repaymentType === 'interest-only') {
     // Interest-only payments with principal at maturity
     const periodicInterest = principal * periodicRate;
     const lastPaymentIndex = totalPayments - 1;
