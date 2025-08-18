@@ -303,7 +303,7 @@ function ProductionFallbackView({ offerId, setLocation }: { offerId: string, set
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
                     <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      {formatFirebaseDate(offer.dueDate)}
+                      {offer.dueDate ? new Date(offer.dueDate?.toDate?.() || offer.dueDate?._seconds * 1000 || offer.dueDate).toLocaleDateString('en-IN') : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -1258,70 +1258,61 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     ) : (
                       <div className="space-y-4">
                         <h4 className="font-medium text-gray-900 text-lg">Make Payment</h4>
-                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="amount">Payment Amount *</Label>
-                              <Input
-                                id="amount"
-                                type="number"
-                                step="0.01"
-                                placeholder={(() => {
-                                  // Calculate suggested amount
-                                  if (scheduleData?.schedule?.emiAmount) {
-                                    return scheduleData.schedule.emiAmount.toString();
-                                  } else if (dueAmount > 0) {
-                                    return dueAmount.toString();
-                                  } else {
-                                    return outstanding.toString();
-                                  }
-                                })()}
-                                {...register("amount")}
-                                data-testid="input-payment-amount"
-                              />
-                              {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+                        <Button 
+                          onClick={() => {
+                            // Calculate the exact payment amount due
+                            let paymentAmount;
+                            if (scheduleData?.schedule?.emiAmount) {
+                              // For EMI-based repayment types, use EMI amount
+                              paymentAmount = scheduleData.schedule.emiAmount;
+                            } else if (dueAmount > 0) {
+                              // Use specific due amount if available
+                              paymentAmount = dueAmount;
+                            } else if (overDueAmount > 0) {
+                              // Use overdue amount if available
+                              paymentAmount = overDueAmount;
+                            } else {
+                              // Fallback to full outstanding amount
+                              paymentAmount = outstanding;
+                            }
+                            
+                            // Submit payment with default values
+                            submitPaymentMutation.mutate({
+                              amount: parseFloat(paymentAmount.toString()),
+                              status: 'pending' as const,
+                              paymentMode: 'upi', // Default payment mode
+                              refString: `AUTO-${Date.now()}` // Auto-generated reference
+                            });
+                          }}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 text-xl"
+                          disabled={submitPaymentMutation.isPending}
+                          data-testid="button-pay-due-amount"
+                        >
+                          {submitPaymentMutation.isPending ? (
+                            <div className="flex items-center">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                              Processing Payment...
                             </div>
-                            <div>
-                              <Label htmlFor="paymentMode">Payment Mode *</Label>
-                              <Select onValueChange={(value) => setValue("paymentMode", value)}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select payment method" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="upi">UPI</SelectItem>
-                                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                  <SelectItem value="cash">Cash</SelectItem>
-                                  <SelectItem value="cheque">Cheque</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="refString">Reference/Transaction ID</Label>
-                            <Input
-                              id="refString"
-                              placeholder="Enter transaction ID or reference number"
-                              {...register("refString")}
-                              data-testid="input-payment-ref"
-                            />
-                            {errors.refString && <p className="text-red-500 text-xs mt-1">{errors.refString.message}</p>}
-                          </div>
-                          <Button 
-                            type="submit" 
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg"
-                            disabled={submitPaymentMutation.isPending}
-                            data-testid="button-submit-payment"
-                          >
-                            {submitPaymentMutation.isPending ? (
-                              <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                                Processing Payment...
-                              </div>
-                            ) : (
-                              'Submit Payment'
-                            )}
-                          </Button>
-                        </form>
+                          ) : (
+                            (() => {
+                              // Calculate display amount for button text
+                              let displayAmount;
+                              if (scheduleData?.schedule?.emiAmount) {
+                                displayAmount = scheduleData.schedule.emiAmount;
+                              } else if (dueAmount > 0) {
+                                displayAmount = dueAmount;
+                              } else if (overDueAmount > 0) {
+                                displayAmount = overDueAmount;
+                              } else {
+                                displayAmount = outstanding;
+                              }
+                              return `Pay ₹${(displayAmount || 0).toLocaleString()}`;
+                            })()
+                          )}
+                        </Button>
+                        <p className="text-sm text-gray-600 text-center">
+                          Payment will be submitted with UPI as default method
+                        </p>
                       </div>
                     )
                   )}
