@@ -293,10 +293,10 @@ export class PdfService {
           principal: parseFloat(String(offer.amount)),
           interestRate: parseFloat(String(offer.interestRate)),
           interestType: offer.interestType as 'fixed' | 'reducing',
-          tenureValue: offer.tenureValue,
+          tenureValue: (offer as any).tenure || offer.tenureValue || 12, // Use tenure from database or tenureValue
           tenureUnit: offer.tenureUnit as 'months' | 'years',
           repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
-          repaymentFrequency: offer.repaymentFrequency || undefined,
+          repaymentFrequency: (offer as any).frequency || offer.repaymentFrequency || 'monthly', // Use frequency from database
           startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any)
         };
         console.log('Loan terms:', loanTerms);
