@@ -20,11 +20,16 @@ export default function VerifyOtp() {
   useEffect(() => {
     const phone = localStorage.getItem('pending_phone');
     if (!phone) {
+      toast({
+        title: "Session Expired",
+        description: "Please start the login process again.",
+        variant: "destructive",
+      });
       setLocation('/login');
       return;
     }
     setPendingPhone(phone);
-  }, [setLocation]);
+  }, [setLocation, toast]);
 
   const {
     register,
@@ -57,10 +62,16 @@ export default function VerifyOtp() {
         });
       } else {
         toast({
-          title: "Error",
+          title: "Verification Failed",
           description: result.error || "Invalid or expired OTP. Please try again.",
           variant: "destructive",
         });
+        
+        // If session expired, redirect back to login
+        if (result.error?.includes('session expired') || result.error?.includes('start over')) {
+          localStorage.removeItem('pending_phone');
+          setLocation('/login');
+        }
       }
     },
     onError: (error) => {
@@ -78,7 +89,9 @@ export default function VerifyOtp() {
 
   const handleResendOtp = async () => {
     if (pendingPhone) {
-      const result = await firebaseAuthService.sendOTP(pendingPhone);
+      // Clean the phone number before resending
+      const cleanedPhone = pendingPhone.replace(/\D/g, '');
+      const result = await firebaseAuthService.sendOTP(cleanedPhone);
       if (result.success) {
         toast({
           title: "OTP Sent",
@@ -91,6 +104,13 @@ export default function VerifyOtp() {
           variant: "destructive",
         });
       }
+    } else {
+      toast({
+        title: "Error",
+        description: "Phone number not found. Please go back to login.",
+        variant: "destructive",
+      });
+      setLocation('/login');
     }
   };
 
@@ -112,7 +132,7 @@ export default function VerifyOtp() {
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Verify Your Phone</CardTitle>
             <p className="text-gray-600 text-base leading-relaxed px-4">Enter the 6-digit OTP sent to</p>
-            <p className="text-blue-600 font-semibold text-lg">{pendingPhone}</p>
+            <p className="text-blue-600 font-semibold text-lg">+91 {pendingPhone}</p>
           </CardHeader>
         
           <CardContent className="px-8 pb-10">

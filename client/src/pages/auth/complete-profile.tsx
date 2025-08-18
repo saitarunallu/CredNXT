@@ -37,7 +37,7 @@ export default function CompleteProfile() {
         });
       } else {
         toast({
-          title: "Error",
+          title: "Profile Setup Failed",
           description: result.error || "Failed to complete profile. Please try again.",
           variant: "destructive",
         });
@@ -55,6 +55,17 @@ export default function CompleteProfile() {
 
   const onSubmit = (data: CompleteProfileRequest) => {
     console.log('Submitting profile form:', data);
+    
+    // Validate required fields
+    if (!data.name || data.name.trim().length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your full name (at least 2 characters).",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     profileMutation.mutate(data);
   };
 
