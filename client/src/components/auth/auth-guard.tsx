@@ -91,7 +91,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       return;
     }
 
-    if (firebaseAuthService.requiresProfile()) {
+    const needsProfile = firebaseAuthService.requiresProfile();
+    console.log('AuthGuard: User needs profile?', needsProfile);
+    console.log('AuthGuard: Current user:', firebaseAuthService.getUser());
+    
+    if (needsProfile) {
+      console.log('AuthGuard: Redirecting to complete-profile');
       setLocation('/complete-profile');
       return;
     }

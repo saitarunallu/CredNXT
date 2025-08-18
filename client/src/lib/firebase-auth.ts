@@ -165,7 +165,9 @@ export class FirebaseAuthService {
         // User exists, log them in
         const userData = userDoc.data() as User;
         await this.setUser(userData);
-        return { success: true, user: userData, needsProfile: !userData.name };
+        const needsProfile = !userData.name || !userData.name.trim();
+        console.log('Existing user login:', { userData, needsProfile, hasName: !!userData.name });
+        return { success: true, user: userData, needsProfile };
       } else {
         // New user, create profile
         const newUser: User = {
@@ -256,6 +258,7 @@ export class FirebaseAuthService {
       };
 
       await this.setUser(userData);
+      console.log('Profile completion: Updated user data:', userData);
       return { success: true };
     } catch (error) {
       console.error('Error completing profile:', error);
@@ -398,7 +401,19 @@ export class FirebaseAuthService {
   }
 
   requiresProfile(): boolean {
-    return this.isAuthenticated() && (!this.user?.name || !this.user?.isVerified);
+    const isAuth = this.isAuthenticated();
+    const hasName = !!this.user?.name;
+    const userName = this.user?.name;
+    
+    console.log('requiresProfile check:', {
+      isAuthenticated: isAuth,
+      hasName,
+      userName,
+      user: this.user,
+      needsProfile: isAuth && !hasName
+    });
+    
+    return isAuth && !hasName;
   }
 }
 
