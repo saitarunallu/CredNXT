@@ -942,12 +942,17 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   <div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600 mb-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{offer.status === 'accepted' && offer.nextPaymentDueDate ? 'Next Payment Due' : 'Final Due Date'}</span>
+                      <span>
+                        {offer.status === 'accepted' && scheduleData?.schedule?.schedule ? 
+                          (offer.repaymentType === 'interest_only' ? 'Next Interest Due' : 'Next Payment Due') :
+                          'Final Due Date'
+                        }
+                      </span>
                     </div>
                     <div className="font-semibold">
-                      {offer.status === 'accepted' && offer.nextPaymentDueDate 
-                        ? formatFirebaseDate(offer.nextPaymentDueDate)
-                        : formatFirebaseDate(offer.dueDate)
+                      {offer.status === 'accepted' && scheduleData?.schedule?.schedule ? 
+                        formatFirebaseDate(scheduleData.schedule.schedule[0]?.dueDate) :
+                        formatFirebaseDate(offer.dueDate)
                       }
                     </div>
                   </div>
@@ -972,7 +977,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     
                     {scheduleData?.schedule?.emiAmount && (
                       <div className="text-center">
-                        <div className="text-sm text-gray-600 mb-1">EMI Amount</div>
+                        <div className="text-sm text-gray-600 mb-1">
+                          {offer.repaymentType === 'interest_only' ? 'Monthly Interest' : 'EMI Amount'}
+                        </div>
                         <div className="font-bold text-lg text-blue-600">
                           ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}
                         </div>
@@ -1080,15 +1087,17 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       {scheduleData?.schedule?.emiAmount && (
                         <div className="pl-4 pt-4 border-t border-blue-200">
                           <div className="text-sm text-gray-600 font-medium mb-1">
-                            {offer.repaymentType === 'emi' ? 'EMI Amount' : 'Payment Amount'}
+                            {offer.repaymentType === 'emi' ? 'EMI Amount' : 
+                             offer.repaymentType === 'interest_only' ? 'Monthly Interest' : 
+                             'Payment Amount'}
                           </div>
                           <div className="font-bold text-xl text-purple-700">₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}</div>
                         </div>
                       )}
                     </div>
 
-                    {/* Schedule Details for EMI */}
-                    {offer.repaymentType === 'emi' && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length <= 12 && (
+                    {/* Schedule Details for EMI and Interest-Only */}
+                    {(offer.repaymentType === 'emi' || offer.repaymentType === 'interest_only') && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length <= 12 && (
                       <div className="space-y-3">
                         <h4 className="font-semibold text-gray-800 text-lg">Payment Schedule</h4>
                         <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
@@ -1096,13 +1105,18 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                             <div key={index} className="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                               <div>
                                 <div className="font-semibold text-gray-800">
-                                  {offer.repaymentType === 'emi' ? `EMI #${installment.installmentNumber}` : `Payment #${installment.installmentNumber}`}
+                                  {offer.repaymentType === 'emi' ? `EMI #${installment.installmentNumber}` : 
+                                   offer.repaymentType === 'interest_only' ? 
+                                     (installment.principalAmount > 0 ? `Principal Payment` : `Interest Payment #${installment.installmentNumber}`) :
+                                     `Payment #${installment.installmentNumber}`}
                                 </div>
                                 <div className="text-sm text-gray-600 mt-1">
                                   Due: {formatFirebaseDate(installment.dueDate)}
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Balance: ₹{(installment.remainingBalance || 0).toLocaleString('en-IN')}
+                                  {offer.repaymentType === 'interest_only' && installment.principalAmount === 0 ? 
+                                    'Interest Only' : 
+                                    `Balance: ₹${(installment.remainingBalance || 0).toLocaleString('en-IN')}`}
                                 </div>
                               </div>
                               <div className="text-right">
@@ -1121,11 +1135,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     )}
 
                     {/* Simple message for large schedules */}
-                    {offer.repaymentType === 'emi' && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length > 12 && (
+                    {(offer.repaymentType === 'emi' || offer.repaymentType === 'interest_only') && scheduleData?.schedule?.schedule && scheduleData.schedule.schedule.length > 12 && (
                       <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                         <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
                         <p className="text-gray-800 font-semibold text-lg mb-2">
-                          {scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} each
+                          {offer.repaymentType === 'interest_only' ? 
+                            `${scheduleData?.schedule?.numberOfPayments - 1 || 0} monthly interest payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} + final principal` :
+                            `${scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} each`
+                          }
                         </p>
                         <p className="text-sm text-gray-600">
                           Download the detailed schedule for complete payment breakdown
