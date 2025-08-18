@@ -88,6 +88,97 @@ const normalizeFirestoreData = (data: any): any => {
 };
 
 class FirebaseBackendService {
+  // Get offer with details (for view page)
+  async getOfferWithDetails(offerId: string): Promise<any> {
+    try {
+      console.log('🔍 Fetching offer details for:', offerId);
+      
+      if (isProduction()) {
+        // In production, try to use Firebase Functions API first
+        try {
+          const token = await getAuthToken();
+          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}`);
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Got offer from Firebase Functions API');
+            return result;
+          }
+        } catch (error) {
+          console.warn('Firebase Functions API failed, falling back to direct Firestore:', error);
+        }
+      }
+      
+      // Direct Firestore access (development or fallback)
+      const offerDoc = await getDoc(doc(db, 'offers', offerId));
+      
+      if (!offerDoc.exists()) {
+        throw new Error('Offer not found');
+      }
+      
+      const offerData = normalizeFirestoreData(offerDoc.data());
+      
+      // Get related user data
+      let fromUser = null;
+      let toUser = null;
+      
+      if (offerData.fromUserId) {
+        const fromUserDoc = await getDoc(doc(db, 'users', offerData.fromUserId));
+        if (fromUserDoc.exists()) {
+          fromUser = normalizeFirestoreData(fromUserDoc.data());
+        }
+      }
+      
+      if (offerData.toUserId) {
+        const toUserDoc = await getDoc(doc(db, 'users', offerData.toUserId));
+        if (toUserDoc.exists()) {
+          toUser = normalizeFirestoreData(toUserDoc.data());
+        }
+      }
+      
+      // Get payments for this offer
+      const paymentsQuery = query(
+        collection(db, 'payments'),
+        where('offerId', '==', offerId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      let payments = [];
+      try {
+        const paymentsSnapshot = await getDocs(paymentsQuery);
+        payments = paymentsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...normalizeFirestoreData(doc.data())
+        }));
+      } catch (error) {
+        console.warn('Failed to fetch payments:', error);
+        payments = [];
+      }
+      
+      console.log('✅ Got offer from direct Firestore');
+      
+      // Return in API-compatible format
+      return {
+        offer: {
+          id: offerId,
+          ...offerData
+        },
+        fromUser,
+        toUser,
+        payments,
+        totalPaid: payments
+          .filter(p => p.status === 'paid' || p.status === 'completed')
+          .reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0),
+        pendingAmount: payments
+          .filter(p => p.status === 'pending')
+          .reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0)
+      };
+    } catch (error) {
+      console.error('Failed to get offer with details:', error);
+      throw error;
+    }
+  }
+
   // PDF download methods with proper environment detection
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
