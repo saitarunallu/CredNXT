@@ -161,7 +161,7 @@ export class FirebaseBackendService {
 
     // Fallback to direct Firestore access
     try {
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (!user) throw new Error('Not authenticated');
 
       const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -192,7 +192,7 @@ export class FirebaseBackendService {
 
     // Fallback to direct Firestore access
     try {
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (!user) throw new Error('Not authenticated');
 
       const sentQuery = query(
@@ -233,7 +233,7 @@ export class FirebaseBackendService {
 
     // Fallback to direct Firestore access
     try {
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (!user) throw new Error('Not authenticated');
 
       const offerDoc = await getDoc(doc(db, 'offers', id));
@@ -276,7 +276,7 @@ export class FirebaseBackendService {
       
       // Fallback to direct Firestore access
       try {
-        const user = auth.currentUser;
+        const user = auth?.currentUser;
         if (!user) throw new Error('Not authenticated');
 
         const offerRef = doc(db, 'offers', id);
@@ -334,7 +334,7 @@ export class FirebaseBackendService {
       
       // Fallback to direct Firestore access
       try {
-        const user = auth.currentUser;
+        const user = auth?.currentUser;
         if (!user) throw new Error('Not authenticated');
 
         // Calculate due date
@@ -448,6 +448,42 @@ export class FirebaseBackendService {
       }
     } catch (error) {
       console.error('PDF download failed:', error);
+      throw error;
+    }
+  }
+
+  async downloadRepaymentSchedule(offerId: string): Promise<Blob> {
+    try {
+      console.log('📄 Starting repayment schedule download...');
+      
+      // Check if we're in production environment
+      if (isProduction()) {
+        // Use Firebase Functions URL
+        const token = await getAuthToken();
+        const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/schedule`;
+        const response = await fetch(url, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        return await response.blob();
+      } else {
+        // Use local API
+        const response = await makeAuthenticatedRequest(`/api/offers/${offerId}/pdf/schedule`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        return await response.blob();
+      }
+    } catch (error) {
+      console.error('Repayment schedule download failed:', error);
       throw error;
     }
   }
