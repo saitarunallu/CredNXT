@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth Production</title>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase config (same as production app)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2WtLJvzBUnOxLZjZk1fSSQKkXyMwfxUk",
+            authDomain: "crednxt-ef673.firebaseapp.com",
+            projectId: "crednxt-ef673",
+            storageBucket: "crednxt-ef673.appspot.com",
+            messagingSenderId: "447736552285",
+            appId: "1:447736552285:web:d5a3f8b4c2e1a9f6e7b8c9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        console.log('🚀 Debug Auth Production Tool Started');
+
+        // Test authentication status
+        onAuthStateChanged(auth, async (user) => {
+            console.log('🔐 Auth State Changed:', !!user);
+            
+            if (user) {
+                console.log('✅ User authenticated:', user.uid);
+                console.log('📧 Email:', user.email);
+                console.log('📱 Phone:', user.phoneNumber);
+                
+                try {
+                    // Try to get ID token
+                    const token = await user.getIdToken();
+                    console.log('🎫 ID Token available:', !!token);
+                    console.log('🎫 Token preview:', token.substring(0, 20) + '...');
+                    
+                    // Test API call with token
+                    const apiUrl = 'https://api-mzz6re522q-uc.a.run.app/offers';
+                    console.log('🌐 Testing API call:', apiUrl);
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/json',
+                            'Origin': window.location.origin
+                        }
+                    });
+                    
+                    console.log('📡 API Response Status:', response.status);
+                    const responseText = await response.text();
+                    console.log('📡 API Response:', responseText);
+                    
+                    // Test PDF endpoint
+                    if (response.status === 200) {
+                        console.log('🧪 Testing PDF endpoint...');
+                        const pdfResponse = await fetch('https://api-mzz6re522q-uc.a.run.app/offers/test/pdf/contract', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/pdf',
+                                'Origin': window.location.origin
+                            }
+                        });
+                        console.log('📄 PDF Response Status:', pdfResponse.status);
+                        const pdfResponseText = await pdfResponse.text();
+                        console.log('📄 PDF Response:', pdfResponseText);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Token/API Error:', error);
+                }
+                
+            } else {
+                console.log('❌ No user authenticated');
+                console.log('💡 Visit https://crednxt-ef673.web.app and login first');
+            }
+        });
+
+        // Add manual test button
+        window.testPDFDownload = async () => {
+            console.log('🧪 Manual PDF test...');
+            const user = auth.currentUser;
+            if (!user) {
+                console.log('❌ No user logged in');
+                return;
+            }
+            
+            try {
+                const token = await user.getIdToken();
+                const response = await fetch('https://api-mzz6re522q-uc.a.run.app/offers/test/pdf/contract', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/pdf'
+                    }
+                });
+                
+                console.log('Manual test response:', response.status);
+                if (response.ok) {
+                    console.log('✅ PDF endpoint is working!');
+                } else {
+                    const errorText = await response.text();
+                    console.log('❌ PDF endpoint error:', errorText);
+                }
+            } catch (error) {
+                console.error('❌ Manual test error:', error);
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>Debug Auth Production</h1>
+    <p>This tool tests Firebase authentication and API calls in production.</p>
+    <p><strong>Step 1:</strong> <a href="https://crednxt-ef673.web.app" target="_blank">Login to your app</a></p>
+    <p><strong>Step 2:</strong> Refresh this page to see auth status</p>
+    <p><strong>Step 3:</strong> <button onclick="testPDFDownload()">Test PDF Download</button></p>
+    <p><strong>Check browser console for detailed logs</strong></p>
+</body>
+</html>
