@@ -340,6 +340,207 @@ class FirebaseBackendService {
       throw error;
     }
   }
+
+  // Check if phone number is registered
+  async checkPhone(phoneNumber: string): Promise<{ exists: boolean; user?: any }> {
+    try {
+      console.log('🔍 Checking phone number:', phoneNumber);
+      
+      // Normalize phone number
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      const normalizedPhone = cleanPhone.startsWith('91') && cleanPhone.length === 12 
+        ? cleanPhone.substring(2) 
+        : cleanPhone;
+      
+      // Check multiple phone formats
+      const phoneVariants = [
+        phoneNumber,
+        normalizedPhone,
+        `+91${normalizedPhone}`,
+        `91${normalizedPhone}`
+      ];
+      
+      console.log('📱 Phone variants to check:', phoneVariants);
+      
+      // Query Firestore for user with this phone number
+      const usersRef = collection(db, 'users');
+      
+      for (const phoneVariant of phoneVariants) {
+        const q = query(usersRef, where('phone', '==', phoneVariant));
+        const snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          const userData = snapshot.docs[0].data();
+          console.log('✅ Found registered user:', userData.name);
+          return {
+            exists: true,
+            user: {
+              id: snapshot.docs[0].id,
+              ...normalizeFirestoreData(userData)
+            }
+          };
+        }
+      }
+      
+      console.log('❌ Phone number not found in database');
+      return { exists: false };
+    } catch (error) {
+      console.error('Phone check error:', error);
+      return { exists: false };
+    }
+  }
+
+  // Get offer schedule (repayment schedule)
+  async getOfferSchedule(offerId: string): Promise<any[]> {
+    try {
+      console.log('📅 Getting offer schedule for:', offerId);
+      
+      // Get offer details first
+      const offer = await this.getOfferWithDetails(offerId);
+      if (!offer) {
+        throw new Error('Offer not found');
+      }
+      
+      // Calculate repayment schedule based on offer terms
+      const { amount, interestRate, tenure, tenureUnit, frequency } = offer;
+      const schedule = [];
+      
+      const totalAmount = parseFloat(amount);
+      const rate = parseFloat(interestRate) / 100;
+      const tenureNumber = parseInt(tenure);
+      
+      // Simple calculation - can be enhanced with more complex logic
+      let installmentAmount = totalAmount;
+      let numberOfInstallments = 1;
+      
+      if (frequency !== 'end-of-tenure' && frequency !== 'lumpsum') {
+        // Calculate based on frequency
+        switch (frequency) {
+          case 'weekly':
+            numberOfInstallments = tenureUnit === 'months' ? tenureNumber * 4 : tenureNumber * 52;
+            break;
+          case 'monthly':
+            numberOfInstallments = tenureUnit === 'years' ? tenureNumber * 12 : tenureNumber;
+            break;
+          case 'quarterly':
+            numberOfInstallments = tenureUnit === 'years' ? tenureNumber * 4 : Math.ceil(tenureNumber / 3);
+            break;
+        }
+        
+        // Simple EMI calculation
+        const monthlyRate = rate / 12;
+        const totalMonths = tenureUnit === 'years' ? tenureNumber * 12 : tenureNumber;
+        
+        if (rate > 0) {
+          installmentAmount = (totalAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / 
+                            (Math.pow(1 + monthlyRate, totalMonths) - 1);
+        } else {
+          installmentAmount = totalAmount / numberOfInstallments;
+        }
+      }
+      
+      // Generate schedule entries
+      const startDate = new Date(offer.createdAt);
+      for (let i = 0; i < numberOfInstallments; i++) {
+        const dueDate = new Date(startDate);
+        
+        switch (frequency) {
+          case 'weekly':
+            dueDate.setDate(startDate.getDate() + (i + 1) * 7);
+            break;
+          case 'monthly':
+            dueDate.setMonth(startDate.getMonth() + (i + 1));
+            break;
+          case 'quarterly':
+            dueDate.setMonth(startDate.getMonth() + (i + 1) * 3);
+            break;
+          default:
+            // Lump sum at end
+            if (tenureUnit === 'months') {
+              dueDate.setMonth(startDate.getMonth() + tenureNumber);
+            } else if (tenureUnit === 'years') {
+              dueDate.setFullYear(startDate.getFullYear() + tenureNumber);
+            }
+        }
+        
+        schedule.push({
+          installmentNumber: i + 1,
+          dueDate: dueDate.toISOString(),
+          amount: Math.round(installmentAmount * 100) / 100,
+          status: 'pending',
+          type: frequency === 'end-of-tenure' ? 'final' : 'regular'
+        });
+      }
+      
+      return schedule;
+    } catch (error) {
+      console.error('Failed to get offer schedule:', error);
+      throw error;
+    }
+  }
+
+  // Update offer status
+  async updateOfferStatus(offerId: string, status: string, reason?: string): Promise<void> {
+    try {
+      console.log('📝 Updating offer status:', { offerId, status, reason });
+      
+      const offerRef = doc(db, 'offers', offerId);
+      const updateData: any = {
+        status,
+        updatedAt: serverTimestamp()
+      };
+      
+      if (reason) {
+        updateData.statusReason = reason;
+      }
+      
+      await updateDoc(offerRef, updateData);
+      console.log('✅ Offer status updated successfully');
+    } catch (error) {
+      console.error('Failed to update offer status:', error);
+      throw error;
+    }
+  }
+
+  // Create new offer
+  async createOffer(offerData: any): Promise<any> {
+    try {
+      console.log('💼 Creating new offer:', offerData);
+      
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+      
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Authentication required');
+      }
+      
+      // Prepare offer document
+      const offerDoc = {
+        ...offerData,
+        fromUserId: currentUser.uid,
+        fromUserPhone: currentUser.phoneNumber || '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      // Add to Firestore
+      const offersRef = collection(db, 'offers');
+      const docRef = await addDoc(offersRef, offerDoc);
+      
+      console.log('✅ Offer created with ID:', docRef.id);
+      
+      return {
+        id: docRef.id,
+        ...offerDoc
+      };
+    } catch (error) {
+      console.error('Failed to create offer:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
