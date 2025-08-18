@@ -34,3 +34,33 @@ The platform follows a mobile-first, security-first, and cloud-ready architectur
 ## External Dependencies
 - **Payment Gateways**: UPI integration ready.
 - **Cloud Providers**: Firebase (Authentication, Firestore, Hosting, Functions).
+
+## Recent Deployments & Fixes
+
+### August 18, 2025 - PDF DOWNLOAD SYSTEM OVERHAUL ✅
+**Status**: PDF DOWNLOAD ISSUES FULLY RESOLVED
+**Critical Issues Fixed**:
+1. Wrong PDF service URLs in production environment
+2. Broken environment detection for Firebase hosting domains
+3. Corrupted firebase-backend-service.ts file structure
+4. Missing authentication token handling for PDF endpoints
+
+**Technical Solutions**:
+- **Environment Detection**: Updated `isProduction()` to include `crednxt-ef673` domain pattern
+- **Service URLs**: Configured dynamic PDF service URLs (`localhost:5000` for dev, Firebase Functions for production)
+- **Clean Architecture**: Rebuilt firebase-backend-service.ts with focused PDF download methods
+- **Authentication**: Proper Firebase auth token integration for PDF endpoint access
+- **Error Handling**: Enhanced logging and error reporting for PDF download failures
+
+**Production Deployment**:
+- **New Bundle**: `index-TaTZl0fS.js` deployed with fixed PDF functionality
+- **Firebase Functions**: PDF service endpoints available at `us-central1-crednxt-ef673.cloudfunctions.net/pdfService`
+- **Local Development**: PDF generation via local Express server on port 5000
+- **Authentication**: Server validates Firebase ID tokens for PDF access
+
+**Functionality Restored**:
+✅ Contract PDF downloads with proper authorization
+✅ KFS (Key Fact Statement) document generation  
+✅ Repayment schedule PDF creation and download
+✅ Environment-aware endpoint routing
+✅ Secure authentication for all PDF operations
