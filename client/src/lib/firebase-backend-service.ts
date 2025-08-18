@@ -27,7 +27,7 @@ const PDF_SERVICE_URL = `${FIREBASE_FUNCTIONS_BASE}/pdfService`;
 // Environment-aware PDF service URL - Use main API for all PDF operations
 const getPdfServiceUrl = () => {
   if (isProduction()) {
-    // For Firebase Hosting, use the direct Functions URL since rewrites aren't working
+    // For Firebase Hosting, use the direct Functions URL - NO /api prefix needed
     return 'https://api-mzz6re522q-uc.a.run.app';
   }
   // Use current domain for Replit development environment
