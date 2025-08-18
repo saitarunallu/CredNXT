@@ -31,11 +31,10 @@ const isProduction = (): boolean => {
 
 // Get auth token for API calls
 const getAuthToken = async (): Promise<string | null> => {
-  const user = auth.currentUser;
-  if (!user) return null;
+  if (!auth?.currentUser) return null;
   
   try {
-    const token = await user.getIdToken();
+    const token = await auth.currentUser.getIdToken();
     return token;
   } catch (error) {
     console.error('Failed to get auth token:', error);
@@ -508,11 +507,114 @@ export class FirebaseBackendService {
         }
       }
 
-      // Return empty schedule for now - can be enhanced later
-      return { schedule: [] };
+      // Get offer details to calculate schedule
+      const offerDetails = await this.getOfferWithDetails(offerId);
+      if (!offerDetails?.offer) {
+        return { schedule: null };
+      }
+
+      const offer = offerDetails.offer;
+      
+      // Calculate schedule using client-side logic
+      const schedule = this.calculateOfferSchedule(offer);
+      return { schedule };
     } catch (error) {
       console.error('Error getting offer schedule:', error);
-      return { schedule: [] };
+      return { schedule: null };
+    }
+  }
+
+  // Client-side schedule calculation
+  private calculateOfferSchedule(offer: any): any {
+    try {
+      const principal = parseFloat(offer.amount) || 0;
+      const annualRate = parseFloat(offer.interestRate) || 0;
+      const tenureValue = parseInt(offer.tenureValue) || 0;
+      const tenureUnit = offer.tenureUnit || 'months';
+      const repaymentType = offer.repaymentType || 'emi';
+      const interestType = offer.interestType || 'reducing';
+
+      if (principal <= 0 || annualRate < 0 || tenureValue <= 0) {
+        return null;
+      }
+
+      // Convert tenure to months
+      const tenureInMonths = tenureUnit === 'years' ? tenureValue * 12 : tenureValue;
+      const monthlyRate = annualRate / 100 / 12;
+      
+      let emiAmount = 0;
+      let totalInterest = 0;
+      let numberOfPayments = tenureInMonths;
+      let schedule: any[] = [];
+
+      if (repaymentType === 'emi' && monthlyRate > 0) {
+        // Calculate EMI using reducing balance method
+        emiAmount = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureInMonths)) / 
+                   (Math.pow(1 + monthlyRate, tenureInMonths) - 1);
+        emiAmount = Math.round(emiAmount * 100) / 100;
+
+        // Generate payment schedule
+        let remainingBalance = principal;
+        const startDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
+
+        for (let i = 1; i <= tenureInMonths; i++) {
+          const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
+          const principalAmount = Math.min(Math.round((emiAmount - interestAmount) * 100) / 100, remainingBalance);
+          remainingBalance = Math.max(0, remainingBalance - principalAmount);
+          
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+
+          schedule.push({
+            installmentNumber: i,
+            dueDate: dueDate,
+            principalAmount,
+            interestAmount,
+            totalAmount: principalAmount + interestAmount,
+            remainingBalance
+          });
+
+          totalInterest += interestAmount;
+        }
+      } else if (repaymentType === 'full_payment') {
+        // Lump sum payment
+        if (interestType === 'fixed') {
+          totalInterest = principal * (annualRate / 100) * (tenureInMonths / 12);
+        } else {
+          totalInterest = principal * Math.pow(1 + annualRate / 100, tenureInMonths / 12) - principal;
+        }
+        totalInterest = Math.round(totalInterest * 100) / 100;
+        emiAmount = principal + totalInterest;
+        numberOfPayments = 1;
+
+        const dueDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
+        if (tenureUnit === 'years') {
+          dueDate.setFullYear(dueDate.getFullYear() + tenureValue);
+        } else {
+          dueDate.setMonth(dueDate.getMonth() + tenureValue);
+        }
+
+        schedule.push({
+          installmentNumber: 1,
+          dueDate: dueDate,
+          principalAmount: principal,
+          interestAmount: totalInterest,
+          totalAmount: principal + totalInterest,
+          remainingBalance: 0
+        });
+      }
+
+      return {
+        principal,
+        totalInterest: Math.round(totalInterest * 100) / 100,
+        totalAmount: Math.round((principal + totalInterest) * 100) / 100,
+        emiAmount: Math.round(emiAmount * 100) / 100,
+        numberOfPayments,
+        schedule
+      };
+    } catch (error) {
+      console.error('Error calculating schedule:', error);
+      return null;
     }
   }
 
