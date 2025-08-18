@@ -18,14 +18,14 @@ import {
 
 const db = getFirestore();
 
-// Firebase Functions URLs
-const FUNCTIONS_BASE_URL = 'https://us-central1-crednxt-ef673.cloudfunctions.net';
-const API_BASE_URL = `${FUNCTIONS_BASE_URL}/api`;
+// Firebase Functions URLs - Updated with correct deployment URLs
+const API_BASE_URL = 'https://api-mzz6re522q-uc.a.run.app';
+const PDF_SERVICE_URL = 'https://pdfservice-mzz6re522q-uc.a.run.app';
 
 // Environment-aware PDF service URL
 const getPdfServiceUrl = () => {
   if (isProduction()) {
-    return `${FUNCTIONS_BASE_URL}/pdfService`; // Firebase Functions PDF API
+    return PDF_SERVICE_URL; // Firebase Functions PDF API (correct URL)
   }
   // Use current domain for Replit development environment
   const currentOrigin = window.location.origin;
