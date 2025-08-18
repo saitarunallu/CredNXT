@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Calendar, IndianRupee, User, CheckCircle, XCircle, ArrowDownLeft, ArrowUpRight, HandCoins, Wallet, Download } from "lucide-react";
+import { Calendar, IndianRupee, User, CheckCircle, XCircle, ArrowDownLeft, ArrowUpRight, HandCoins, Wallet, Download, Ban } from "lucide-react";
 import { Offer, User as UserType } from "@shared/firestore-schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,6 +33,13 @@ export default function OfferCard({
   const amount = parseFloat(String(offer.amount));
   const paid = parseFloat(totalPaid);
   const outstanding = amount - paid;
+
+  // Role-based authorization checks
+  const isReceiver = currentUser?.id === offer.toUserId;
+  const isSender = currentUser?.id === offer.fromUserId;
+  const canViewOffer = isReceiver || isSender;
+  const canAcceptOffer = isReceiver && offer.status === 'pending';
+  const canCancelOffer = isSender && offer.status === 'pending';
 
   const acceptOfferMutation = useMutation({
     mutationFn: () => {
@@ -309,8 +316,8 @@ export default function OfferCard({
           </div>
         </div>
       
-        {/* Optional: Show action buttons for pending offers */}
-        {offer.status === 'pending' && isReceived && offer.toUserId === currentUser?.id && (
+        {/* Role-based action buttons */}
+        {canAcceptOffer && (
           <div className="mt-3 pt-3 border-t border-gray-100 flex space-x-2">
             <Button 
               onClick={(e) => {
@@ -340,6 +347,30 @@ export default function OfferCard({
             >
               <XCircle className="w-3 h-3 mr-1" />
               Decline
+            </Button>
+          </div>
+        )}
+
+        {/* Show cancel option for sender of pending offers */}
+        {canCancelOffer && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <Button 
+              variant="outline"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Add cancel offer mutation here if needed
+                toast({
+                  title: "Cancel Offer",
+                  description: "This feature will be available soon.",
+                });
+              }}
+              className="w-full text-xs px-3 py-1.5 h-8"
+              size="sm"
+              data-testid="button-cancel-offer"
+            >
+              <Ban className="w-3 h-3 mr-1" />
+              Cancel Offer
             </Button>
           </div>
         )}

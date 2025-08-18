@@ -37,6 +37,58 @@ interface ViewOfferProps {
   offerId: string;
 }
 
+// Helper function to format Firebase timestamps
+const formatFirebaseDate = (timestamp: any): string => {
+  if (!timestamp) return 'N/A';
+  
+  try {
+    // Handle Firebase Timestamp objects
+    if (timestamp._seconds !== undefined) {
+      const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+      return date.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // Handle Firestore toDate() method
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // Handle Date objects
+    if (timestamp instanceof Date) {
+      return timestamp.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // Handle ISO strings
+    if (typeof timestamp === 'string') {
+      const date = new Date(timestamp);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+    }
+    
+    return 'Invalid Date';
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Invalid Date';
+  }
+};
+
 // Production fallback component with direct Firestore access
 function ProductionFallbackView({ offerId, setLocation }: { offerId: string, setLocation: Function }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -355,58 +407,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const [closeLoanReason, setCloseLoanReason] = useState("");
 
   const currentUser = authService.getUser();
-
-  // Helper function to format Firebase timestamps
-  const formatFirebaseDate = (timestamp: any): string => {
-    if (!timestamp) return 'N/A';
-    
-    try {
-      // Handle Firebase Timestamp objects
-      if (timestamp._seconds !== undefined) {
-        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
-        return date.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-      }
-      
-      // Handle Firestore toDate() method
-      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-      }
-      
-      // Handle Date objects
-      if (timestamp instanceof Date) {
-        return timestamp.toLocaleDateString('en-IN', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-      }
-      
-      // Handle ISO strings
-      if (typeof timestamp === 'string') {
-        const date = new Date(timestamp);
-        if (!isNaN(date.getTime())) {
-          return date.toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-          });
-        }
-      }
-      
-      return 'Invalid Date';
-    } catch (error) {
-      console.error('Date formatting error:', error);
-      return 'Invalid Date';
-    }
-  };
 
   console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);
@@ -828,6 +828,38 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   
   const isReceiver = offer.toUserId === currentUser?.id;
   const isSender = offer.fromUserId === currentUser?.id;
+  
+  // Enhanced role-based authorization checks
+  const canViewOffer = isReceiver || isSender || currentUser?.phone === offer.toUserPhone;
+  const canAcceptOffer = isReceiver && offer.status === 'pending';
+  const canRejectOffer = isReceiver && offer.status === 'pending';
+  const canSubmitPayment = isReceiver && offer.status === 'accepted';
+  const canApprovePayment = isSender && offer.status === 'accepted';
+  const canCloseLoan = isSender && offer.status === 'accepted';
+  const canDownloadDocuments = canViewOffer && offer.status === 'accepted';
+
+  // Security check - if user is not authorized to view this offer, redirect
+  if (!canViewOffer && currentUser) {
+    console.warn('Unauthorized access attempt to offer:', offerId, 'by user:', currentUser.id);
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+            <CardContent className="p-8 text-center">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Access Denied</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                You are not authorized to view this offer. Only the sender and recipient can access offer details.
+              </p>
+              <Button onClick={() => setLocation('/dashboard')} className="bg-blue-600 hover:bg-blue-700 text-white">
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -991,34 +1023,42 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
               </CardContent>
             </Card>
 
-            {/* Actions */}
-            {offer.status === 'pending' && isReceiver && (
+            {/* Role-based Actions */}
+            {(canAcceptOffer || canRejectOffer) && (
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg font-semibold">Respond to Offer</CardTitle>
-                  <p className="text-sm text-gray-600">Choose your action for this offer</p>
+                  <p className="text-sm text-gray-600">
+                    {isReceiver ? 'Choose your action for this offer' : 'You can view the offer details'}
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button 
-                      onClick={() => acceptOfferMutation.mutate()}
-                      disabled={acceptOfferMutation.isPending || rejectOfferMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium"
-                      size="lg"
-                    >
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      Accept Offer
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => rejectOfferMutation.mutate()}
-                      disabled={acceptOfferMutation.isPending || rejectOfferMutation.isPending}
-                      className="h-12 text-base font-medium"
-                      size="lg"
-                    >
-                      <XCircle className="w-5 h-5 mr-2" />
-                      Decline Offer
-                    </Button>
+                    {canAcceptOffer && (
+                      <Button 
+                        onClick={() => acceptOfferMutation.mutate()}
+                        disabled={acceptOfferMutation.isPending || rejectOfferMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white h-12 text-base font-medium"
+                        size="lg"
+                        data-testid="button-accept-offer-details"
+                      >
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Accept Offer
+                      </Button>
+                    )}
+                    {canRejectOffer && (
+                      <Button 
+                        variant="destructive"
+                        onClick={() => rejectOfferMutation.mutate()}
+                        disabled={acceptOfferMutation.isPending || rejectOfferMutation.isPending}
+                        className="h-12 text-base font-medium"
+                        size="lg"
+                        data-testid="button-reject-offer-details"
+                      >
+                        <XCircle className="w-5 h-5 mr-2" />
+                        Decline Offer
+                      </Button>
+                    )}
                   </div>
                   {(acceptOfferMutation.isPending || rejectOfferMutation.isPending) && (
                     <div className="mt-4 text-center">
@@ -1145,7 +1185,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     </div>
 
                     {/* Payment submission form for borrower */}
-                    {currentUser?.id === offer.toUserId && (
+                    {canSubmitPayment && (
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-3">Submit Payment</h4>
                         <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-3">
@@ -1306,7 +1346,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
             )}
 
             {/* Next Payment Due Section - Only show when payment is actually due */}
-            {offer.status === 'accepted' && (dueAmount > 0.01 || overDueAmount > 0.01) && isReceiver && (
+            {offer.status === 'accepted' && (dueAmount > 0.01 || overDueAmount > 0.01) && canSubmitPayment && (
               <Card className="border-2 border-blue-300 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
                   <CardTitle className="flex items-center text-blue-900">
@@ -1462,7 +1502,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                           </div>
                           
                           {/* Approval buttons for lender when payment is pending */}
-                          {payment.status === 'pending' && isSender && (
+                          {payment.status === 'pending' && canApprovePayment && (
                             <div className="flex gap-2 mt-3">
                               <Button
                                 size="sm"
@@ -1594,36 +1634,47 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={downloadContract}
-                  data-testid="button-download-contract"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Contract
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
-                  onClick={downloadKFS}
-                  data-testid="button-download-kfs"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download KFS
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-green-50 border-green-200 hover:bg-green-100 text-green-700"
-                  onClick={downloadRepaymentSchedule}
-                  data-testid="button-download-schedule"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Schedule
-                </Button>
+                {canDownloadDocuments && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={downloadContract}
+                      data-testid="button-download-contract"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Contract
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700"
+                      onClick={downloadKFS}
+                      data-testid="button-download-kfs"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download KFS
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-green-50 border-green-200 hover:bg-green-100 text-green-700"
+                      onClick={downloadRepaymentSchedule}
+                      data-testid="button-download-schedule"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Schedule
+                    </Button>
+                  </>
+                )}
+                
+                {!canDownloadDocuments && offer.status !== 'accepted' && (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600 mb-2">Document downloads available after offer acceptance</p>
+                    <FileText className="w-8 h-8 mx-auto text-gray-400" />
+                  </div>
+                )}
 
                 {/* Lender Controls */}
-                {offer.status === 'accepted' && isSender && (
+                {canCloseLoan && (
                   <>
                     <div className="border-t pt-3">
                       <div className="flex items-center justify-between mb-2">
