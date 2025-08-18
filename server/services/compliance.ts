@@ -83,7 +83,7 @@ export class ComplianceService {
         validate: (offer: Offer) => {
           const violations: string[] = [];
           const warnings: string[] = [];
-          const amount = parseFloat(offer.amount);
+          const amount = parseFloat(String(offer.amount));
 
           // Banking regulation: Maximum unsecured personal loan
           if (amount > 1000000) violations.push('Loan amount exceeds ₹10,00,000 maximum limit');
@@ -116,7 +116,7 @@ export class ComplianceService {
         validate: (offer: Offer) => {
           const violations: string[] = [];
           const warnings: string[] = [];
-          const rate = parseFloat(offer.interestRate);
+          const rate = parseFloat(String(offer.interestRate));
 
           // Indian banking regulation: Maximum interest rate for personal loans
           if (rate > 50) violations.push('Interest rate exceeds 50% annual maximum');
@@ -149,7 +149,7 @@ export class ComplianceService {
         validate: (payment: Payment) => {
           const violations: string[] = [];
           const warnings: string[] = [];
-          const amount = parseFloat(payment.amount);
+          const amount = parseFloat(String(payment.amount));
 
           if (amount <= 0) violations.push('Payment amount must be positive');
           if (amount > 200000) warnings.push('Large payment amount requires additional verification');
