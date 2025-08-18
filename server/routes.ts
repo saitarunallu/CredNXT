@@ -1674,10 +1674,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this contract' });
       }
 
-      // Check if contract PDF was pre-generated
+      // Check if contract PDF was pre-generated, generate if missing (backward compatibility)
       if (!offer.contractPdfKey) {
-        console.log('❌ Contract PDF not available for offer:', id);
-        return res.status(404).json({ message: 'Contract PDF not available' });
+        console.log('⚡ Generating missing contract PDF for existing offer:', id);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        try {
+          const contractKey = await pdfService.generateContract(offer as any, fromUser as any);
+          await storage.updateOffer(id, { contractPdfKey: contractKey });
+          offer.contractPdfKey = contractKey;
+          console.log('✅ Generated contract PDF for existing offer:', contractKey);
+        } catch (error) {
+          console.error('❌ Failed to generate contract PDF for existing offer:', error);
+          return res.status(500).json({ message: 'Contract PDF not available' });
+        }
       }
 
       console.log('📥 Downloading pre-generated contract PDF:', offer.contractPdfKey);
@@ -1715,10 +1729,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this KFS document' });
       }
 
-      // Check if KFS PDF was pre-generated
+      // Check if KFS PDF was pre-generated, generate if missing (backward compatibility)
       if (!offer.kfsPdfKey) {
-        console.log('❌ KFS PDF not available for offer:', id);
-        return res.status(404).json({ message: 'KFS PDF not available' });
+        console.log('⚡ Generating missing KFS PDF for existing offer:', id);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        try {
+          const kfsKey = await pdfService.generateKFS(offer as any, fromUser as any);
+          await storage.updateOffer(id, { kfsPdfKey: kfsKey });
+          offer.kfsPdfKey = kfsKey;
+          console.log('✅ Generated KFS PDF for existing offer:', kfsKey);
+        } catch (error) {
+          console.error('❌ Failed to generate KFS PDF for existing offer:', error);
+          return res.status(500).json({ message: 'KFS PDF not available' });
+        }
       }
 
       console.log('📥 Downloading pre-generated KFS PDF:', offer.kfsPdfKey);
@@ -1756,10 +1784,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Unauthorized to access this schedule' });
       }
 
-      // Check if schedule PDF was pre-generated
+      // Check if schedule PDF was pre-generated, generate if missing (backward compatibility)
       if (!offer.schedulePdfKey) {
-        console.log('❌ Schedule PDF not available for offer:', id);
-        return res.status(404).json({ message: 'Schedule PDF not available' });
+        console.log('⚡ Generating missing schedule PDF for existing offer:', id);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        try {
+          const scheduleKey = await pdfService.generateRepaymentSchedule(offer as any, fromUser as any);
+          await storage.updateOffer(id, { schedulePdfKey: scheduleKey });
+          offer.schedulePdfKey = scheduleKey;
+          console.log('✅ Generated schedule PDF for existing offer:', scheduleKey);
+        } catch (error) {
+          console.error('❌ Failed to generate schedule PDF for existing offer:', error);
+          return res.status(500).json({ message: 'Schedule PDF not available' });
+        }
       }
 
       console.log('📥 Downloading pre-generated schedule PDF:', offer.schedulePdfKey);
