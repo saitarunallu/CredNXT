@@ -541,6 +541,103 @@ class FirebaseBackendService {
       throw error;
     }
   }
+
+  // Get all offers for the current user
+  async getOffers(): Promise<any[]> {
+    try {
+      console.log('📋 Fetching all offers for current user...');
+      
+      if (!auth?.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
+      const userId = auth.currentUser.uid;
+      const allOffers = [];
+      
+      // Get offers where user is the sender (fromUserId)
+      const sentQuery = query(
+        collection(db, 'offers'),
+        where('fromUserId', '==', userId)
+      );
+      const sentSnapshot = await getDocs(sentQuery);
+      const sentOffers = sentSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...normalizeFirestoreData(doc.data())
+      }));
+      
+      console.log(`Found ${sentOffers.length} sent offers`);
+      allOffers.push(...sentOffers);
+      
+      // Get offers where user is the recipient (toUserId)
+      const receivedQuery = query(
+        collection(db, 'offers'),
+        where('toUserId', '==', userId)
+      );
+      const receivedSnapshot = await getDocs(receivedQuery);
+      const receivedOffers = receivedSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...normalizeFirestoreData(doc.data())
+      }));
+      
+      console.log(`Found ${receivedOffers.length} received offers`);
+      allOffers.push(...receivedOffers);
+      
+      // Remove duplicates
+      const uniqueOffers = allOffers.filter((offer, index, self) => 
+        index === self.findIndex(o => o.id === offer.id)
+      );
+      
+      console.log(`Total unique offers: ${uniqueOffers.length}`);
+      return uniqueOffers;
+    } catch (error) {
+      console.error('Failed to get offers:', error);
+      throw error;
+    }
+  }
+
+  // Create a test offer for demo purposes
+  async createTestOffer(): Promise<any> {
+    try {
+      console.log('🧪 Creating test offer...');
+      
+      if (!auth?.currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
+      // Create a test offer
+      const testOffer = {
+        fromUserId: auth.currentUser.uid,
+        fromUserPhone: auth.currentUser.phoneNumber || '+919876543211',
+        toUserId: 'test-recipient', // Dummy recipient
+        toUserPhone: '9876543210',
+        toUserName: 'Test Borrower',
+        amount: 50000,
+        interestRate: 12,
+        tenure: 12,
+        tenureUnit: 'months',
+        purpose: 'Test loan for demo purposes',
+        status: 'pending',
+        offerType: 'lend',
+        interestType: 'simple',
+        repaymentType: 'installment',
+        frequency: 'monthly',
+        allowPartPayment: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      
+      const docRef = await addDoc(collection(db, 'offers'), testOffer);
+      console.log('✅ Test offer created with ID:', docRef.id);
+      
+      return {
+        id: docRef.id,
+        ...testOffer
+      };
+    } catch (error) {
+      console.error('Failed to create test offer:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
