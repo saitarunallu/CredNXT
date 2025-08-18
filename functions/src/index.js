@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
+const PDFDocument = require('pdfkit');
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -233,8 +234,8 @@ app.get('/api/offers/:id/pdf/contract', authenticate, async (req, res) => {
       }
     }
     
-    // Simple PDF content generation (you can enhance this)
-    const pdfContent = generateContractPDF(offerData, fromUser);
+    // Generate PDF content
+    const pdfContent = await generateContractPDF(offerData, fromUser);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="contract-${id}.pdf"`);
@@ -274,7 +275,7 @@ app.get('/api/offers/:id/pdf/kfs', authenticate, async (req, res) => {
     }
     
     // Generate KFS PDF content
-    const pdfContent = generateKFSPDF(offerData);
+    const pdfContent = await generateKFSPDF(offerData);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
@@ -322,7 +323,7 @@ app.get('/api/offers/:id/pdf/schedule', authenticate, async (req, res) => {
     const payments = paymentsSnapshot.docs.map(doc => doc.data());
     
     // Generate schedule PDF content
-    const pdfContent = generateSchedulePDF(offerData, payments);
+    const pdfContent = await generateSchedulePDF(offerData, payments);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="schedule-${id}.pdf"`);
@@ -334,78 +335,200 @@ app.get('/api/offers/:id/pdf/schedule', authenticate, async (req, res) => {
   }
 });
 
-// Simple PDF generation functions (basic implementation)
+// PDF generation functions using PDFKit
 function generateContractPDF(offerData, fromUser) {
-  const content = `
-    LOAN CONTRACT
-    
-    Amount: ₹${offerData.amount}
-    Interest Rate: ${offerData.interestRate}%
-    Duration: ${offerData.duration} ${offerData.durationUnit}
-    Frequency: ${offerData.frequency}
-    
-    Lender: ${fromUser?.name || 'N/A'}
-    Phone: ${fromUser?.phone || offerData.fromUserPhone || 'N/A'}
-    
-    Borrower: ${offerData.toUserName || 'N/A'}
-    Phone: ${offerData.toUserPhone || 'N/A'}
-    
-    Created: ${new Date().toLocaleDateString()}
-    
-    This is a legal agreement between the parties mentioned above.
-  `;
-  
-  return Buffer.from(content, 'utf-8');
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      });
+      
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfData = Buffer.concat(buffers);
+        resolve(pdfData);
+      });
+      
+      // Header
+      doc.fontSize(20).text('LOAN CONTRACT', { align: 'center' });
+      doc.moveDown(2);
+      
+      // Loan Details
+      doc.fontSize(14).text('LOAN DETAILS', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12)
+        .text(`Loan Amount: ₹${offerData.amount}`)
+        .text(`Interest Rate: ${offerData.interestRate}% per annum`)
+        .text(`Duration: ${offerData.duration} ${offerData.durationUnit}`)
+        .text(`Repayment Frequency: ${offerData.frequency}`);
+      
+      doc.moveDown(2);
+      
+      // Parties
+      doc.fontSize(14).text('PARTIES INVOLVED', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12)
+        .text(`Lender: ${fromUser?.name || 'N/A'}`)
+        .text(`Phone: ${fromUser?.phone || offerData.fromUserPhone || 'N/A'}`)
+        .moveDown()
+        .text(`Borrower: ${offerData.toUserName || 'N/A'}`)
+        .text(`Phone: ${offerData.toUserPhone || 'N/A'}`);
+      
+      doc.moveDown(2);
+      
+      // Terms
+      doc.fontSize(14).text('TERMS & CONDITIONS', { underline: true });
+      doc.moveDown();
+      doc.fontSize(10)
+        .text('1. This is a legally binding agreement between the parties mentioned above.')
+        .text('2. The borrower agrees to repay the loan amount with interest as per the agreed schedule.')
+        .text('3. Late payment charges may apply as per mutual agreement.')
+        .text('4. Early repayment is allowed without penalty.')
+        .text('5. All disputes will be subject to local jurisdiction.');
+      
+      doc.moveDown(2);
+      doc.fontSize(10).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'right' });
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 function generateKFSPDF(offerData) {
-  const content = `
-    KEY FACT SHEET (KFS)
-    
-    Loan Amount: ₹${offerData.amount}
-    Interest Rate: ${offerData.interestRate}% per annum
-    Loan Duration: ${offerData.duration} ${offerData.durationUnit}
-    Repayment Frequency: ${offerData.frequency}
-    
-    Total Interest: ₹${calculateTotalInterest(offerData)}
-    Total Repayment: ₹${calculateTotalRepayment(offerData)}
-    
-    Monthly EMI: ₹${calculateEMI(offerData)}
-    
-    Terms and Conditions:
-    - Late payment charges may apply
-    - Early repayment is allowed
-    - All disputes subject to local jurisdiction
-    
-    Generated: ${new Date().toLocaleDateString()}
-  `;
-  
-  return Buffer.from(content, 'utf-8');
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      });
+      
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfData = Buffer.concat(buffers);
+        resolve(pdfData);
+      });
+      
+      // Header
+      doc.fontSize(20).text('KEY FACT SHEET (KFS)', { align: 'center' });
+      doc.moveDown(2);
+      
+      // Loan Summary
+      doc.fontSize(14).text('LOAN SUMMARY', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12)
+        .text(`Loan Amount: ₹${offerData.amount}`)
+        .text(`Interest Rate: ${offerData.interestRate}% per annum`)
+        .text(`Loan Duration: ${offerData.duration} ${offerData.durationUnit}`)
+        .text(`Repayment Frequency: ${offerData.frequency}`);
+      
+      doc.moveDown(2);
+      
+      // Financial Details
+      doc.fontSize(14).text('FINANCIAL BREAKDOWN', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12)
+        .text(`Total Interest: ₹${calculateTotalInterest(offerData)}`)
+        .text(`Total Repayment: ₹${calculateTotalRepayment(offerData)}`)
+        .text(`EMI Amount: ₹${calculateEMI(offerData)}`);
+      
+      doc.moveDown(2);
+      
+      // Important Terms
+      doc.fontSize(14).text('IMPORTANT TERMS', { underline: true });
+      doc.moveDown();
+      doc.fontSize(10)
+        .text('• Late payment charges may apply as per agreement')
+        .text('• Early repayment is allowed without penalty')
+        .text('• All disputes subject to local jurisdiction')
+        .text('• Interest calculation is based on simple interest method')
+        .text('• Repayment schedule will be provided separately');
+      
+      doc.moveDown(2);
+      doc.fontSize(10).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'right' });
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 function generateSchedulePDF(offerData, payments) {
-  let content = `
-    REPAYMENT SCHEDULE
-    
-    Loan Amount: ₹${offerData.amount}
-    Interest Rate: ${offerData.interestRate}%
-    Duration: ${offerData.duration} ${offerData.durationUnit}
-    
-    PAYMENT SCHEDULE:
-    `;
-    
-  payments.forEach((payment, index) => {
-    const dueDate = payment.dueDate?.toDate ? payment.dueDate.toDate() : new Date(payment.dueDate);
-    content += `
-    ${index + 1}. Due: ${dueDate.toLocaleDateString()} - Amount: ₹${payment.amount} - Status: ${payment.status || 'Pending'}`;
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      });
+      
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfData = Buffer.concat(buffers);
+        resolve(pdfData);
+      });
+      
+      // Header
+      doc.fontSize(20).text('REPAYMENT SCHEDULE', { align: 'center' });
+      doc.moveDown(2);
+      
+      // Loan Summary
+      doc.fontSize(14).text('LOAN DETAILS', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12)
+        .text(`Loan Amount: ₹${offerData.amount}`)
+        .text(`Interest Rate: ${offerData.interestRate}% per annum`)
+        .text(`Duration: ${offerData.duration} ${offerData.durationUnit}`);
+      
+      doc.moveDown(2);
+      
+      // Payment Schedule Table
+      doc.fontSize(14).text('PAYMENT SCHEDULE', { underline: true });
+      doc.moveDown();
+      
+      // Table headers
+      doc.fontSize(10)
+        .text('S.No.', 50, doc.y, { width: 40 })
+        .text('Due Date', 100, doc.y, { width: 100 })
+        .text('Amount (₹)', 210, doc.y, { width: 100 })
+        .text('Status', 320, doc.y, { width: 100 });
+      
+      doc.moveDown();
+      
+      // Draw line under headers
+      doc.moveTo(50, doc.y)
+         .lineTo(450, doc.y)
+         .stroke();
+      
+      doc.moveDown();
+      
+      // Payment rows
+      payments.forEach((payment, index) => {
+        const dueDate = payment.dueDate?.toDate ? payment.dueDate.toDate() : new Date(payment.dueDate);
+        const yPosition = doc.y;
+        
+        doc.fontSize(10)
+          .text((index + 1).toString(), 50, yPosition, { width: 40 })
+          .text(dueDate.toLocaleDateString(), 100, yPosition, { width: 100 })
+          .text(payment.amount.toString(), 210, yPosition, { width: 100 })
+          .text(payment.status || 'Pending', 320, yPosition, { width: 100 });
+        
+        doc.moveDown();
+      });
+      
+      doc.moveDown(2);
+      doc.fontSize(10).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: 'right' });
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
   });
-  
-  content += `
-    
-    Generated: ${new Date().toLocaleDateString()}
-  `;
-  
-  return Buffer.from(content, 'utf-8');
 }
 
 // Helper calculation functions
