@@ -21,8 +21,8 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - Successfully used FIREBASE_CONFIG_JSON secret for authentication
 - Frontend and Functions deployed successfully
 - Live at: https://crednxt-ef673.web.app
-- API endpoints: https://us-central1-crednxt-ef673.cloudfunctions.net/api
-- PDF service: https://us-central1-crednxt-ef673.cloudfunctions.net/pdfService
+- API endpoints: https://api-mzz6re522q-uc.a.run.app (Cloud Run deployment)
+- PDF service: https://api-mzz6re522q-uc.a.run.app (integrated with main API)
 
 ✅ **PDF System Completely Improved** - August 18, 2025
 - **Pre-Generation Strategy**: All PDFs (contract, KFS, repayment schedule) now generated immediately when offer is created
@@ -31,6 +31,13 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - **Firebase Storage Integration**: Cloud storage automatically handles PDF persistence in production
 - **Simplified Endpoints**: PDF download routes now simply fetch pre-generated files
 - **Enhanced User Experience**: All loan documents ready instantly when user needs them
+
+✅ **PDF Download URL Routing Fixed** - August 18, 2025
+- Fixed critical issue where client was adding `/api` prefix to Firebase Functions URLs
+- Updated both queryClient.ts and firebase-backend-service.ts for correct production routing
+- Firebase Functions deployed at https://api-mzz6re522q-uc.a.run.app expects direct paths (not `/api/path`)
+- PDF downloads now use correct endpoint URLs: `/offers/{id}/pdf/contract`, `/offers/{id}/pdf/kfs`, `/offers/{id}/pdf/schedule`
+- Enhanced logging shows authentication and API call details for debugging
 
 ✅ **Offers Display Issue Fixed** - August 18, 2025
 - Resolved authentication user ID matching with Firestore data
