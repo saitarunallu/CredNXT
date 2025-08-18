@@ -303,11 +303,7 @@ function ProductionFallbackView({ offerId, setLocation }: { offerId: string, set
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
                     <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      {offer.dueDate ? new Date(offer.dueDate.toDate()).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      }) : 'N/A'}
+                      {formatFirebaseDate(offer.dueDate)}
                     </p>
                   </div>
                 </div>
@@ -359,6 +355,58 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const [closeLoanReason, setCloseLoanReason] = useState("");
 
   const currentUser = authService.getUser();
+
+  // Helper function to format Firebase timestamps
+  const formatFirebaseDate = (timestamp: any): string => {
+    if (!timestamp) return 'N/A';
+    
+    try {
+      // Handle Firebase Timestamp objects
+      if (timestamp._seconds !== undefined) {
+        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+        return date.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle Firestore toDate() method
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle Date objects
+      if (timestamp instanceof Date) {
+        return timestamp.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle ISO strings
+      if (typeof timestamp === 'string') {
+        const date = new Date(timestamp);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          });
+        }
+      }
+      
+      return 'Invalid Date';
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
+  };
 
   console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);
@@ -459,10 +507,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       });
       reset(); // Reset form after successful submission
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to submit payment. Please try again.",
+        description: `Failed to submit payment: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -481,10 +529,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
         description: "Payment has been approved successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to approve payment. Please try again.",
+        description: `Failed to approve payment: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -503,10 +551,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
         description: "Payment has been rejected.",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to reject payment. Please try again.",
+        description: `Failed to reject payment: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -624,33 +672,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
       refString: undefined,
       status: "pending" // Required status field for payment
     });
-  };
-
-  // Helper function to format Firebase timestamps
-  const formatFirebaseDate = (timestamp: any): string => {
-    if (!timestamp) return 'Invalid Date';
-    
-    try {
-      // Handle Firebase Timestamp objects
-      if (timestamp._seconds) {
-        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
-        return date.toLocaleDateString();
-      }
-      
-      // Handle Firestore toDate() method
-      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleDateString();
-      }
-      
-      // Handle regular date strings/objects
-      const date = new Date(timestamp);
-      return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString();
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Date formatting error:', error);
-      }
-      return 'Invalid Date';
-    }
   };
 
   // Add debug logging
