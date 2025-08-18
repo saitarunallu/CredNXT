@@ -202,7 +202,7 @@ class FirebaseBackendService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Accept': 'application/pdf'
         }
       });
 
@@ -219,10 +219,14 @@ class FirebaseBackendService {
       }
 
       const blob = await response.blob();
+      console.log('✅ Contract PDF blob received, initiating download...');
+      
+      // Create and trigger download
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `loan-contract-${offerId}.pdf`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -255,7 +259,7 @@ class FirebaseBackendService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Accept': 'application/pdf'
         }
       });
 
@@ -272,10 +276,14 @@ class FirebaseBackendService {
       }
 
       const blob = await response.blob();
+      console.log('✅ KFS PDF blob received, initiating download...');
+      
+      // Create and trigger download
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = `kfs-${offerId}.pdf`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -288,7 +296,7 @@ class FirebaseBackendService {
     }
   }
 
-  async downloadRepaymentSchedule(offerId: string): Promise<void> {
+  async downloadRepaymentSchedule(offerId: string): Promise<Blob> {
     try {
       console.log('📄 Starting repayment schedule download...');
       
@@ -308,7 +316,7 @@ class FirebaseBackendService {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Accept': 'application/pdf'
         }
       });
 
@@ -325,16 +333,8 @@ class FirebaseBackendService {
       }
 
       const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `repayment-schedule-${offerId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      
-      console.log('✅ Repayment schedule PDF downloaded successfully');
+      console.log('✅ Repayment schedule PDF blob received successfully');
+      return blob;
     } catch (error) {
       console.error('Repayment schedule download failed:', error);
       throw error;
