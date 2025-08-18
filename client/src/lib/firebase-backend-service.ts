@@ -532,38 +532,66 @@ export class FirebaseBackendService {
       const tenureValue = parseInt(offer.tenureValue) || 0;
       const tenureUnit = offer.tenureUnit || 'months';
       const repaymentType = offer.repaymentType || 'emi';
+      const repaymentFrequency = offer.repaymentFrequency || 'monthly';
       const interestType = offer.interestType || 'reducing';
 
       if (principal <= 0 || annualRate < 0 || tenureValue <= 0) {
         return null;
       }
 
-      // Convert tenure to months
+      // Calculate payment frequency multipliers
+      const getPaymentsPerYear = (frequency: string): number => {
+        switch (frequency) {
+          case 'weekly': return 52;
+          case 'bi_weekly': return 26;
+          case 'monthly': return 12;
+          case 'quarterly': return 4;
+          case 'half_yearly': return 2;
+          case 'yearly': return 1;
+          default: return 12; // Default to monthly
+        }
+      };
+
+      const getFrequencyMonths = (frequency: string): number => {
+        switch (frequency) {
+          case 'weekly': return 1/4.33; // Approximately 1 week in months
+          case 'bi_weekly': return 0.5;
+          case 'monthly': return 1;
+          case 'quarterly': return 3;
+          case 'half_yearly': return 6;
+          case 'yearly': return 12;
+          default: return 1;
+        }
+      };
+
+      // Convert tenure to months and calculate payments
       const tenureInMonths = tenureUnit === 'years' ? tenureValue * 12 : tenureValue;
-      const monthlyRate = annualRate / 100 / 12;
+      const paymentsPerYear = getPaymentsPerYear(repaymentFrequency);
+      const periodicRate = annualRate / 100 / paymentsPerYear;
+      const frequencyInMonths = getFrequencyMonths(repaymentFrequency);
+      const numberOfPayments = Math.ceil(tenureInMonths / frequencyInMonths);
       
       let emiAmount = 0;
       let totalInterest = 0;
-      let numberOfPayments = tenureInMonths;
       let schedule: any[] = [];
 
-      if (repaymentType === 'emi' && monthlyRate > 0) {
+      const startDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
+
+      if (repaymentType === 'emi' && periodicRate > 0) {
         // Calculate EMI using reducing balance method
-        emiAmount = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureInMonths)) / 
-                   (Math.pow(1 + monthlyRate, tenureInMonths) - 1);
+        emiAmount = (principal * periodicRate * Math.pow(1 + periodicRate, numberOfPayments)) / 
+                   (Math.pow(1 + periodicRate, numberOfPayments) - 1);
         emiAmount = Math.round(emiAmount * 100) / 100;
 
         // Generate payment schedule
         let remainingBalance = principal;
-        const startDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
 
-        for (let i = 1; i <= tenureInMonths; i++) {
-          const interestAmount = Math.round(remainingBalance * monthlyRate * 100) / 100;
+        for (let i = 1; i <= numberOfPayments; i++) {
+          const interestAmount = Math.round(remainingBalance * periodicRate * 100) / 100;
           const principalAmount = Math.min(Math.round((emiAmount - interestAmount) * 100) / 100, remainingBalance);
           remainingBalance = Math.max(0, remainingBalance - principalAmount);
           
-          const dueDate = new Date(startDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
+          const dueDate = this.calculateDueDate(startDate, i, repaymentFrequency);
 
           schedule.push({
             installmentNumber: i,
@@ -578,34 +606,29 @@ export class FirebaseBackendService {
         }
       } else if (repaymentType === 'interest_only') {
         // Interest-only payments with principal due at the end
-        const monthlyInterest = Math.round(principal * monthlyRate * 100) / 100;
-        emiAmount = monthlyInterest;
-        totalInterest = monthlyInterest * tenureInMonths;
-        numberOfPayments = tenureInMonths + 1; // Interest payments + final principal payment
+        const periodicInterest = Math.round(principal * periodicRate * 100) / 100;
+        emiAmount = periodicInterest;
+        totalInterest = periodicInterest * numberOfPayments;
 
-        const startDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
-
-        // Monthly interest payments
-        for (let i = 1; i <= tenureInMonths; i++) {
-          const dueDate = new Date(startDate);
-          dueDate.setMonth(dueDate.getMonth() + i);
+        // Regular interest payments
+        for (let i = 1; i <= numberOfPayments; i++) {
+          const dueDate = this.calculateDueDate(startDate, i, repaymentFrequency);
 
           schedule.push({
             installmentNumber: i,
             dueDate: dueDate,
             principalAmount: 0,
-            interestAmount: monthlyInterest,
-            totalAmount: monthlyInterest,
+            interestAmount: periodicInterest,
+            totalAmount: periodicInterest,
             remainingBalance: principal
           });
         }
 
         // Final principal payment
-        const finalDueDate = new Date(startDate);
-        finalDueDate.setMonth(finalDueDate.getMonth() + tenureInMonths + 1);
+        const finalDueDate = this.calculateDueDate(startDate, numberOfPayments + 1, repaymentFrequency);
         
         schedule.push({
-          installmentNumber: tenureInMonths + 1,
+          installmentNumber: numberOfPayments + 1,
           dueDate: finalDueDate,
           principalAmount: principal,
           interestAmount: 0,
@@ -621,9 +644,8 @@ export class FirebaseBackendService {
         }
         totalInterest = Math.round(totalInterest * 100) / 100;
         emiAmount = principal + totalInterest;
-        numberOfPayments = 1;
 
-        const dueDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
+        const dueDate = new Date(startDate);
         if (tenureUnit === 'years') {
           dueDate.setFullYear(dueDate.getFullYear() + tenureValue);
         } else {
@@ -645,13 +667,44 @@ export class FirebaseBackendService {
         totalInterest: Math.round(totalInterest * 100) / 100,
         totalAmount: Math.round((principal + totalInterest) * 100) / 100,
         emiAmount: Math.round(emiAmount * 100) / 100,
-        numberOfPayments,
+        numberOfPayments: repaymentType === 'interest_only' ? numberOfPayments + 1 : (repaymentType === 'full_payment' ? 1 : numberOfPayments),
+        paymentFrequency: repaymentFrequency,
         schedule
       };
     } catch (error) {
       console.error('Error calculating schedule:', error);
       return null;
     }
+  }
+
+  // Helper method to calculate due dates based on frequency
+  private calculateDueDate(startDate: Date, paymentNumber: number, frequency: string): Date {
+    const dueDate = new Date(startDate);
+    
+    switch (frequency) {
+      case 'weekly':
+        dueDate.setDate(dueDate.getDate() + (paymentNumber * 7));
+        break;
+      case 'bi_weekly':
+        dueDate.setDate(dueDate.getDate() + (paymentNumber * 14));
+        break;
+      case 'monthly':
+        dueDate.setMonth(dueDate.getMonth() + paymentNumber);
+        break;
+      case 'quarterly':
+        dueDate.setMonth(dueDate.getMonth() + (paymentNumber * 3));
+        break;
+      case 'half_yearly':
+        dueDate.setMonth(dueDate.getMonth() + (paymentNumber * 6));
+        break;
+      case 'yearly':
+        dueDate.setFullYear(dueDate.getFullYear() + paymentNumber);
+        break;
+      default:
+        dueDate.setMonth(dueDate.getMonth() + paymentNumber);
+    }
+    
+    return dueDate;
   }
 
   // Get offer payment info

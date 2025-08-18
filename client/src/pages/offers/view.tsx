@@ -944,7 +944,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <Calendar className="w-4 h-4" />
                       <span>
                         {offer.status === 'accepted' && scheduleData?.schedule?.schedule ? 
-                          (offer.repaymentType === 'interest_only' ? 'Next Interest Due' : 'Next Payment Due') :
+                          (offer.repaymentType === 'interest_only' ? 
+                            `Next Interest Due (${offer.repaymentFrequency || 'monthly'})` : 
+                            `Next Payment Due (${offer.repaymentFrequency || 'monthly'})`) :
                           'Final Due Date'
                         }
                       </span>
@@ -978,7 +980,11 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     {scheduleData?.schedule?.emiAmount && (
                       <div className="text-center">
                         <div className="text-sm text-gray-600 mb-1">
-                          {offer.repaymentType === 'interest_only' ? 'Monthly Interest' : 'EMI Amount'}
+                          {offer.repaymentType === 'interest_only' ? 
+                            `${offer.repaymentFrequency === 'quarterly' ? 'Quarterly' : 
+                              offer.repaymentFrequency === 'half_yearly' ? 'Half-Yearly' :
+                              offer.repaymentFrequency === 'yearly' ? 'Yearly' : 'Monthly'} Interest` : 
+                            'EMI Amount'}
                         </div>
                         <div className="font-bold text-lg text-blue-600">
                           ₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}
@@ -1088,7 +1094,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         <div className="pl-4 pt-4 border-t border-blue-200">
                           <div className="text-sm text-gray-600 font-medium mb-1">
                             {offer.repaymentType === 'emi' ? 'EMI Amount' : 
-                             offer.repaymentType === 'interest_only' ? 'Monthly Interest' : 
+                             offer.repaymentType === 'interest_only' ? 
+                               `${offer.repaymentFrequency === 'quarterly' ? 'Quarterly' : 
+                                 offer.repaymentFrequency === 'half_yearly' ? 'Half-Yearly' :
+                                 offer.repaymentFrequency === 'yearly' ? 'Yearly' : 'Monthly'} Interest` : 
                              'Payment Amount'}
                           </div>
                           <div className="font-bold text-xl text-purple-700">₹{(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')}</div>
@@ -1140,8 +1149,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         <TrendingUp className="w-10 h-10 mx-auto text-blue-600 mb-3" />
                         <p className="text-gray-800 font-semibold text-lg mb-2">
                           {offer.repaymentType === 'interest_only' ? 
-                            `${scheduleData?.schedule?.numberOfPayments - 1 || 0} monthly interest payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} + final principal` :
-                            `${scheduleData?.schedule?.numberOfPayments || 0} EMI payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} each`
+                            `${scheduleData?.schedule?.numberOfPayments - 1 || 0} ${offer.repaymentFrequency || 'monthly'} interest payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} + final principal` :
+                            `${scheduleData?.schedule?.numberOfPayments || 0} ${offer.repaymentFrequency || 'monthly'} EMI payments of ₹${(scheduleData?.schedule?.emiAmount || 0).toLocaleString('en-IN')} each`
                           }
                         </p>
                         <p className="text-sm text-gray-600">
@@ -1216,7 +1225,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         {offer.repaymentFrequency && (
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Payment Frequency:</span>
-                            <span className="font-medium">{offer.repaymentFrequency.replace('_', '-')}</span>
+                            <span className="font-medium">
+                              {offer.repaymentFrequency === 'monthly' ? 'Monthly' :
+                               offer.repaymentFrequency === 'quarterly' ? 'Quarterly' :
+                               offer.repaymentFrequency === 'half_yearly' ? 'Half-Yearly' :
+                               offer.repaymentFrequency === 'yearly' ? 'Yearly' :
+                               offer.repaymentFrequency === 'weekly' ? 'Weekly' :
+                               offer.repaymentFrequency === 'bi_weekly' ? 'Bi-Weekly' :
+                               offer.repaymentFrequency.replace('_', ' ').toUpperCase()}
+                            </span>
                           </div>
                         )}
                         {offer.gracePeriodDays > 0 && (
