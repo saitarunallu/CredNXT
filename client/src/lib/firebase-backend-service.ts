@@ -374,11 +374,15 @@ export class FirebaseBackendService {
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
+      console.log('📄 Contract download - token available:', !!token);
       const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
+      console.log('📄 Contract download URL:', url);
+      
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
+      console.log('📄 Contract download response status:', response.status);
       if (response.ok) {
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
@@ -390,7 +394,9 @@ export class FirebaseBackendService {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
       } else {
-        throw new Error('Failed to download contract PDF');
+        const errorText = await response.text();
+        console.error('📄 Contract download failed:', response.status, errorText);
+        throw new Error(`Failed to download contract PDF: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('PDF download failed:', error);
