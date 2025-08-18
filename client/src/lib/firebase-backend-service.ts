@@ -576,6 +576,42 @@ export class FirebaseBackendService {
 
           totalInterest += interestAmount;
         }
+      } else if (repaymentType === 'interest_only') {
+        // Interest-only payments with principal due at the end
+        const monthlyInterest = Math.round(principal * monthlyRate * 100) / 100;
+        emiAmount = monthlyInterest;
+        totalInterest = monthlyInterest * tenureInMonths;
+        numberOfPayments = tenureInMonths + 1; // Interest payments + final principal payment
+
+        const startDate = new Date(offer.startDate?._seconds ? offer.startDate._seconds * 1000 : offer.startDate || Date.now());
+
+        // Monthly interest payments
+        for (let i = 1; i <= tenureInMonths; i++) {
+          const dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+
+          schedule.push({
+            installmentNumber: i,
+            dueDate: dueDate,
+            principalAmount: 0,
+            interestAmount: monthlyInterest,
+            totalAmount: monthlyInterest,
+            remainingBalance: principal
+          });
+        }
+
+        // Final principal payment
+        const finalDueDate = new Date(startDate);
+        finalDueDate.setMonth(finalDueDate.getMonth() + tenureInMonths + 1);
+        
+        schedule.push({
+          installmentNumber: tenureInMonths + 1,
+          dueDate: finalDueDate,
+          principalAmount: principal,
+          interestAmount: 0,
+          totalAmount: principal,
+          remainingBalance: 0
+        });
       } else if (repaymentType === 'full_payment') {
         // Lump sum payment
         if (interestType === 'fixed') {
