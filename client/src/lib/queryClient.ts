@@ -21,8 +21,9 @@ function getApiUrl(path: string): string {
                       window.location.hostname.includes('crednxt-ef673');
   
   if (isProduction) {
-    // Use direct Firebase Functions URL since hosting rewrites aren't working
-    return `https://api-mzz6re522q-uc.a.run.app${path}`;
+    // Use direct Firebase Functions URL - Remove /api prefix since it's not needed
+    const cleanPath = path.startsWith('/api') ? path.substring(4) : path;
+    return `https://api-mzz6re522q-uc.a.run.app${cleanPath}`;
   }
   
   // For development, use relative path
