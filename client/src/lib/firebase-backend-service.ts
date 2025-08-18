@@ -491,23 +491,12 @@ export class FirebaseBackendService {
     }
   }
 
-  // Get offer schedule
+  // Get offer schedule - ALWAYS fresh calculation
   async getOfferSchedule(offerId: string): Promise<any> {
     try {
-      // Try API first if available
-      if (!isProduction()) {
-        try {
-          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}/schedule`);
-          if (response.ok) {
-            const data = await response.json();
-            return normalizeFirestoreData(data);
-          }
-        } catch (error) {
-          console.log('API not available for schedule');
-        }
-      }
-
-      // Get offer details to calculate schedule
+      console.log(`💫 FORCING fresh schedule calculation for offer: ${offerId}`);
+      
+      // SKIP API and any cached data - calculate fresh every time
       const offerDetails = await this.getOfferWithDetails(offerId);
       if (!offerDetails?.offer) {
         return { schedule: null };
@@ -515,8 +504,14 @@ export class FirebaseBackendService {
 
       const offer = offerDetails.offer;
       
-      // Calculate schedule using client-side logic
+      // FORCE fresh calculation - ignore any stored values
       const schedule = this.calculateOfferSchedule(offer);
+      console.log(`✅ Fresh calculation complete:`, {
+        emiAmount: schedule?.emiAmount,
+        totalAmount: schedule?.totalAmount,
+        numberOfPayments: schedule?.numberOfPayments
+      });
+      
       return { schedule };
     } catch (error) {
       console.error('Error getting offer schedule:', error);
@@ -524,7 +519,7 @@ export class FirebaseBackendService {
     }
   }
 
-  // Client-side schedule calculation
+  // Client-side schedule calculation - ALWAYS recalculates fresh
   private calculateOfferSchedule(offer: any): any {
     try {
       const principal = parseFloat(offer.amount) || 0;
@@ -535,7 +530,16 @@ export class FirebaseBackendService {
       const repaymentFrequency = offer.repaymentFrequency || 'monthly';
       const interestType = offer.interestType || 'reducing';
 
+      console.log(`🔥 FRESH CALCULATION for offer:
+        - Amount: ₹${principal}
+        - Rate: ${annualRate}%
+        - Tenure: ${tenureValue} ${tenureUnit}
+        - Type: ${repaymentType}
+        - Frequency: ${repaymentFrequency}
+      `);
+
       if (principal <= 0 || annualRate < 0 || tenureValue <= 0) {
+        console.error('❌ Invalid input values');
         return null;
       }
 
@@ -616,11 +620,17 @@ export class FirebaseBackendService {
         }
       } else if (repaymentType === 'interest_only') {
         // Interest-only payments with principal due at the end
+        // For ₹1,00,000 at 24% annual with monthly frequency:
+        // Monthly rate = 24% / 12 = 2%
+        // Monthly interest = ₹1,00,000 × 2% = ₹2,000
         const periodicInterest = Math.round(principal * periodicRate * 100) / 100;
-        console.log(`🔍 Interest-Only Calculation:
-          - Principal: ₹${principal}
-          - Periodic Rate: ${periodicRate} (${periodicRate * 100}%)
-          - Periodic Interest: ₹${periodicInterest}
+        console.log(`🔍 Interest-Only Detailed Calculation:
+          - Principal: ₹${principal.toLocaleString('en-IN')}
+          - Annual Rate: ${annualRate}%
+          - Payments Per Year: ${paymentsPerYear}
+          - Periodic Rate: ${periodicRate} (${(periodicRate * 100).toFixed(4)}%)
+          - Calculated Interest: ₹${principal} × ${periodicRate} = ₹${periodicInterest}
+          - Expected for ₹1L at 24% monthly: ₹2,000
         `);
         emiAmount = periodicInterest;
         totalInterest = periodicInterest * numberOfPayments;
