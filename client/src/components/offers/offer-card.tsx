@@ -41,6 +41,20 @@ export default function OfferCard({
   const canAcceptOffer = isReceiver && offer.status === 'pending';
   const canCancelOffer = isSender && offer.status === 'pending';
 
+  // Debug: Check role assignment
+  if (offer.status === 'pending') {
+    console.log('🔍 OfferCard Role Debug for offer:', offer.id, {
+      currentUserId: currentUser?.id,
+      offerToUserId: offer.toUserId,
+      offerFromUserId: offer.fromUserId,
+      isReceiver,
+      isSender,
+      canAcceptOffer,
+      canCancelOffer,
+      isReceivedProp: isReceived
+    });
+  }
+
 
 
   const acceptOfferMutation = useMutation({
