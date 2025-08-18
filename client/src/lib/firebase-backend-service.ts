@@ -373,17 +373,22 @@ export class FirebaseBackendService {
   // PDF download methods
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
-      const token = await getAuthToken();
-      console.log('📄 Contract download - token available:', !!token);
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
-      console.log('📄 Contract download URL:', url);
+      console.log('📄 Starting contract download...');
       
-      const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      // Check if we're in production environment
+      if (isProduction()) {
+        // Use Firebase Functions URL
+        const token = await getAuthToken();
+        const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
+        const response = await fetch(url, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
 
-      console.log('📄 Contract download response status:', response.status);
-      if (response.ok) {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -394,25 +399,48 @@ export class FirebaseBackendService {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
       } else {
-        const errorText = await response.text();
-        console.error('📄 Contract download failed:', response.status, errorText);
-        throw new Error(`Failed to download contract PDF: ${response.status} ${errorText}`);
+        // Use local API
+        const response = await makeAuthenticatedRequest(`/api/offers/${offerId}/pdf/contract`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `loan-contract-${offerId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
       }
     } catch (error) {
-      console.error('PDF download failed:', error);
+      console.error('Contract download failed:', error);
       throw error;
     }
   }
 
   async downloadKFSPDF(offerId: string): Promise<void> {
     try {
-      const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/kfs`;
-      const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
+      console.log('📄 Starting KFS download...');
+      
+      // Check if we're in production environment
+      if (isProduction()) {
+        // Use Firebase Functions URL
+        const token = await getAuthToken();
+        const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/kfs`;
+        const response = await fetch(url, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
 
-      if (response.ok) {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -423,10 +451,26 @@ export class FirebaseBackendService {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
       } else {
-        throw new Error('Failed to download KFS PDF');
+        // Use local API
+        const response = await makeAuthenticatedRequest(`/api/offers/${offerId}/pdf/kfs`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `kfs-${offerId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
       }
     } catch (error) {
-      console.error('PDF download failed:', error);
+      console.error('KFS download failed:', error);
       throw error;
     }
   }
