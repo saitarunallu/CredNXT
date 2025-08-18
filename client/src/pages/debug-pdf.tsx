@@ -45,7 +45,8 @@ export default function DebugPDF() {
       const hostname = window.location.hostname;
       const isProduction = hostname.includes('firebaseapp.com') || 
                           hostname.includes('web.app') || 
-                          hostname.includes('crednxt-ef673');
+                          hostname.includes('crednxt-ef673') ||
+                          hostname.includes('crednxt.com');
       
       addLog(`🌐 Hostname: ${hostname}`);
       addLog(`🏭 Is production: ${isProduction}`);

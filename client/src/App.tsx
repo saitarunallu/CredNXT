@@ -74,9 +74,10 @@ function Router() {
             return <NotFound />;
           }
           
-          // Check if we're in production (Firebase hosting OR web.app domain)
+          // Check if we're in production (Firebase hosting OR web.app domain OR custom domain)
           const isProduction = window.location.hostname.includes('firebaseapp.com') || 
-                               window.location.hostname.includes('web.app');
+                               window.location.hostname.includes('web.app') ||
+                               window.location.hostname.includes('crednxt.com');
           console.log('🔍 Is production?', isProduction);
           console.log('🔍 Hostname includes firebaseapp.com?', window.location.hostname.includes('firebaseapp.com'));
           console.log('🔍 Hostname includes web.app?', window.location.hostname.includes('web.app'));
