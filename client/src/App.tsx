@@ -23,10 +23,10 @@ import DebugAuth from "@/pages/debug-auth";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+  const currentPath = window.location.pathname;
   console.log('🚦 Router initialized on:', currentPath);
-  console.log('🌐 Hostname check:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
-  console.log('🔍 Is production?', typeof window !== 'undefined' && window.location.hostname.includes('firebaseapp.com'));
+  console.log('🌐 Hostname check:', window.location.hostname);
+  console.log('🔍 Is production?', window.location.hostname.includes('firebaseapp.com'));
   
   return (
     <Switch>
@@ -63,8 +63,8 @@ function Router() {
       <Route path="/offers/:id">
         {(params: { id: string }) => {
           console.log('🔗 Offer route matched:', params.id);
-          console.log('🌐 Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
-          console.log('📍 Full URL:', typeof window !== 'undefined' ? window.location.href : 'unknown');
+          console.log('🌐 Current hostname:', window.location.hostname);
+          console.log('📍 Full URL:', window.location.href);
           console.log('🔍 Route params received:', params);
           
           // Ensure we have a valid ID
@@ -74,12 +74,11 @@ function Router() {
           }
           
           // Check if we're in production (Firebase hosting OR web.app domain)
-          const isProduction = typeof window !== 'undefined' && 
-            (window.location.hostname.includes('firebaseapp.com') || 
-             window.location.hostname.includes('web.app'));
+          const isProduction = window.location.hostname.includes('firebaseapp.com') || 
+                               window.location.hostname.includes('web.app');
           console.log('🔍 Is production?', isProduction);
-          console.log('🔍 Hostname includes firebaseapp.com?', typeof window !== 'undefined' && window.location.hostname.includes('firebaseapp.com'));
-          console.log('🔍 Hostname includes web.app?', typeof window !== 'undefined' && window.location.hostname.includes('web.app'));
+          console.log('🔍 Hostname includes firebaseapp.com?', window.location.hostname.includes('firebaseapp.com'));
+          console.log('🔍 Hostname includes web.app?', window.location.hostname.includes('web.app'));
           
           if (isProduction) {
             console.log('🔥 Production environment detected, bypassing AuthGuard');

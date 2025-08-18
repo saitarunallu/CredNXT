@@ -4,7 +4,7 @@ import "./index.css";
 
 // Global error handling for unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('🚨 Unhandled promise rejection in', process.env.NODE_ENV || 'production', ':', {
+  console.error('🚨 Unhandled promise rejection in', import.meta.env.MODE || 'production', ':', {
     reason: event.reason,
     message: event.reason?.message,
     stack: event.reason?.stack,
@@ -14,7 +14,7 @@ window.addEventListener('unhandledrejection', (event) => {
   
   // Log additional context for debugging
   if (event.reason instanceof Error) {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('Error details:', {
         name: event.reason.name,
         message: event.reason.message,
@@ -29,7 +29,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 // Global error handling for uncaught errors
 window.addEventListener('error', (event) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.error('Uncaught error:', event.error);
   } else {
     console.error('Uncaught error:', event.error?.message || 'Unknown error');
