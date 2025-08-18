@@ -110,6 +110,58 @@ export default function OfferCard({
     }
   };
 
+  // Helper function to format Firebase timestamps for card display
+  const formatFirebaseDate = (timestamp: any): string => {
+    if (!timestamp) return 'N/A';
+    
+    try {
+      // Handle Firebase Timestamp objects
+      if (timestamp._seconds !== undefined) {
+        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle Firestore toDate() method
+      if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle Date objects
+      if (timestamp instanceof Date) {
+        return timestamp.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+      
+      // Handle ISO strings
+      if (typeof timestamp === 'string') {
+        const date = new Date(timestamp);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        }
+      }
+      
+      return 'N/A';
+    } catch (error) {
+      console.error('Date formatting error in offer card:', error);
+      return 'N/A';
+    }
+  };
+
   const getOfferTypeColor = (type: string) => {
     return type === 'lend' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
   };
@@ -242,18 +294,10 @@ export default function OfferCard({
                 </span>
               </div>
               <p className="text-gray-500 text-sm">
-                Due: {offer.status === 'accepted' && offer.nextPaymentDueDate 
-                  ? (offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : new Date(offer.nextPaymentDueDate as any)).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric', 
-                      year: 'numeric' 
-                    })
-                  : (offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any)).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric', 
-                      year: 'numeric' 
-                    })
-                }
+                Due: {formatFirebaseDate(offer.status === 'accepted' && offer.nextPaymentDueDate 
+                  ? offer.nextPaymentDueDate 
+                  : offer.dueDate
+                )}
               </p>
             </div>
           </div>
