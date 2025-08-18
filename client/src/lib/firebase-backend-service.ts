@@ -374,7 +374,7 @@ export class FirebaseBackendService {
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/contract`;
+      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -401,7 +401,7 @@ export class FirebaseBackendService {
   async downloadKFSPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/kfs`;
+      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/kfs`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
