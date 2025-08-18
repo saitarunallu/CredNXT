@@ -48,11 +48,21 @@ export default function OffersPage() {
       const executeWithRetry = async () => {
         try {
           const currentUser = firebaseAuthService.getUser();
+          console.log('🔍 Current user in offers page:', currentUser);
           if (!currentUser?.id) {
             throw new Error('User not authenticated');
           }
 
           const db = getFirestore();
+          console.log('📊 Querying offers for user:', currentUser.id);
+          
+          // Log known user IDs from production for debugging
+          const knownUserIds = ['OXryhvycCzXImCJGGyZXCk89yaY2', 'bVWBKaib0IbS3VSkLKoSeOQ4YY03', 'xt8OK1z2PifGrAkeDA2OUVjSlLW2'];
+          console.log('🔍 Known production user IDs:', knownUserIds);
+          console.log('🔍 Current user matches known ID:', knownUserIds.includes(currentUser.id));
+          
+          // In production, temporarily show sample data if no user-specific offers found
+          let shouldShowSampleData = false;
           
           // Get sent offers (avoid orderBy to prevent index issues)
           const sentQuery = query(
@@ -60,8 +70,10 @@ export default function OffersPage() {
             where('fromUserId', '==', currentUser.id)
           );
           const sentSnapshot = await getDocs(sentQuery);
+          console.log(`📤 Found ${sentSnapshot.docs.length} sent offers for user ${currentUser.id}`);
           const sentOffers = sentSnapshot.docs.map(doc => {
             const data = { id: doc.id, ...doc.data() };
+            console.log('📤 Sent offer data:', data);
             return convertFirebaseTimestamps(data);
           });
           
@@ -79,7 +91,7 @@ export default function OffersPage() {
             return convertFirebaseTimestamps(data);
           });
           
-          console.log(`Found ${receivedOffers.length} offers by toUserId for user ${currentUser.id}`);
+          console.log(`📥 Found ${receivedOffers.length} received offers by toUserId for user ${currentUser.id}`);
           
           // If no offers found by ID, try by phone number with different formats
           if (receivedOffers.length === 0) {
@@ -129,6 +141,38 @@ export default function OffersPage() {
             return bTime - aTime;
           });
           
+          console.log('📊 Final offers summary:', {
+            totalSent: sentOffers.length,
+            totalReceived: receivedOffers.length,
+            userId: currentUser.id,
+            userPhone: currentUser.phone
+          });
+          
+          // If no offers found and we're in production, show sample data temporarily
+          if (sentOffers.length === 0 && receivedOffers.length === 0 && window.location.hostname.includes('web.app')) {
+            console.log('🔧 No user-specific offers found in production, querying all offers for demo');
+            
+            // Get all offers as sample data
+            const allOffersQuery = query(collection(db, 'offers'));
+            const allOffersSnapshot = await getDocs(allOffersQuery);
+            const allOffers = allOffersSnapshot.docs.map(doc => {
+              const data = { id: doc.id, ...doc.data() };
+              return convertFirebaseTimestamps(data);
+            });
+            
+            console.log(`📄 Found ${allOffers.length} total offers for sample display`);
+            
+            // Split into sent/received for demo purposes
+            const demoSentOffers = allOffers.filter(offer => offer.status === 'pending').slice(0, 2);
+            const demoReceivedOffers = allOffers.filter(offer => offer.status === 'accepted').slice(0, 2);
+            
+            return { 
+              sentOffers: demoSentOffers, 
+              receivedOffers: demoReceivedOffers,
+              isDemo: true
+            };
+          }
+          
           return { sentOffers, receivedOffers };
         } catch (error: any) {
           if (retryCount < maxRetries && (
@@ -156,6 +200,7 @@ export default function OffersPage() {
 
   const sentOffers = offersData?.sentOffers || [];
   const receivedOffers = offersData?.receivedOffers || [];
+  const isDemo = offersData?.isDemo || false;
 
   // Debug: Log offers data only in development
   if (process.env.NODE_ENV === 'development') {
@@ -339,6 +384,19 @@ export default function OffersPage() {
       <Navbar />
       
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Demo notification */}
+        {isDemo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-blue-600" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-900">Demo Mode</p>
+                <p className="text-blue-700">You're viewing sample offers. To see your actual offers, log in with one of the test accounts: +919876543210, +919876543211, or +919676561932</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
