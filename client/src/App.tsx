@@ -20,6 +20,7 @@ import Analytics from "@/pages/analytics";
 import Profile from "@/pages/profile";
 import SMSTestPage from "@/pages/sms-test-page";
 import DebugAuth from "@/pages/debug-auth";
+import DebugPDF from "@/pages/debug-pdf";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -114,6 +115,11 @@ function Router() {
       </Route>
       
       <Route path="/debug-auth" component={DebugAuth} />
+      <Route path="/debug-pdf">
+        <AuthGuard>
+          <DebugPDF />
+        </AuthGuard>
+      </Route>
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
