@@ -41,6 +41,20 @@ export default function OfferCard({
   const canAcceptOffer = isReceiver && offer.status === 'pending';
   const canCancelOffer = isSender && offer.status === 'pending';
 
+  // Debug logging for role-based authorization
+  console.log('🔍 OfferCard Authorization Debug:', {
+    offerId: offer.id,
+    currentUserId: currentUser?.id,
+    toUserId: offer.toUserId,
+    fromUserId: offer.fromUserId,
+    isReceiver,
+    isSender,
+    canAcceptOffer,
+    canCancelOffer,
+    offerStatus: offer.status,
+    isReceivedProp: isReceived
+  });
+
   const acceptOfferMutation = useMutation({
     mutationFn: () => {
       console.log('🔄 Accepting offer:', offer.id);
