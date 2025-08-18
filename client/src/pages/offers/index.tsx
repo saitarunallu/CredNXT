@@ -65,16 +65,56 @@ export default function OffersPage() {
             return convertFirebaseTimestamps(data);
           });
           
-          // Get received offers
-          const receivedQuery = query(
+          // Get received offers - try both toUserId and toUserPhone with multiple phone formats
+          let receivedOffers = [];
+          
+          // First try by toUserId (preferred method)
+          const receivedByIdQuery = query(
             collection(db, 'offers'),
-            where('toUserPhone', '==', currentUser.phone)
+            where('toUserId', '==', currentUser.id)
           );
-          const receivedSnapshot = await getDocs(receivedQuery);
-          const receivedOffers = receivedSnapshot.docs.map(doc => {
+          const receivedByIdSnapshot = await getDocs(receivedByIdQuery);
+          receivedOffers = receivedByIdSnapshot.docs.map(doc => {
             const data = { id: doc.id, ...doc.data() };
             return convertFirebaseTimestamps(data);
           });
+          
+          console.log(`Found ${receivedOffers.length} offers by toUserId for user ${currentUser.id}`);
+          
+          // If no offers found by ID, try by phone number with different formats
+          if (receivedOffers.length === 0) {
+            console.log(`No offers found by toUserId, trying phone lookup for: ${currentUser.phone}`);
+            const phoneVariants = [
+              currentUser.phone,
+              currentUser.phone.replace(/^\+91/, ''), // Remove +91 prefix
+              currentUser.phone.replace(/\D/g, ''), // Remove all non-digits
+              `+91${currentUser.phone.replace(/\D/g, '')}` // Add +91 prefix
+            ];
+            
+            for (const phoneVariant of phoneVariants) {
+              if (receivedOffers.length > 0) break; // Stop if we found offers
+              
+              console.log(`Trying phone variant: ${phoneVariant}`);
+              const receivedByPhoneQuery = query(
+                collection(db, 'offers'),
+                where('toUserPhone', '==', phoneVariant)
+              );
+              const receivedByPhoneSnapshot = await getDocs(receivedByPhoneQuery);
+              const phoneOffers = receivedByPhoneSnapshot.docs.map(doc => {
+                const data = { id: doc.id, ...doc.data() };
+                return convertFirebaseTimestamps(data);
+              });
+              
+              console.log(`Found ${phoneOffers.length} offers for phone variant: ${phoneVariant}`);
+              receivedOffers = [...receivedOffers, ...phoneOffers];
+            }
+            
+            // Remove duplicates if any
+            const uniqueOffers = receivedOffers.filter((offer, index, self) => 
+              index === self.findIndex(o => o.id === offer.id)
+            );
+            receivedOffers = uniqueOffers;
+          }
           
           // Sort on client side
           sentOffers.sort((a, b) => {
