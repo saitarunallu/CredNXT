@@ -1,0 +1,34 @@
+You are an expert Firebase + Vite/Next.js full-stack engineer.  
+I am giving you a project that needs to deploy cleanly to Firebase Hosting + Firebase Functions.  
+
+Your tasks:
+1. Fix ALL issues that cause Firebase deployment errors.  
+   - Ensure `firebase.json` has proper Hosting configuration (SPA rewrites: `"rewrites": [{ "source": "**", "destination": "/index.html" }]`).  
+   - Ensure the `"public"` directory in `firebase.json` matches the app build output (`dist` for Vite or `.next` for Next.js).  
+   - Add `"engines": { "node": "18" }` inside `functions/package.json`.  
+
+2. Fix environment variable usage.  
+   - Any client-side env vars must use `VITE_*` (if Vite) or `NEXT_PUBLIC_*` (if Next.js).  
+   - Remove raw server secrets (`FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`, etc.) from client code. Keep them only inside Functions or server config.  
+
+3. Fix server/browser mismatches.  
+   - Do not use `window`, `document`, or `localStorage` inside Functions or API routes.  
+   - If such logic is needed, move it to client-only code paths.  
+
+4. Fix package.json issues.  
+   - Ensure root `package.json` has `"scripts": { "build": "...", "start": "..." }`.  
+   - Keep Functions and frontend using the correct module system (don’t mix ESM and CommonJS inconsistently).  
+
+5. Fix hard-coded URLs.  
+   - Replace absolute URLs with environment-based variables (e.g., `import.meta.env.VITE_API_URL` for Vite).  
+   - Ensure relative paths are used where Firebase Hosting rewrites handle routing.  
+
+6. Ensure Functions deployment works.  
+   - Export functions properly (`exports.myFunction = ...` in CommonJS, or `export const myFunction = ...` in ESM).  
+   - Don’t use client imports (`react`, `next/router`, etc.) inside Functions.  
+
+Output:
+- The **corrected, deployable codebase** with all fixes applied.  
+- Keep existing app logic intact — just fix Firebase compatibility issues.  
+
+IMPORTANT: Do not just suggest changes. Rewrite the full project files so I can run `firebase deploy` without errors.

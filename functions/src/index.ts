@@ -4,12 +4,222 @@ const express = require('express');
 const cors = require('cors');
 const PDFDocument = require('pdfkit');
 
+// PDF Service implementation for Firebase Functions
+class PdfService {
+  constructor() {
+    this.bucket = admin.storage().bucket();
+    console.log('📁 PDF Service: Using Firebase Storage');
+  }
+
+  async generateContract(offer, fromUser) {
+    const fileName = `${offer.id}-${Date.now()}.pdf`;
+    const contractKey = `contracts/${fileName}`;
+    
+    try {
+      console.log('🔄 Generating contract PDF for offer:', offer.id);
+      const pdfBuffer = await this.createPdfContract(offer, fromUser);
+      
+      // Upload to Firebase Storage
+      const file = this.bucket.file(contractKey);
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+          cacheControl: 'public, max-age=3600'
+        }
+      });
+      
+      console.log('✅ Contract PDF stored:', contractKey);
+      return contractKey;
+    } catch (error) {
+      console.error('❌ Failed to generate contract PDF:', error);
+      throw error;
+    }
+  }
+
+  async generateKFS(offer, fromUser) {
+    const fileName = `${offer.id}-kfs-${Date.now()}.pdf`;
+    const kfsKey = `kfs/${fileName}`;
+    
+    try {
+      console.log('🔄 Generating KFS PDF for offer:', offer.id);
+      const pdfBuffer = await this.createPdfKFS(offer, fromUser);
+      
+      // Upload to Firebase Storage
+      const file = this.bucket.file(kfsKey);
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+          cacheControl: 'public, max-age=3600'
+        }
+      });
+      
+      console.log('✅ KFS PDF stored:', kfsKey);
+      return kfsKey;
+    } catch (error) {
+      console.error('❌ Failed to generate KFS PDF:', error);
+      throw error;
+    }
+  }
+
+  async generateRepaymentSchedule(offer, fromUser) {
+    const fileName = `${offer.id}-schedule-${Date.now()}.pdf`;
+    const scheduleKey = `schedules/${fileName}`;
+    
+    try {
+      console.log('🔄 Generating schedule PDF for offer:', offer.id);
+      const pdfBuffer = await this.createPdfSchedule(offer, fromUser);
+      
+      // Upload to Firebase Storage
+      const file = this.bucket.file(scheduleKey);
+      await file.save(pdfBuffer, {
+        metadata: {
+          contentType: 'application/pdf',
+          cacheControl: 'public, max-age=3600'
+        }
+      });
+      
+      console.log('✅ Schedule PDF stored:', scheduleKey);
+      return scheduleKey;
+    } catch (error) {
+      console.error('❌ Failed to generate schedule PDF:', error);
+      throw error;
+    }
+  }
+
+  async createPdfContract(offer, fromUser) {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers = [];
+      
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Contract content
+      doc.fontSize(20).text('LOAN AGREEMENT CONTRACT', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+         .text(`Contract ID: ${offer.id}`)
+         .text(`Date: ${new Date().toLocaleDateString('en-IN')}`)
+         .moveDown();
+      
+      doc.fontSize(14).text('LOAN TERMS:', { underline: true });
+      doc.fontSize(12)
+         .text(`Lender: ${fromUser.name}`)
+         .text(`Borrower: ${offer.toUserName}`)
+         .text(`Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
+         .text(`Interest Rate: ${offer.interestRate}% per annum`)
+         .text(`Tenure: ${offer.tenure} ${offer.tenureUnit}`)
+         .text(`Purpose: ${offer.purpose}`)
+         .moveDown();
+
+      doc.fontSize(14).text('TERMS AND CONDITIONS:', { underline: true });
+      doc.fontSize(10)
+         .text('1. The borrower agrees to repay the loan amount with interest as per agreed schedule.')
+         .text('2. Late payment charges may apply for overdue amounts.')
+         .text('3. This agreement is legally binding under Indian law.');
+
+      doc.end();
+    });
+  }
+
+  async createPdfKFS(offer, fromUser) {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers = [];
+      
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // KFS content
+      doc.fontSize(20).text('KEY FACT STATEMENT (KFS)', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(14).text('LOAN SUMMARY:', { underline: true });
+      doc.fontSize(12)
+         .text(`Loan Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
+         .text(`Interest Rate: ${offer.interestRate}% per annum`)
+         .text(`Loan Tenure: ${offer.tenure} ${offer.tenureUnit}`)
+         .text(`Repayment Frequency: ${offer.frequency}`)
+         .moveDown();
+
+      doc.fontSize(14).text('IMPORTANT DISCLOSURES:', { underline: true });
+      doc.fontSize(10)
+         .text('• Interest is calculated on reducing balance method')
+         .text('• No prepayment penalties apply')
+         .text('• Late payment charges: 2% per month on overdue amount')
+         .text('• This is a peer-to-peer lending arrangement');
+
+      doc.end();
+    });
+  }
+
+  async createPdfSchedule(offer, fromUser) {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers = [];
+      
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Schedule content
+      doc.fontSize(20).text('REPAYMENT SCHEDULE', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+         .text(`Loan ID: ${offer.id}`)
+         .text(`Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
+         .text(`Interest Rate: ${offer.interestRate}% per annum`)
+         .moveDown();
+
+      // Simple schedule calculation
+      const monthlyRate = offer.interestRate / 12 / 100;
+      const numPayments = offer.tenureUnit === 'years' ? offer.tenure * 12 : 
+                         offer.tenureUnit === 'months' ? offer.tenure : 1;
+      const monthlyPayment = (offer.amount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+                            (Math.pow(1 + monthlyRate, numPayments) - 1);
+
+      doc.fontSize(14).text('PAYMENT SCHEDULE:', { underline: true });
+      doc.fontSize(10);
+      
+      for (let i = 1; i <= Math.min(numPayments, 12); i++) {
+        const paymentDate = new Date();
+        paymentDate.setMonth(paymentDate.getMonth() + i);
+        doc.text(`${i}. ${paymentDate.toLocaleDateString('en-IN')} - ₹${monthlyPayment.toFixed(2)}`);
+      }
+
+      if (numPayments > 12) {
+        doc.text(`... and ${numPayments - 12} more payments`);
+      }
+
+      doc.end();
+    });
+  }
+
+  async downloadPdf(pdfKey) {
+    try {
+      const file = this.bucket.file(pdfKey);
+      const [buffer] = await file.download();
+      return buffer;
+    } catch (error) {
+      console.error('❌ Failed to download PDF:', error);
+      throw error;
+    }
+  }
+}
+
 // Firebase Admin SDK initialization
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const db = admin.firestore();
+
+// Initialize PDF Service
+const pdfService = new PdfService();
 
 // Main API app
 const app = express();
@@ -387,16 +597,20 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
           dueDate: dueDate
         };
         
-        // Note: This is a basic implementation. In production, you would implement
-        // a complete PDF service similar to the server-side version
-        console.log('📝 PDF generation placeholder - would generate contract, KFS, and schedule PDFs');
-        console.log('✅ All PDFs would be stored in Firebase Storage for instant downloads');
+        // Generate all three PDFs concurrently for better performance
+        const [contractKey, kfsKey, scheduleKey] = await Promise.all([
+          pdfService.generateContract(offerForPdf, userData),
+          pdfService.generateKFS(offerForPdf, userData),
+          pdfService.generateRepaymentSchedule(offerForPdf, userData)
+        ]);
         
-        // Update offer with PDF keys (placeholder for now)
+        console.log('✅ All PDFs generated successfully:', { contractKey, kfsKey, scheduleKey });
+        
+        // Update offer with actual PDF keys
         await offerRef.update({
-          contractPdfKey: `contracts/${offerRef.id}-contract.pdf`,
-          kfsPdfKey: `kfs/${offerRef.id}-kfs.pdf`,
-          schedulePdfKey: `schedules/${offerRef.id}-schedule.pdf`
+          contractPdfKey: contractKey,
+          kfsPdfKey: kfsKey,
+          schedulePdfKey: scheduleKey
         });
       }
     } catch (error) {
@@ -432,42 +646,34 @@ pdfApp.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) 
       return res.status(403).json({ message: 'Access denied' });
     }
     
-    const doc = new PDFDocument({ margin: 50 });
+    // Check if contract PDF was pre-generated, generate if missing (backward compatibility)
+    if (!offerData.contractPdfKey) {
+      console.log('⚡ Generating missing contract PDF for existing offer:', id);
+      
+      const fromUser = await db.collection('users').doc(offerData.fromUserId).get();
+      if (!fromUser.exists) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      try {
+        const contractKey = await pdfService.generateContract(offerData, fromUser.data());
+        await db.collection('offers').doc(id).update({ contractPdfKey: contractKey });
+        offerData.contractPdfKey = contractKey;
+        console.log('✅ Generated contract PDF for existing offer:', contractKey);
+      } catch (error) {
+        console.error('❌ Failed to generate contract PDF for existing offer:', error);
+        return res.status(500).json({ message: 'Contract PDF not available' });
+      }
+    }
+
+    console.log('📥 Downloading pre-generated contract PDF:', offerData.contractPdfKey);
+    
+    // Download and serve the pre-generated PDF
+    const pdfBuffer = await pdfService.downloadPdf(offerData.contractPdfKey);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="loan-contract-${id}.pdf"`);
-    
-    doc.pipe(res);
-    
-    doc.fontSize(20).text('LOAN AGREEMENT CONTRACT', { align: 'center' });
-    doc.moveDown();
-    
-    doc.fontSize(12)
-       .text(`Contract ID: ${id}`)
-       .text(`Date: ${new Date().toLocaleDateString('en-IN')}`)
-       .moveDown();
-    
-    doc.fontSize(14).text('LOAN TERMS:', { underline: true });
-    doc.fontSize(12)
-       .text(`Principal Amount: ${formatCurrency(offerData.amount)}`)
-       .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-       .text(`Tenure: ${offerData.tenure} ${offerData.tenureUnit}`)
-       .text(`Purpose: ${offerData.purpose || 'Not specified'}`)
-       .moveDown();
-    
-    doc.fontSize(14).text('TERMS AND CONDITIONS:', { underline: true });
-    doc.fontSize(10)
-       .text('1. The borrower agrees to repay the loan amount along with interest.')
-       .text('2. Late payment charges may apply as per RBI guidelines.')
-       .text('3. This agreement is governed by Indian laws.')
-       .moveDown();
-    
-    doc.fontSize(12)
-       .text('Lender Signature: _________________    Date: _________')
-       .moveDown()
-       .text('Borrower Signature: _______________    Date: _________');
-    
-    doc.end();
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('Contract PDF generation error:', error);
     res.status(500).json({ message: 'Failed to generate contract PDF' });
