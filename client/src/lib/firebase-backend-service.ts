@@ -204,7 +204,7 @@ class FirebaseBackendService {
       }
       
       const pdfServiceUrl = getPdfServiceUrl();
-      const url = `${pdfServiceUrl}/offers/${offerId}/pdf/contract`;
+      const url = `${pdfServiceUrl}/api/offers/${offerId}/pdf/contract`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
@@ -271,7 +271,7 @@ class FirebaseBackendService {
       }
       
       const pdfServiceUrl = getPdfServiceUrl();
-      const url = `${pdfServiceUrl}/offers/${offerId}/pdf/kfs`;
+      const url = `${pdfServiceUrl}/api/offers/${offerId}/pdf/kfs`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
@@ -328,7 +328,7 @@ class FirebaseBackendService {
       }
       
       const pdfServiceUrl = getPdfServiceUrl();
-      const url = `${pdfServiceUrl}/offers/${offerId}/pdf/schedule`;
+      const url = `${pdfServiceUrl}/api/offers/${offerId}/pdf/schedule`;
       
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
