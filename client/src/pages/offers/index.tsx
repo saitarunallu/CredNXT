@@ -55,6 +55,8 @@ export default function OffersPage() {
 
           const db = getFirestore();
           console.log('📊 Querying offers for user:', currentUser.id);
+          console.log('📱 User phone:', currentUser.phone);
+          console.log('👤 User name:', currentUser.name);
           
           // Log known user IDs from production for debugging
           const knownUserIds = ['OXryhvycCzXImCJGGyZXCk89yaY2', 'bVWBKaib0IbS3VSkLKoSeOQ4YY03', 'xt8OK1z2PifGrAkeDA2OUVjSlLW2'];
@@ -163,7 +165,7 @@ export default function OffersPage() {
               const allOffersSnapshot = await getDocs(allOffersQuery);
               const allOffers = allOffersSnapshot.docs.map(doc => ({
                 id: doc.id, 
-                ...doc.data()
+                ...(doc.data() as any)
               }));
               
               // Find offers for this specific user by any means
@@ -176,7 +178,7 @@ export default function OffersPage() {
               
               console.log('📱 Phone variants to check:', phoneVariants);
               
-              const userOffers = allOffers.filter(offer => {
+              const userOffers = allOffers.filter((offer: any) => {
                 const matchesFromUser = offer.fromUserId === currentUser.id;
                 const matchesToUser = offer.toUserId === currentUser.id;
                 const matchesToPhone = phoneVariants.some(variant => 
@@ -203,8 +205,8 @@ export default function OffersPage() {
                 return isMatch;
               });
               
-              const userSentOffers = userOffers.filter(offer => offer.fromUserId === currentUser.id);
-              const userReceivedOffers = userOffers.filter(offer => 
+              const userSentOffers = userOffers.filter((offer: any) => offer.fromUserId === currentUser.id);
+              const userReceivedOffers = userOffers.filter((offer: any) => 
                 offer.toUserId === currentUser.id || 
                 (currentUser.phone && [
                   currentUser.phone,
