@@ -1,17 +1,27 @@
-const { onRequest } = require('firebase-functions/v2/https');
-const admin = require('firebase-admin');
-const express = require('express');
-const cors = require('cors');
-const PDFDocument = require('pdfkit');
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import * as express from 'express';
+import * as cors from 'cors';
+// @ts-ignore
+import PDFDocument from 'pdfkit';
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
 
 // PDF Service implementation for Firebase Functions
 class PdfService {
+  private bucket: any;
+
   constructor() {
     this.bucket = admin.storage().bucket();
     console.log('📁 PDF Service: Using Firebase Storage');
   }
 
-  async generateContract(offer, fromUser) {
+  async generateContract(offer: any, fromUser: any): Promise<string> {
     const fileName = `${offer.id}-${Date.now()}.pdf`;
     const contractKey = `contracts/${fileName}`;
     
@@ -36,7 +46,7 @@ class PdfService {
     }
   }
 
-  async generateKFS(offer, fromUser) {
+  async generateKFS(offer: any, fromUser: any): Promise<string> {
     const fileName = `${offer.id}-kfs-${Date.now()}.pdf`;
     const kfsKey = `kfs/${fileName}`;
     
@@ -61,7 +71,7 @@ class PdfService {
     }
   }
 
-  async generateRepaymentSchedule(offer, fromUser) {
+  async generateRepaymentSchedule(offer: any, fromUser: any): Promise<string> {
     const fileName = `${offer.id}-schedule-${Date.now()}.pdf`;
     const scheduleKey = `schedules/${fileName}`;
     
@@ -86,12 +96,12 @@ class PdfService {
     }
   }
 
-  async createPdfContract(offer, fromUser) {
+  private async createPdfContract(offer: any, fromUser: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const buffers = [];
+      const buffers: Buffer[] = [];
       
-      doc.on('data', buffers.push.bind(buffers));
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
@@ -110,7 +120,7 @@ class PdfService {
          .text(`Borrower: ${offer.toUserName}`)
          .text(`Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
          .text(`Interest Rate: ${offer.interestRate}% per annum`)
-         .text(`Tenure: ${offer.tenure} ${offer.tenureUnit}`)
+         .text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`)
          .text(`Purpose: ${offer.purpose}`)
          .moveDown();
 
@@ -124,12 +134,12 @@ class PdfService {
     });
   }
 
-  async createPdfKFS(offer, fromUser) {
+  private async createPdfKFS(offer: any, fromUser: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const buffers = [];
+      const buffers: Buffer[] = [];
       
-      doc.on('data', buffers.push.bind(buffers));
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
@@ -141,8 +151,8 @@ class PdfService {
       doc.fontSize(12)
          .text(`Loan Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
          .text(`Interest Rate: ${offer.interestRate}% per annum`)
-         .text(`Loan Tenure: ${offer.tenure} ${offer.tenureUnit}`)
-         .text(`Repayment Frequency: ${offer.frequency}`)
+         .text(`Loan Tenure: ${offer.tenureValue} ${offer.tenureUnit}`)
+         .text(`Repayment Frequency: ${offer.repaymentFrequency}`)
          .moveDown();
 
       doc.fontSize(14).text('IMPORTANT DISCLOSURES:', { underline: true });
@@ -156,12 +166,12 @@ class PdfService {
     });
   }
 
-  async createPdfSchedule(offer, fromUser) {
+  private async createPdfSchedule(offer: any, fromUser: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const buffers = [];
+      const buffers: Buffer[] = [];
       
-      doc.on('data', buffers.push.bind(buffers));
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
@@ -177,8 +187,8 @@ class PdfService {
 
       // Simple schedule calculation
       const monthlyRate = offer.interestRate / 12 / 100;
-      const numPayments = offer.tenureUnit === 'years' ? offer.tenure * 12 : 
-                         offer.tenureUnit === 'months' ? offer.tenure : 1;
+      const numPayments = offer.tenureUnit === 'years' ? offer.tenureValue * 12 : 
+                         offer.tenureUnit === 'months' ? offer.tenureValue : 1;
       const monthlyPayment = (offer.amount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
                             (Math.pow(1 + monthlyRate, numPayments) - 1);
 
@@ -199,7 +209,7 @@ class PdfService {
     });
   }
 
-  async downloadPdf(pdfKey) {
+  async downloadPdf(pdfKey: string): Promise<Buffer> {
     try {
       const file = this.bucket.file(pdfKey);
       const [buffer] = await file.download();
@@ -211,39 +221,48 @@ class PdfService {
   }
 }
 
-// Firebase Admin SDK initialization
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = admin.firestore();
-
 // Initialize PDF Service
 const pdfService = new PdfService();
 
-// Main API app
-const app = express();
-app.use(cors({ origin: true, credentials: true }));
+// Utility functions
+function normalizePhoneNumber(phone: string): string {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    return cleaned.substring(2);
+  }
+  if (cleaned.length === 10) {
+    return cleaned;
+  }
+  if (cleaned.startsWith('+91')) {
+    return cleaned.substring(3);
+  }
+  return cleaned;
+}
+
+function isValidIndianMobile(phone: string): boolean {
+  const normalized = normalizePhoneNumber(phone);
+  return /^[6-9]\d{9}$/.test(normalized);
+}
+
+function formatCurrency(amount: number): string {
+  return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function calculateEMI(principal: number, rate: number, tenure: number): number {
+  const monthlyRate = rate / 100 / 12;
+  const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
+              (Math.pow(1 + monthlyRate, tenure) - 1);
+  return Math.round(emi * 100) / 100;
+}
+
+// Main API Express app
+const app = express.default();
+app.use(cors.default({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
-// PDF service app
-const pdfApp = express();
-pdfApp.use(cors({ origin: true, credentials: true }));
-pdfApp.use(express.json());
-
-// Payment service app
-const paymentApp = express();
-paymentApp.use(cors({ origin: true, credentials: true }));
-paymentApp.use(express.json());
-
-// Notification service app
-const notificationApp = express();
-notificationApp.use(cors({ origin: true, credentials: true }));
-notificationApp.use(express.json());
-
-// Simple rate limiting middleware
+// Rate limiting middleware (simplified)
 const rateLimitMiddleware = (req: any, res: any, next: any) => {
-  next(); // Simplified for now
+  next(); // Simplified for Firebase Functions
 };
 
 app.use(rateLimitMiddleware);
@@ -282,37 +301,6 @@ const authenticate = async (req: any, res: any, next: any) => {
     });
   }
 };
-
-// Utility functions
-function normalizePhoneNumber(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('91') && cleaned.length === 12) {
-    return cleaned.substring(2);
-  }
-  if (cleaned.length === 10) {
-    return cleaned;
-  }
-  if (cleaned.startsWith('+91')) {
-    return cleaned.substring(3);
-  }
-  return cleaned;
-}
-
-function isValidIndianMobile(phone: string): boolean {
-  const normalized = normalizePhoneNumber(phone);
-  return /^[6-9]\d{9}$/.test(normalized);
-}
-
-function formatCurrency(amount: number): string {
-  return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function calculateEMI(principal: number, rate: number, tenure: number): number {
-  const monthlyRate = rate / 100 / 12;
-  const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / 
-              (Math.pow(1 + monthlyRate, tenure) - 1);
-  return Math.round(emi * 100) / 100;
-}
 
 // MAIN API ENDPOINTS
 
@@ -371,7 +359,12 @@ app.get('/users/check-phone', async (req: any, res: any) => {
       const snapshot = await db.collection('users').where('phone', '==', phoneVariant).limit(1).get();
       if (!snapshot.empty) {
         const userData = snapshot.docs[0].data();
-        user = { id: snapshot.docs[0].id, ...userData };
+        user = { 
+          id: snapshot.docs[0].id, 
+          name: userData?.name || '',
+          phone: userData?.phone || '',
+          ...userData 
+        };
         break;
       }
     }
@@ -527,13 +520,13 @@ app.patch('/offers/:id', authenticate, async (req: any, res: any) => {
 
 app.post('/offers', authenticate, async (req: any, res: any) => {
   try {
-    const { toUserPhone, toUserName, amount, interestRate, tenure, tenureUnit, purpose, frequency, collateral } = req.body;
+    const { toUserPhone, toUserName, amount, interestRate, tenureValue, tenureUnit, purpose, repaymentFrequency } = req.body;
     
-    if (!toUserPhone || !amount || !interestRate || !tenure) {
+    if (!toUserPhone || !amount || !interestRate || !tenureValue) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     
-    if (amount <= 0 || interestRate < 0 || tenure <= 0) {
+    if (amount <= 0 || interestRate < 0 || tenureValue <= 0) {
       return res.status(400).json({ message: 'Invalid amount, interest rate, or tenure' });
     }
     
@@ -549,11 +542,11 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
     // Calculate due date
     const dueDate = new Date();
     if (tenureUnit === 'days') {
-      dueDate.setDate(dueDate.getDate() + tenure);
+      dueDate.setDate(dueDate.getDate() + tenureValue);
     } else if (tenureUnit === 'months') {
-      dueDate.setMonth(dueDate.getMonth() + tenure);
+      dueDate.setMonth(dueDate.getMonth() + tenureValue);
     } else if (tenureUnit === 'years') {
-      dueDate.setFullYear(dueDate.getFullYear() + tenure);
+      dueDate.setFullYear(dueDate.getFullYear() + tenureValue);
     }
     
     const offerData = {
@@ -563,11 +556,10 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
       toUserName: toUserName || '',
       amount: parseFloat(amount),
       interestRate: parseFloat(interestRate),
-      tenure: parseInt(tenure),
+      tenureValue: parseInt(tenureValue),
       tenureUnit: tenureUnit || 'months',
       purpose: purpose || '',
-      frequency: frequency || 'monthly',
-      collateral: collateral || '',
+      repaymentFrequency: repaymentFrequency || 'monthly',
       status: 'pending',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -577,45 +569,6 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
     const offerRef = await db.collection('offers').add(offerData);
     const createdOffer = await offerRef.get();
     const createdData = createdOffer.data();
-    
-    // Generate ALL PDFs immediately when offer is created (contract, KFS, and schedule)
-    try {
-      console.log('🔄 Generating all PDFs for new offer:', offerRef.id);
-      
-      // Get user data for PDF generation
-      const userDoc = await db.collection('users').doc(req.userId).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        console.log('✅ User data retrieved for PDF generation');
-        
-        // Create a simplified offer object for PDF generation
-        const offerForPdf = {
-          id: offerRef.id,
-          ...offerData,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          dueDate: dueDate
-        };
-        
-        // Generate all three PDFs concurrently for better performance
-        const [contractKey, kfsKey, scheduleKey] = await Promise.all([
-          pdfService.generateContract(offerForPdf, userData),
-          pdfService.generateKFS(offerForPdf, userData),
-          pdfService.generateRepaymentSchedule(offerForPdf, userData)
-        ]);
-        
-        console.log('✅ All PDFs generated successfully:', { contractKey, kfsKey, scheduleKey });
-        
-        // Update offer with actual PDF keys
-        await offerRef.update({
-          contractPdfKey: contractKey,
-          kfsPdfKey: kfsKey,
-          schedulePdfKey: scheduleKey
-        });
-      }
-    } catch (error) {
-      console.warn('⚠️ PDF generation failed, continuing without PDFs:', error);
-    }
     
     res.status(201).json({
       id: offerRef.id,
@@ -630,8 +583,8 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
   }
 });
 
-// PDF ENDPOINTS
-pdfApp.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => {
+// PDF endpoints
+app.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -642,34 +595,21 @@ pdfApp.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) 
     
     const offerData = offerDoc.data();
     
-    if (offerData?.fromUserId !== req.userId && offerData?.toUserId !== req.userId) {
+    if (!offerData) {
+      return res.status(404).json({ message: 'Offer data not found' });
+    }
+    
+    if (offerData.fromUserId !== req.userId && offerData.toUserId !== req.userId) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
-    // Check if contract PDF was pre-generated, generate if missing (backward compatibility)
-    if (!offerData.contractPdfKey) {
-      console.log('⚡ Generating missing contract PDF for existing offer:', id);
-      
-      const fromUser = await db.collection('users').doc(offerData.fromUserId).get();
-      if (!fromUser.exists) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      try {
-        const contractKey = await pdfService.generateContract(offerData, fromUser.data());
-        await db.collection('offers').doc(id).update({ contractPdfKey: contractKey });
-        offerData.contractPdfKey = contractKey;
-        console.log('✅ Generated contract PDF for existing offer:', contractKey);
-      } catch (error) {
-        console.error('❌ Failed to generate contract PDF for existing offer:', error);
-        return res.status(500).json({ message: 'Contract PDF not available' });
-      }
+    const fromUser = await db.collection('users').doc(offerData.fromUserId).get();
+    if (!fromUser.exists) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log('📥 Downloading pre-generated contract PDF:', offerData.contractPdfKey);
-    
-    // Download and serve the pre-generated PDF
-    const pdfBuffer = await pdfService.downloadPdf(offerData.contractPdfKey);
+    const contractKey = await pdfService.generateContract(offerData, fromUser.data());
+    const pdfBuffer = await pdfService.downloadPdf(contractKey);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="loan-contract-${id}.pdf"`);
@@ -680,7 +620,7 @@ pdfApp.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) 
   }
 });
 
-pdfApp.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => {
+app.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -691,112 +631,66 @@ pdfApp.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) 
     
     const offerData = offerDoc.data();
     
-    if (offerData?.fromUserId !== req.userId && offerData?.toUserId !== req.userId) {
+    if (!offerData) {
+      return res.status(404).json({ message: 'Offer data not found' });
+    }
+    
+    if (offerData.fromUserId !== req.userId && offerData.toUserId !== req.userId) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
-    const totalTenureMonths = offerData.tenureUnit === 'years' 
-      ? offerData.tenure * 12 
-      : offerData.tenureUnit === 'months' 
-        ? offerData.tenure 
-        : Math.ceil(offerData.tenure / 30);
-    
-    const emi = calculateEMI(offerData.amount, offerData.interestRate, totalTenureMonths);
-    
-    const doc = new PDFDocument({ margin: 50 });
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${id}.pdf"`);
-    
-    doc.pipe(res);
-    
-    doc.fontSize(16).text('LOAN REPAYMENT SCHEDULE', { align: 'center' });
-    doc.moveDown();
-    
-    doc.fontSize(12)
-       .text(`Loan Amount: ${formatCurrency(offerData.amount)}`)
-       .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-       .text(`Monthly EMI: ${formatCurrency(emi)}`)
-       .text(`Tenure: ${offerData.tenure} ${offerData.tenureUnit}`)
-       .moveDown();
-    
-    // Simple schedule table
-    doc.fontSize(10);
-    let balance = offerData.amount;
-    for (let i = 1; i <= totalTenureMonths; i++) {
-      const interestAmount = balance * (offerData.interestRate / 100 / 12);
-      const principalAmount = emi - interestAmount;
-      balance = Math.max(0, balance - principalAmount);
-      
-      const paymentDate = new Date();
-      paymentDate.setMonth(paymentDate.getMonth() + i);
-      
-      doc.text(`${i}. ${paymentDate.toLocaleDateString('en-IN')} - EMI: ${formatCurrency(emi)} (Principal: ${formatCurrency(principalAmount)}, Interest: ${formatCurrency(interestAmount)}, Balance: ${formatCurrency(balance)})`);
-      
-      if (i % 10 === 0 && i < totalTenureMonths) {
-        doc.addPage();
-      }
+    const fromUser = await db.collection('users').doc(offerData.fromUserId).get();
+    if (!fromUser.exists) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    
-    doc.end();
-  } catch (error) {
-    console.error('Schedule PDF generation error:', error);
-    res.status(500).json({ message: 'Failed to generate schedule PDF' });
-  }
-});
 
-pdfApp.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
-  try {
-    const { id } = req.params;
-    const offerDoc = await db.collection('offers').doc(id).get();
-    
-    if (!offerDoc.exists) {
-      return res.status(404).json({ message: 'Offer not found' });
-    }
-    
-    const offerData = offerDoc.data();
-    
-    if (offerData?.fromUserId !== req.userId && offerData?.toUserId !== req.userId) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    const doc = new PDFDocument({ margin: 50 });
+    const kfsKey = await pdfService.generateKFS(offerData, fromUser.data());
+    const pdfBuffer = await pdfService.downloadPdf(kfsKey);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
-    
-    doc.pipe(res);
-    
-    doc.fontSize(18).text('KEY FACT STATEMENT (KFS)', { align: 'center' });
-    doc.moveDown();
-    
-    doc.fontSize(14).text('LOAN SUMMARY:', { underline: true });
-    doc.fontSize(12)
-       .text(`Loan Amount: ${formatCurrency(offerData.amount)}`)
-       .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-       .text(`Loan Tenure: ${offerData.tenure} ${offerData.tenureUnit}`)
-       .moveDown();
-    
-    doc.fontSize(14).text('IMPORTANT TERMS:', { underline: true });
-    doc.fontSize(10)
-       .text('• Interest is calculated on reducing balance method')
-       .text('• Prepayment allowed without charges')
-       .text('• Late payment charges: 2% per month on overdue amount')
-       .moveDown();
-    
-    doc.fontSize(14).text('RBI GUIDELINES:', { underline: true });
-    doc.fontSize(10)
-       .text('• This loan is governed by RBI Fair Practices Code')
-       .text('• Borrower has right to receive loan statements')
-       .text('• Grievance redressal mechanism available');
-    
-    doc.end();
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('KFS PDF generation error:', error);
     res.status(500).json({ message: 'Failed to generate KFS PDF' });
   }
 });
 
-// Export all services as Firebase Functions (v2)
-exports.api = onRequest({ region: 'us-central1' }, app);
-exports.pdfService = onRequest({ region: 'us-central1' }, pdfApp);
+app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const offerDoc = await db.collection('offers').doc(id).get();
+    
+    if (!offerDoc.exists) {
+      return res.status(404).json({ message: 'Offer not found' });
+    }
+    
+    const offerData = offerDoc.data();
+    
+    if (!offerData) {
+      return res.status(404).json({ message: 'Offer data not found' });
+    }
+    
+    if (offerData.fromUserId !== req.userId && offerData.toUserId !== req.userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    const fromUser = await db.collection('users').doc(offerData.fromUserId).get();
+    if (!fromUser.exists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const scheduleKey = await pdfService.generateRepaymentSchedule(offerData, fromUser.data());
+    const pdfBuffer = await pdfService.downloadPdf(scheduleKey);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${id}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Schedule PDF generation error:', error);
+    res.status(500).json({ message: 'Failed to generate schedule PDF' });
+  }
+});
+
+// Export the main API function for Firebase Functions
+export const api = functions.https.onRequest(app);

@@ -5,14 +5,14 @@ import { getAuth, connectAuthEmulator, RecaptchaVerifier, type Auth } from 'fire
 // Use actual project ID from environment or fallback
 const actualProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'crednxt-ef673';
 
-// Firebase configuration using actual project credentials
+// Firebase configuration using environment variables only
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || import.meta.env.FIREBASE_WEB_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${actualProjectId}.firebaseapp.com`,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || actualProjectId,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${actualProjectId}.appspot.com`,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "447736552285",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:447736552285:web:d5a3f8b4c2e1a9f6e7b8c9",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Validate Firebase configuration
