@@ -21,8 +21,13 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - Successfully used FIREBASE_CONFIG_JSON secret for authentication
 - Frontend and Functions deployed successfully
 - Live at: https://crednxt-ef673.web.app
-- API endpoints: https://api-mzz6re522q-uc.a.run.app
-- PDF service: https://pdfservice-mzz6re522q-uc.a.run.app
+- API endpoints: https://us-central1-crednxt-ef673.cloudfunctions.net/api
+- PDF service: https://us-central1-crednxt-ef673.cloudfunctions.net/pdfService
+
+✅ **PDF Download Issue Fixed** - August 18, 2025
+- Resolved Firebase Functions v2 IAM permission issue
+- Granted public access (roles/run.invoker) to api and pdfService functions
+- PDF downloads now working in production deployment
 
 ## Project Architecture
 
