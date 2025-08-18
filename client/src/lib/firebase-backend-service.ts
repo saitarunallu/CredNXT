@@ -21,7 +21,7 @@ const db = getFirestore();
 // Firebase Functions URLs
 const FUNCTIONS_BASE_URL = 'https://us-central1-crednxt-ef673.cloudfunctions.net';
 const API_BASE_URL = `${FUNCTIONS_BASE_URL}/api`;
-const PDF_SERVICE_URL = 'http://localhost:5000/api';
+const PDF_SERVICE_URL = `${FUNCTIONS_BASE_URL}/pdfService`;
 
 // Check if we're in production (Firebase hosting)
 const isProduction = (): boolean => {
@@ -374,7 +374,7 @@ export class FirebaseBackendService {
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/contract`;
+      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -401,7 +401,7 @@ export class FirebaseBackendService {
   async downloadKFSPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/kfs`;
+      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/kfs`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
