@@ -1624,6 +1624,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Download contract PDF - using lightweight authentication like schedule
+  app.get('/api/offers/:id/pdf/contract', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Authorization check - ensure user has access to this offer
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      const hasAccess = 
+        offer.fromUserId === currentUserId ||
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'Unauthorized to access this contract' });
+      }
+
+      let contractKey = offer.contractPdfKey;
+
+      // If no contract exists or file is missing, generate it
+      if (!contractKey || !await pdfService.contractExists(contractKey)) {
+        const offerId = offer.id || id; // Use route param if offer.id is missing
+        console.log(`Generating contract for offer ${offerId}, current contractKey: ${contractKey}`);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log(`Found user for contract generation: ${fromUser.name} (${fromUser.phone})`);
+        
+        try {
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            id: offerId, // Ensure ID is properly set
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          contractKey = await pdfService.generateContract(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
+          console.log(`Generated contract with key: ${contractKey}`);
+          
+          await storage.updateOffer(offerId, { contractPdfKey: contractKey });
+          console.log(`Updated offer ${offerId} with contract key`);
+        } catch (genError) {
+          console.error('Contract generation failed:', genError);
+          return res.status(500).json({ message: 'Failed to generate contract' });
+        }
+      }
+
+      const pdfBuffer = await pdfService.downloadContract(contractKey);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="contract-${offer.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Contract download error:', error);
+      res.status(500).json({ message: 'Failed to generate or download contract' });
+    }
+  });
+
+  // Download KFS PDF - using lightweight authentication like schedule
+  app.get('/api/offers/:id/pdf/kfs', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getOffer(id);
+      
+      if (!offer) {
+        return res.status(404).json({ message: 'Offer not found' });
+      }
+
+      // Authorization check - ensure user has access to this offer
+      const currentUserId = req.userId!;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      const hasAccess = 
+        offer.fromUserId === currentUserId ||
+        offer.toUserId === currentUserId ||
+        (currentUser && offer.toUserPhone === currentUser.phone);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'Unauthorized to access this KFS document' });
+      }
+
+      let kfsKey = offer.kfsPdfKey;
+
+      // If no KFS exists or file is missing, generate it
+      if (!kfsKey || !await pdfService.kfsExists(kfsKey)) {
+        const offerId = offer.id || id; // Use route param if offer.id is missing
+        console.log(`Generating KFS for offer ${offerId}, current kfsKey: ${kfsKey}`);
+        
+        const fromUser = await storage.getUser(offer.fromUserId);
+        if (!fromUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log(`Found user for KFS generation: ${fromUser.name} (${fromUser.phone})`);
+        
+        try {
+          // Convert offer for PDF service compatibility
+          const offerForPdf = {
+            ...offer,
+            id: offerId, // Ensure ID is properly set
+            toUserId: offer.toUserId || null,
+            createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
+            updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
+            startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
+            dueDate: offer.dueDate?.toDate ? offer.dueDate.toDate() : new Date(offer.dueDate as any),
+            nextPaymentDueDate: offer.nextPaymentDueDate?.toDate ? offer.nextPaymentDueDate.toDate() : 
+              (offer.nextPaymentDueDate ? new Date(offer.nextPaymentDueDate as any) : null)
+          };
+          kfsKey = await pdfService.generateKFS(offerForPdf as any, {
+            ...fromUser,
+            name: fromUser.name ?? undefined,
+            email: fromUser.email ?? undefined,
+            isVerified: fromUser.isVerified ?? undefined,
+            createdAt: fromUser.createdAt?.toDate ? fromUser.createdAt.toDate() : new Date(),
+            updatedAt: fromUser.updatedAt?.toDate ? fromUser.updatedAt.toDate() : new Date()
+          } as any);
+          console.log(`Generated KFS with key: ${kfsKey}`);
+          
+          await storage.updateOffer(offerId, { kfsPdfKey: kfsKey });
+          console.log(`Updated offer ${offerId} with KFS key`);
+        } catch (genError) {
+          console.error('KFS generation failed:', genError);
+          return res.status(500).json({ message: 'Failed to generate KFS document' });
+        }
+      }
+
+      const pdfBuffer = await pdfService.downloadKFS(kfsKey);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="kfs-${offer.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('KFS download error:', error);
+      res.status(500).json({ message: 'Failed to generate or download KFS document' });
+    }
+  });
+
   // Download repayment schedule PDF - alias route for compatibility
   app.get('/api/offers/:id/pdf/schedule', authenticateForPDF, async (req: AuthenticatedRequest, res) => {
     try {
