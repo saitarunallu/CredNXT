@@ -571,6 +571,16 @@ export class FirebaseBackendService {
       const frequencyInMonths = getFrequencyMonths(repaymentFrequency);
       const numberOfPayments = Math.ceil(tenureInMonths / frequencyInMonths);
       
+      // Debug logging
+      console.log(`📊 Calculation Debug:
+        - Principal: ₹${principal.toLocaleString('en-IN')}
+        - Annual Rate: ${annualRate}%
+        - Tenure: ${tenureValue} ${tenureUnit} (${tenureInMonths} months)
+        - Frequency: ${repaymentFrequency} (${paymentsPerYear} payments/year)
+        - Periodic Rate: ${periodicRate * 100}% (${periodicRate})
+        - Number of Payments: ${numberOfPayments}
+      `);
+      
       let emiAmount = 0;
       let totalInterest = 0;
       let schedule: any[] = [];
@@ -607,6 +617,11 @@ export class FirebaseBackendService {
       } else if (repaymentType === 'interest_only') {
         // Interest-only payments with principal due at the end
         const periodicInterest = Math.round(principal * periodicRate * 100) / 100;
+        console.log(`🔍 Interest-Only Calculation:
+          - Principal: ₹${principal}
+          - Periodic Rate: ${periodicRate} (${periodicRate * 100}%)
+          - Periodic Interest: ₹${periodicInterest}
+        `);
         emiAmount = periodicInterest;
         totalInterest = periodicInterest * numberOfPayments;
 
