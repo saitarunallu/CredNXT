@@ -29,6 +29,12 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - Granted public access (roles/run.invoker) to api and pdfService functions
 - PDF downloads now working in production deployment
 
+✅ **Offers Display Issue Fixed** - August 18, 2025
+- Resolved authentication user ID matching with Firestore data
+- Enhanced phone number matching for cross-referencing offers
+- Added comprehensive logging and fallback mechanisms
+- Production users can now see their actual offers properly
+
 ## Project Architecture
 
 ### Frontend Structure
