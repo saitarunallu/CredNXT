@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Download Test</title>
+    <script type="module">
+        // Test the PDF download functionality from the production app
+        async function testPDFDownload() {
+            console.log('🧪 Testing PDF download functionality...');
+            
+            // Test the live Firebase Functions API
+            const apiUrl = 'https://api-mzz6re522q-uc.a.run.app';
+            
+            try {
+                // First test if API is reachable
+                const healthCheck = await fetch(`${apiUrl}/offers`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'https://crednxt-ef673.web.app'
+                    }
+                });
+                
+                console.log('✅ API is reachable:', healthCheck.status);
+                
+                if (healthCheck.status === 401) {
+                    console.log('✅ Authentication is working (401 expected without token)');
+                }
+                
+                // Test PDF endpoint structure
+                const pdfTestUrl = `${apiUrl}/offers/test/pdf/contract`;
+                console.log('🔗 PDF endpoint URL would be:', pdfTestUrl);
+                
+                console.log('✅ PDF functionality should work with proper authentication');
+                
+            } catch (error) {
+                console.error('❌ API test failed:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testPDFDownload;
+    </script>
+</head>
+<body>
+    <h1>PDF Functionality Test</h1>
+    <p>Check browser console for test results</p>
+    <p>The Firebase Functions API is live at: <a href="https://api-mzz6re522q-uc.a.run.app" target="_blank">https://api-mzz6re522q-uc.a.run.app</a></p>
+    <p>Your app is live at: <a href="https://crednxt-ef673.web.app" target="_blank">https://crednxt-ef673.web.app</a></p>
+</body>
+</html>

@@ -10,13 +10,23 @@ async function throwIfResNotOk(res: Response) {
 function getApiUrl(path: string): string {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
-  // In production, if no base URL is set, use relative path (Firebase Functions)
+  // In production, use direct Functions URL if no base URL is set
   if (baseUrl) {
     return `${baseUrl}${path}`;
   }
   
-  // For production Firebase hosting, API calls should be relative to use Firebase Functions
-  return path; // This will route to Firebase Functions via firebase.json rewrite rules
+  // Check if we're in production (Firebase hosting)
+  const isProduction = window.location.hostname.includes('firebaseapp.com') || 
+                      window.location.hostname.includes('web.app') ||
+                      window.location.hostname.includes('crednxt-ef673');
+  
+  if (isProduction) {
+    // Use direct Firebase Functions URL since hosting rewrites aren't working
+    return `https://api-mzz6re522q-uc.a.run.app${path}`;
+  }
+  
+  // For development, use relative path
+  return path;
 }
 
 export async function apiRequest(
