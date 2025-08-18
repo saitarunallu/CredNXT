@@ -196,6 +196,9 @@ export class FirebaseBackendService {
       const user = auth.currentUser;
       if (!user) throw new Error('Not authenticated');
 
+      // Get current user data to find phone number
+      const currentUserData = await this.getCurrentUser();
+      
       const sentQuery = query(
         collection(db, 'offers'),
         where('fromUserId', '==', user.uid)
@@ -204,15 +207,37 @@ export class FirebaseBackendService {
         collection(db, 'offers'),
         where('toUserId', '==', user.uid)
       );
+      
+      // Also search by phone number for offers sent to this user's phone
+      const phoneQuery = currentUserData?.phone ? query(
+        collection(db, 'offers'),
+        where('toUserPhone', '==', currentUserData.phone)
+      ) : null;
 
-      const [sentSnapshot, receivedSnapshot] = await Promise.all([
+      const queryPromises = [
         getDocs(sentQuery),
         getDocs(receivedQuery)
-      ]);
+      ];
+      
+      if (phoneQuery) {
+        queryPromises.push(getDocs(phoneQuery));
+      }
 
+      const snapshots = await Promise.all(queryPromises);
+      const [sentSnapshot, receivedSnapshot, phoneSnapshot] = snapshots;
+
+      const sentOffers = sentSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
+      const receivedOffers = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
+      const phoneOffers = phoneSnapshot ? phoneSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })) : [];
+      
+      // Filter out duplicates (offers found both by userId and phone)
+      const receivedOfferIds = new Set(receivedOffers.map(offer => offer.id));
+      const uniquePhoneOffers = phoneOffers.filter(offer => !receivedOfferIds.has(offer.id));
+      
       const allOffers = [
-        ...sentSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })),
-        ...receivedSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }))
+        ...sentOffers,
+        ...receivedOffers,
+        ...uniquePhoneOffers
       ];
 
       return allOffers;
