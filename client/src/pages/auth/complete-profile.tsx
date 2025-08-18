@@ -29,13 +29,16 @@ export default function CompleteProfile() {
       return await firebaseAuthService.completeProfile(data.name, data.email || '');
     },
     onSuccess: (result: any) => {
+      console.log('Profile completion result:', result);
       if (result.success) {
+        console.log('Profile completed successfully, redirecting to dashboard');
         setLocation('/dashboard');
         toast({
           title: "Welcome to CredNXT!",
           description: "Your profile has been completed successfully.",
         });
       } else {
+        console.log('Profile completion failed:', result.error);
         toast({
           title: "Profile Setup Failed",
           description: result.error || "Failed to complete profile. Please try again.",

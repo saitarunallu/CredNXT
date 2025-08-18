@@ -51,9 +51,18 @@ export default function VerifyOtp() {
     onSuccess: (result) => {
       if (result.success) {
         localStorage.removeItem('pending_phone');
+        
+        // Debug logging
+        console.log('OTP verification result:', result);
+        console.log('User data:', result.user);
+        console.log('Needs profile?', result.needsProfile);
+        console.log('User name:', result.user?.name);
+        
         if (result.needsProfile) {
+          console.log('Redirecting to complete-profile');
           setLocation('/complete-profile');
         } else {
+          console.log('Redirecting to dashboard');
           setLocation('/dashboard');
         }
         toast({
