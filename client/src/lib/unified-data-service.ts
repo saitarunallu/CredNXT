@@ -45,7 +45,8 @@ class UnifiedDataServiceImpl implements UnifiedDataService {
   isProduction(): boolean {
     if (typeof window === 'undefined') return false;
     return window.location.hostname.includes('firebaseapp.com') || 
-           window.location.hostname.includes('web.app');
+           window.location.hostname.includes('web.app') ||
+           window.location.hostname.includes('crednxt-ef673');
   }
   
   private async getCurrentUserId(): Promise<string | null> {
