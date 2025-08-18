@@ -234,8 +234,9 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
       }
     }
     
-    // Generate PDF content
-    const pdfContent = await generateContractPDF(offerData, fromUser);
+    // Generate PDF content - add ID to offer data
+    const offerWithId = { ...offerData, id };
+    const pdfContent = await generateContractPDF(offerWithId, fromUser);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="contract-${id}.pdf"`);
@@ -274,8 +275,9 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized to access this KFS' });
     }
     
-    // Generate KFS PDF content
-    const pdfContent = await generateKFSPDF(offerData);
+    // Generate KFS PDF content - add ID to offer data
+    const offerWithId = { ...offerData, id };
+    const pdfContent = await generateKFSPDF(offerWithId);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
@@ -322,8 +324,9 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
     
     const payments = paymentsSnapshot.docs.map(doc => doc.data());
     
-    // Generate schedule PDF content
-    const pdfContent = await generateSchedulePDF(offerData, payments);
+    // Generate schedule PDF content - add ID to offer data
+    const offerWithId = { ...offerData, id };
+    const pdfContent = await generateSchedulePDF(offerWithId, payments);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="schedule-${id}.pdf"`);
