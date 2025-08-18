@@ -1593,30 +1593,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Lightweight authentication for PDF downloads (less strict than full compliance)
   const authenticateForPDF = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+      console.log('🔐 PDF Auth - Headers:', req.headers.authorization ? 'present' : 'missing');
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) {
+        console.log('🔐 PDF Auth - No token found');
         return res.status(401).json({ 
           message: 'Authentication required',
           code: 'AUTH_TOKEN_MISSING'
         });
       }
 
+      console.log('🔐 PDF Auth - Token length:', token.length);
       // Verify Firebase ID token
       const decodedToken = await admin.auth().verifyIdToken(token);
       const userId = decodedToken.uid;
+      console.log('🔐 PDF Auth - Token verified for user:', userId);
       
       // Basic user existence check (no compliance validation for PDFs)
       const user = await storage.getUser(userId);
       if (!user) {
+        console.log('🔐 PDF Auth - User not found:', userId);
         return res.status(401).json({ 
           message: 'User account not found',
           code: 'AUTH_USER_NOT_FOUND'
         });
       }
 
+      console.log('🔐 PDF Auth - Success for user:', user.phone);
       req.userId = userId;
       next();
     } catch (error) {
+      console.error('🔐 PDF Auth - Error:', error);
       return res.status(401).json({ 
         message: 'Invalid authentication token',
         code: 'AUTH_TOKEN_INVALID'
