@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
@@ -556,6 +556,6 @@ pdfApp.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
   }
 });
 
-// Export all services as Firebase Functions
-exports.api = functions.https.onRequest(app);
-exports.pdfService = functions.https.onRequest(pdfApp);
+// Export all services as Firebase Functions (v2)
+exports.api = onRequest({ region: 'us-central1' }, app);
+exports.pdfService = onRequest({ region: 'us-central1' }, pdfApp);
