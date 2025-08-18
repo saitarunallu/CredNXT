@@ -18,14 +18,15 @@ import {
 
 const db = getFirestore();
 
-// Firebase Functions URLs - Updated with correct deployment URLs
-const API_BASE_URL = 'https://api-mzz6re522q-uc.a.run.app';
-const PDF_SERVICE_URL = 'https://pdfservice-mzz6re522q-uc.a.run.app';
+// Firebase Functions URLs - Using correct Firebase Functions format
+const FIREBASE_FUNCTIONS_BASE = 'https://us-central1-crednxt-ef673.cloudfunctions.net';
+const API_BASE_URL = `${FIREBASE_FUNCTIONS_BASE}/api`;
+const PDF_SERVICE_URL = `${FIREBASE_FUNCTIONS_BASE}/pdfService`;
 
 // Environment-aware PDF service URL
 const getPdfServiceUrl = () => {
   if (isProduction()) {
-    return PDF_SERVICE_URL; // Firebase Functions PDF API (correct URL)
+    return PDF_SERVICE_URL; // Firebase Functions PDF API
   }
   // Use current domain for Replit development environment
   const currentOrigin = window.location.origin;
@@ -184,7 +185,7 @@ class FirebaseBackendService {
   // PDF download methods with proper environment detection
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
-      console.log('📄 Starting contract download...');
+      console.log('📄 Starting contract download for offer:', offerId);
       
       const token = await getAuthToken();
       if (!token) {
@@ -197,6 +198,7 @@ class FirebaseBackendService {
       console.log('🔗 PDF service URL:', url);
       console.log('🔍 Is production:', isProduction());
       console.log('🔑 Token available:', !!token);
+      console.log('🌐 Current hostname:', window.location.hostname);
       
       const response = await fetch(url, {
         method: 'GET',
