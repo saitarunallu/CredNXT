@@ -609,8 +609,8 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => 
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const contractKey = await pdfService.generateContract(offerData, fromUser.data());
-    const pdfBuffer = await pdfService.downloadPdf(contractKey);
+    const offerWithId = { ...offerData, id };
+    const pdfBuffer = await generateContractPDFBuffer(offerWithId, fromUser.data());
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="loan-contract-${id}.pdf"`);
@@ -645,8 +645,8 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const kfsKey = await pdfService.generateKFS(offerData, fromUser.data());
-    const pdfBuffer = await pdfService.downloadPdf(kfsKey);
+    const offerWithId = { ...offerData, id };
+    const pdfBuffer = await generateKFSPDFBuffer(offerWithId, fromUser.data());
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
@@ -681,8 +681,14 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => 
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const scheduleKey = await pdfService.generateRepaymentSchedule(offerData, fromUser.data());
-    const pdfBuffer = await pdfService.downloadPdf(scheduleKey);
+    const offerWithId = { ...offerData, id };
+    // Get payments for schedule
+    const paymentsSnapshot = await db.collection('payments')
+      .where('offerId', '==', id)
+      .orderBy('dueDate', 'asc')
+      .get();
+    const payments = paymentsSnapshot.docs.map(doc => doc.data());
+    const pdfBuffer = await generateSchedulePDFBuffer(offerWithId, payments);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="repayment-schedule-${id}.pdf"`);
@@ -699,6 +705,147 @@ setGlobalOptions({
   memory: '1GiB',
   timeoutSeconds: 300,
 });
+
+// Simple PDF generation functions
+function generateContractPDFBuffer(offerData: any, fromUser: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
+      
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Contract content
+      doc.fontSize(20).text('LOAN AGREEMENT CONTRACT', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+         .text(`Contract ID: ${offerData.id}`)
+         .text(`Date: ${new Date().toLocaleDateString('en-IN')}`)
+         .moveDown();
+      
+      doc.fontSize(14).text('LOAN TERMS:', { underline: true });
+      doc.fontSize(12)
+         .text(`Lender: ${fromUser?.name || 'N/A'}`)
+         .text(`Phone: ${fromUser?.phone || 'N/A'}`)
+         .text(`Borrower: ${offerData.toUserName || 'N/A'}`)
+         .text(`Amount: ₹${offerData.amount?.toLocaleString('en-IN') || 'N/A'}`)
+         .text(`Interest Rate: ${offerData.interestRate || 'N/A'}% per annum`)
+         .text(`Duration: ${offerData.duration || offerData.tenureValue || 'N/A'} ${offerData.durationUnit || offerData.tenureUnit || ''}`)
+         .text(`Purpose: ${offerData.purpose || 'N/A'}`)
+         .moveDown();
+
+      doc.fontSize(14).text('TERMS AND CONDITIONS:', { underline: true });
+      doc.fontSize(10)
+         .text('1. The borrower agrees to repay the loan amount with interest as per agreed schedule.')
+         .text('2. Late payment charges may apply for overdue amounts.')
+         .text('3. This agreement is legally binding under Indian law.');
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function generateKFSPDFBuffer(offerData: any, fromUser: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
+      
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // KFS content
+      doc.fontSize(20).text('KEY FACT SHEET (KFS)', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+         .text(`Loan ID: ${offerData.id}`)
+         .text(`Date: ${new Date().toLocaleDateString('en-IN')}`)
+         .moveDown();
+      
+      doc.fontSize(14).text('LOAN SUMMARY:', { underline: true });
+      doc.fontSize(12)
+         .text(`Principal Amount: ₹${offerData.amount?.toLocaleString('en-IN') || 'N/A'}`)
+         .text(`Interest Rate: ${offerData.interestRate || 'N/A'}% per annum`)
+         .text(`Loan Duration: ${offerData.duration || offerData.tenureValue || 'N/A'} ${offerData.durationUnit || offerData.tenureUnit || ''}`)
+         .text(`Repayment Frequency: ${offerData.frequency || offerData.repaymentFrequency || 'N/A'}`)
+         .moveDown();
+
+      doc.fontSize(14).text('IMPORTANT INFORMATION:', { underline: true });
+      doc.fontSize(10)
+         .text('• This is a peer-to-peer lending arrangement')
+         .text('• Interest rates are as mutually agreed between parties')
+         .text('• Early repayment options may be available');
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function generateSchedulePDFBuffer(offerData: any, payments: any[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
+      
+      doc.on('data', (buffer: Buffer) => buffers.push(buffer));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // Schedule content
+      doc.fontSize(20).text('REPAYMENT SCHEDULE', { align: 'center' });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+         .text(`Loan ID: ${offerData.id}`)
+         .text(`Principal Amount: ₹${offerData.amount?.toLocaleString('en-IN') || 'N/A'}`)
+         .text(`Generated: ${new Date().toLocaleDateString('en-IN')}`)
+         .moveDown();
+
+      if (payments && payments.length > 0) {
+        doc.fontSize(14).text('PAYMENT SCHEDULE:', { underline: true });
+        doc.moveDown();
+        
+        // Table headers
+        doc.fontSize(10)
+          .text('S.No.', 50, doc.y, { width: 40 })
+          .text('Due Date', 100, doc.y, { width: 100 })
+          .text('Amount (₹)', 210, doc.y, { width: 100 })
+          .text('Status', 320, doc.y, { width: 100 });
+        
+        doc.moveDown();
+        
+        // Payment rows
+        payments.forEach((payment, index) => {
+          const dueDate = payment.dueDate?.toDate ? payment.dueDate.toDate() : new Date(payment.dueDate);
+          const yPosition = doc.y;
+          
+          doc.fontSize(10)
+            .text((index + 1).toString(), 50, yPosition, { width: 40 })
+            .text(dueDate.toLocaleDateString(), 100, yPosition, { width: 100 })
+            .text(payment.amount?.toString() || '0', 210, yPosition, { width: 100 })
+            .text(payment.status || 'Pending', 320, yPosition, { width: 100 });
+          
+          doc.moveDown();
+        });
+      } else {
+        doc.fontSize(12).text('No payment schedule available.');
+      }
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 // Export the main API function for Firebase Functions v2
 export const api = onRequest(app);
