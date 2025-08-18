@@ -1,0 +1,15 @@
+Debug Logs:
+
+3:37:53 AM: 🔍 Starting PDF download test...
+3:37:53 AM: 👤 Current user: xt8OK1z2PifGrAkeDA2OUVjSlLW2
+3:37:53 AM: 📧 User email: None
+3:37:53 AM: 🔑 Getting authentication token...
+3:37:53 AM: ✅ Token obtained: eyJhbGciOiJSUzI1NiIs...
+3:37:53 AM: 🌐 Hostname: crednxt.com
+3:37:53 AM: 🏭 Is production: false
+3:37:53 AM: 🔗 Request URL: https://crednxt.com/api/offers/CMvmI8IcUbXme78luUAl/pdf/contract
+3:37:53 AM: 📡 Making request...
+3:37:53 AM: 📊 Response status: 404
+3:37:53 AM: 📋 Response content-type: text/html; charset=utf-8
+3:37:53 AM: 📏 Response content-length: 183
+3:37:53 AM: ❌ Error response: <!DOCTYPE html> <html lang="en"> <head> <meta charset="utf-8"> <title>Error</title> </head> <body> <pre>Cannot GET /api/offers/CMvmI8IcUbXme78luUAl/pdf/contract</pre> </body> </html>

@@ -23,7 +23,8 @@ const isProduction = (): boolean => {
   const hostname = window.location.hostname;
   return hostname.includes('firebaseapp.com') || 
          hostname.includes('web.app') || 
-         hostname.includes('crednxt-ef673');
+         hostname.includes('crednxt-ef673') ||
+         hostname.includes('crednxt.com');
 };
 
 // Firebase Functions URLs - Environment-aware routing
