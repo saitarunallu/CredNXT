@@ -18,11 +18,24 @@ import {
 
 const db = getFirestore();
 
-// Firebase Functions URLs - Using correct Firebase Functions format
-// Use environment variables for Firebase Functions base URL
-const FIREBASE_FUNCTIONS_BASE = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || `https://us-central1-${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'crednxt-ef673'}.cloudfunctions.net`;
-const API_BASE_URL = `${FIREBASE_FUNCTIONS_BASE}/api`;
-const PDF_SERVICE_URL = `${FIREBASE_FUNCTIONS_BASE}/pdfService`;
+// Check if we're in production (Firebase hosting) - Define first to avoid circular dependency
+const isProduction = (): boolean => {
+  const hostname = window.location.hostname;
+  return hostname.includes('firebaseapp.com') || 
+         hostname.includes('web.app') || 
+         hostname.includes('crednxt-ef673');
+};
+
+// Firebase Functions URLs - Environment-aware routing
+const getApiBaseUrl = (): string => {
+  if (isProduction()) {
+    // Use direct Cloud Run URL without /api prefix
+    return 'https://api-mzz6re522q-uc.a.run.app';
+  }
+  // Development - use standard Firebase Functions format
+  const FIREBASE_FUNCTIONS_BASE = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || `https://us-central1-${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'crednxt-ef673'}.cloudfunctions.net`;
+  return `${FIREBASE_FUNCTIONS_BASE}/api`;
+};
 
 // Environment-aware PDF service URL - Use main API for all PDF operations
 const getPdfServiceUrl = () => {
@@ -33,14 +46,6 @@ const getPdfServiceUrl = () => {
   // Use current domain for Replit development environment
   const currentOrigin = window.location.origin;
   return `${currentOrigin}/api`; // Local development
-};
-
-// Check if we're in production (Firebase hosting)
-const isProduction = (): boolean => {
-  const hostname = window.location.hostname;
-  return hostname.includes('firebaseapp.com') || 
-         hostname.includes('web.app') || 
-         hostname.includes('crednxt-ef673');
 };
 
 // Get auth token for API calls
@@ -102,7 +107,8 @@ class FirebaseBackendService {
         // In production, try to use Firebase Functions API first
         try {
           const token = await getAuthToken();
-          const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${offerId}`);
+          const apiBaseUrl = getApiBaseUrl();
+          const response = await makeAuthenticatedRequest(`${apiBaseUrl}/offers/${offerId}`);
           
           if (response.ok) {
             const result = await response.json();
