@@ -640,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate PDF contract (skip for now if service not available)
       try {
         const pdfKey = await pdfService.generateContract(offer as any, fromUser as any);
-        await storage.updateOffer(offer.id, { contractPdfKey: pdfKey });
+        await storage.updateOffer(offerId, { contractPdfKey: pdfKey });
       } catch (error) {
         console.warn('PDF generation failed, continuing without contract PDF:', error);
       }
@@ -804,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert Firebase Timestamp to compatible format for repayment service
           const offerForRepayment = {
             ...offer,
-            id: offer.id || id, // Ensure ID is properly set
+            id: offerId, // Ensure ID is properly set
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
             startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date(offer.startDate as any),
@@ -923,9 +923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         interestType: offer.interestType as 'fixed' | 'reducing',
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit as 'months' | 'years',
-        repaymentType: (offer.repaymentType === 'interest_only' ? 'interest-only' : 
-                       offer.repaymentType === 'full_payment' ? 'full-payment' : 
-                       offer.repaymentType) as 'emi' | 'interest-only' | 'full-payment',
+        repaymentType: offer.repaymentType as 'emi' | 'interest_only' | 'full_payment',
         repaymentFrequency: (offer.repaymentFrequency || 'monthly') as 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'yearly',
         startDate: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date()
       };
@@ -1232,9 +1230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         interestType: offer.interestType,
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
-        repaymentType: (offer.repaymentType === 'interest_only' ? 'interest-only' : 
-                       offer.repaymentType === 'full_payment' ? 'full-payment' : 
-                       offer.repaymentType) as 'emi' | 'interest-only' | 'full-payment',
+        repaymentType: offer.repaymentType,
         repaymentFrequency: offer.repaymentFrequency || 'monthly',
         startDate: offer.startDate?.toDate ? offer.startDate.toDate() : new Date()
       };
@@ -1396,7 +1392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
-            id: offer.id || id, // Ensure ID is properly set
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1415,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated contract with key: ${contractKey}`);
           
-          await storage.updateOffer(offer.id || id, { contractPdfKey: contractKey });
+          await storage.updateOffer(offerId, { contractPdfKey: contractKey });
           console.log(`Updated offer with contract key`);
         } catch (genError) {
           console.error('Contract generation failed:', genError);
@@ -1461,7 +1457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert offer for PDF service compatibility
           const offerForPdf = {
             ...offer,
-            id: offer.id || id, // Ensure ID is properly set
+            id: offerId, // Ensure ID is properly set
             toUserId: offer.toUserId || null,
             createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt as any),
             updatedAt: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : new Date(offer.updatedAt as any),
@@ -1480,7 +1476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } as any);
           console.log(`Generated KFS with key: ${kfsKey}`);
           
-          await storage.updateOffer(offer.id || id, { kfsPdfKey: kfsKey });
+          await storage.updateOffer(offerId, { kfsPdfKey: kfsKey });
           console.log(`Updated offer with KFS key`);
         } catch (genError) {
           console.error('KFS generation failed:', genError);
@@ -1897,9 +1893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         interestType: offer.interestType,
         tenureValue: offer.tenureValue,
         tenureUnit: offer.tenureUnit,
-        repaymentType: (offer.repaymentType === 'interest_only' ? 'interest-only' : 
-                       offer.repaymentType === 'full_payment' ? 'full-payment' : 
-                       offer.repaymentType) as 'emi' | 'interest-only' | 'full-payment',
+        repaymentType: offer.repaymentType,
         repaymentFrequency: offer.repaymentFrequency || 'monthly',
         startDate: offer.updatedAt?.toDate ? offer.updatedAt.toDate() : offer.createdAt?.toDate ? offer.createdAt.toDate() : new Date()
       };
