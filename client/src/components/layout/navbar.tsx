@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { firebaseAuthService } from "@/lib/firebase-auth";
+import { formatNotificationTime } from "@/hooks/useRealtimeNotifications";
 import { Shield, Bell, User, LogOut, Menu, X, IndianRupee } from "lucide-react";
 
 export default function Navbar() {
@@ -162,7 +163,7 @@ export default function Navbar() {
                           {notification.message}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 flex justify-between w-full">
-                          <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
+                          <span>{formatNotificationTime(notification.createdAt)}</span>
                           {!notification.isRead && (
                             <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
                               New

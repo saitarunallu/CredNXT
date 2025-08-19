@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OfferCard from "@/components/offers/offer-card";
+import NotificationTest from "@/components/notifications/notification-test";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { firebaseAuthService } from "@/lib/firebase-auth";
@@ -371,7 +372,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-
+            {/* Real-time Notification Test */}
+            <NotificationTest />
           </div>
         </div>
 

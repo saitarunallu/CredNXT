@@ -2255,6 +2255,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Demo endpoint to test real-time notifications via onSnapshot
+  app.post('/api/notifications/demo', authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { type = 'test', priority = 'medium', title, message } = req.body;
+      
+      const notificationData = {
+        userId: req.userId!,
+        type,
+        priority,
+        title: title || 'Test Notification',
+        message: message || 'This is a demo notification to test real-time updates via onSnapshot',
+        metadata: { demo: true, timestamp: new Date().toISOString() }
+      };
+      
+      const notificationId = await advancedNotificationService.createSmartNotification(notificationData);
+      
+      res.json({ 
+        success: true, 
+        notificationId,
+        message: 'Demo notification created successfully'
+      });
+    } catch (error) {
+      console.error('Demo notification error:', error);
+      res.status(500).json({ message: 'Failed to create demo notification' });
+    }
+  });
+
   // Readiness probe - checks if app is ready to serve traffic
   app.get('/api/ready', async (req, res) => {
     try {
