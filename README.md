@@ -6,6 +6,14 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 
 **Production URL**: [https://crednxt-ef673.web.app](https://crednxt-ef673.web.app)
 
+**Deployment Status**: ✅ LIVE (Deployed August 19, 2025)
+
+### Recent Updates
+- **Security Enhanced**: Comprehensive security audit completed with XSS prevention, input sanitization, and PDF injection protection
+- **Error Handling**: Improved error boundaries and recovery mechanisms
+- **Authentication**: Enhanced Firebase authentication with better token management
+- **Code Quality**: Consolidated components and improved TypeScript consistency
+
 ## ✨ Key Features
 
 ### 🔐 Authentication System
@@ -65,9 +73,24 @@ npm run dev
 ```
 
 ### Deployment
+
+**Prerequisites**: Configure `FIREBASE_CONFIG_JSON` in Replit Secrets with your Firebase service account JSON.
+
 ```bash
+# Quick deployment (recommended)
+./deploy.sh
+
+# Full deployment with detailed output
 ./deploy-with-service-account.sh
+
+# Manual deployment
+npm run build
+firebase deploy --only hosting,functions --project crednxt-ef673
 ```
+
+**Current Deployment**: ✅ Live at https://crednxt-ef673.web.app
+
+**Note**: All deployment methods automatically use the `FIREBASE_CONFIG_JSON` secret for authentication. No manual login required.
 
 ## 📁 Project Structure
 
@@ -101,12 +124,22 @@ npm run dev
 
 ## 🔒 Security & Privacy
 
-- All API endpoints require authentication
-- Rate limiting implemented
-- Input validation on all forms
-- Secure financial data handling
-- Production-grade Firebase security rules
+### Production Security Features
+- **XSS Prevention**: Comprehensive input sanitization across all user inputs
+- **PDF Security**: Injection attack prevention in document generation
+- **Authentication**: Enhanced Firebase token validation and management
+- **Rate Limiting**: API endpoint protection against abuse
+- **Input Validation**: Strict Zod schema validation with detailed error handling
+- **WebSocket Security**: Message validation and sanitization
+- **Error Boundaries**: Comprehensive error recovery mechanisms
+- **Data Protection**: Secure financial data handling with encryption
+- **Firebase Rules**: Production-grade Firestore security rules
+- **HTTPS Enforcement**: All traffic secured with SSL certificates
+
+### Compliance
 - Proprietary license - All rights reserved
+- Data protection and privacy standards implemented
+- Secure coding practices followed
 
 ## 📞 Support
 

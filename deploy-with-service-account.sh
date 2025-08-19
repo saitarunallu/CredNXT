@@ -6,7 +6,8 @@ echo "🚀 Starting Firebase deployment with service account credentials..."
 # Check if FIREBASE_CONFIG_JSON secret exists
 if [ -z "$FIREBASE_CONFIG_JSON" ]; then
     echo "❌ Error: FIREBASE_CONFIG_JSON secret not found"
-    echo "🔧 Please ensure the service account JSON is stored in secrets as FIREBASE_CONFIG_JSON"
+    echo "🔧 Please ensure the service account JSON is stored in Replit Secrets as FIREBASE_CONFIG_JSON"
+    echo "💡 This secret contains your Firebase service account credentials for automatic deployment"
     exit 1
 fi
 
@@ -65,5 +66,8 @@ echo "🧹 Cleaning up temporary files..."
 rm -f /tmp/firebase-service-account.json
 
 echo "🎉 Firebase deployment completed successfully!"
-echo "🌐 Your application should now be available at: https://$PROJECT_ID.web.app"
-echo "📊 Check the Firebase Console for deployment details: https://console.firebase.google.com/project/$PROJECT_ID"
+echo "🌐 Your application is live at: https://$PROJECT_ID.web.app"
+echo "📊 Firebase Console: https://console.firebase.google.com/project/$PROJECT_ID"
+echo ""
+echo "💡 Future deployments will use the same FIREBASE_CONFIG_JSON secret automatically"
+echo "🚀 To deploy again, simply run: ./deploy-with-service-account.sh"
