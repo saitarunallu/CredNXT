@@ -11,9 +11,13 @@ import NotificationTest from "@/components/notifications/notification-test";
 import { IndianRupee, Plus, Users, AlertCircle, TrendingUp, FileText } from "lucide-react";
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { firebaseAuthService } from "@/lib/firebase-auth";
+import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  
+  // Initialize real-time listeners for this page
+  useFirestoreRealtime();
 
   // Helper function to convert Firebase timestamps
   const convertFirebaseTimestamps = (data: any) => {

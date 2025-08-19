@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { authService } from "@/lib/auth";
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { insertPaymentSchema, type InsertPayment } from "@shared/firestore-schema";
+import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
 import { 
   ArrowLeft, 
   IndianRupee, 
@@ -403,6 +404,9 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const [closeLoanReason, setCloseLoanReason] = useState("");
 
   const currentUser = authService.getUser();
+  
+  // Initialize real-time listeners for this page
+  useFirestoreRealtime();
 
   console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'crednxt.com' ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);

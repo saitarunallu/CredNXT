@@ -17,7 +17,10 @@ export function useFirestoreRealtime() {
     
     // Use the stored user data instead of Firebase auth user
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    if (!userData?.id || !db) return;
+    if (!userData?.id || !db) {
+      console.warn('🔄 Real-time listeners not initialized - missing user data or db:', { userData: !!userData?.id, db: !!db });
+      return;
+    }
 
     const unsubscribes: Array<() => void> = [];
     console.log('🔄 Setting up cost-efficient Firestore real-time listeners for user:', userData.id);
@@ -31,31 +34,37 @@ export function useFirestoreRealtime() {
     );
     
     const unsubscribeSentOffers = onSnapshot(sentOffersQuery, (snapshot) => {
-      if (!snapshot.metadata.hasPendingWrites) {
-        console.log('🔄 Firestore: Sent offers real-time update');
-        
-        // Update React Query cache directly with new data instead of invalidating
-        const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Update all relevant cache keys used by different pages
-        queryClient.setQueryData(['/api/offers', 'sent'], offers);
-        queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
-          if (oldData) {
-            return { ...oldData, sentOffers: offers };
-          }
-          return oldData;
-        });
-        
-        // Update the offers page cache
-        queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
-          if (oldData) {
-            return { ...oldData, sentOffers: offers };
-          }
-          return { sentOffers: offers, receivedOffers: oldData?.receivedOffers || [] };
-        });
-      }
+      console.log('🔄 Firestore: Sent offers snapshot received, hasPendingWrites:', snapshot.metadata.hasPendingWrites, 'docs:', snapshot.docs.length);
+      
+      // Process all updates, including pending writes for more responsive UI
+      const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('📦 Sent offers updated:', offers.map(o => ({ id: o.id, status: (o as any).status })));
+      
+      // Update all relevant cache keys used by different pages
+      queryClient.setQueryData(['/api/offers', 'sent'], offers);
+      queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
+        console.log('🔄 Updating dashboard cache with sent offers');
+        if (oldData) {
+          return { ...oldData, sentOffers: offers };
+        }
+        return { sentOffers: offers, receivedOffers: [] };
+      });
+      
+      // Update the offers page cache
+      queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+        console.log('🔄 Updating offers page cache with sent offers');
+        if (oldData) {
+          return { ...oldData, sentOffers: offers };
+        }
+        return { sentOffers: offers, receivedOffers: oldData?.receivedOffers || [] };
+      });
+      
+      // Force re-render by invalidating queries
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', 'sent'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['offers', 'firebase'], exact: false });
     }, (error) => {
-      console.error('Error in sent offers listener:', error);
+      console.error('❌ Error in sent offers listener:', error);
     });
     unsubscribes.push(unsubscribeSentOffers);
 
@@ -68,31 +77,37 @@ export function useFirestoreRealtime() {
     );
     
     const unsubscribeReceivedOffers = onSnapshot(receivedOffersQuery, (snapshot) => {
-      if (!snapshot.metadata.hasPendingWrites) {
-        console.log('🔄 Firestore: Received offers real-time update');
-        
-        // Update React Query cache directly with new data instead of invalidating
-        const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Update all relevant cache keys used by different pages
-        queryClient.setQueryData(['/api/offers', 'received'], offers);
-        queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
-          if (oldData) {
-            return { ...oldData, receivedOffers: offers };
-          }
-          return oldData;
-        });
-        
-        // Update the offers page cache
-        queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
-          if (oldData) {
-            return { ...oldData, receivedOffers: offers };
-          }
-          return { sentOffers: oldData?.sentOffers || [], receivedOffers: offers };
-        });
-      }
+      console.log('🔄 Firestore: Received offers snapshot received, hasPendingWrites:', snapshot.metadata.hasPendingWrites, 'docs:', snapshot.docs.length);
+      
+      // Process all updates, including pending writes for more responsive UI
+      const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('📦 Received offers updated:', offers.map(o => ({ id: o.id, status: (o as any).status })));
+      
+      // Update all relevant cache keys used by different pages
+      queryClient.setQueryData(['/api/offers', 'received'], offers);
+      queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
+        console.log('🔄 Updating dashboard cache with received offers');
+        if (oldData) {
+          return { ...oldData, receivedOffers: offers };
+        }
+        return { sentOffers: [], receivedOffers: offers };
+      });
+      
+      // Update the offers page cache
+      queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+        console.log('🔄 Updating offers page cache with received offers');
+        if (oldData) {
+          return { ...oldData, receivedOffers: offers };
+        }
+        return { sentOffers: oldData?.sentOffers || [], receivedOffers: offers };
+      });
+      
+      // Force re-render by invalidating queries
+      queryClient.invalidateQueries({ queryKey: ['/api/offers', 'received'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['offers', 'firebase'], exact: false });
     }, (error) => {
-      console.error('Error in received offers listener:', error);
+      console.error('❌ Error in received offers listener:', error);
     });
     unsubscribes.push(unsubscribeReceivedOffers);
 
@@ -125,27 +140,28 @@ export function useFirestoreRealtime() {
     );
     
     const unsubscribeAllOffers = onSnapshot(allOffersQuery, (snapshot) => {
-      if (!snapshot.metadata.hasPendingWrites) {
-        console.log('🔄 Firestore: All offers real-time update');
-        
-        // Update individual offer detail caches
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified' || change.type === 'added') {
-            const offerData = { id: change.doc.id, ...change.doc.data() };
-            console.log(`🔄 Updating offer detail cache for: ${offerData.id}`);
-            
-            // Update the specific offer detail cache
-            queryClient.setQueryData(['offer-details', offerData.id], offerData);
-            
-            // Also invalidate schedule data if it's an important status change
-            if (change.type === 'modified' && (offerData as any).status) {
-              queryClient.invalidateQueries({ queryKey: ['offer-schedule', offerData.id] });
-            }
+      console.log('🔄 Firestore: All offers snapshot received, hasPendingWrites:', snapshot.metadata.hasPendingWrites, 'changes:', snapshot.docChanges().length);
+      
+      // Process all updates, including pending writes for more responsive UI
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified' || change.type === 'added') {
+          const offerData = { id: change.doc.id, ...change.doc.data() };
+          console.log(`🔄 Updating offer detail cache for: ${offerData.id}, status: ${(offerData as any).status}, change type: ${change.type}`);
+          
+          // Update the specific offer detail cache
+          queryClient.setQueryData(['offer-details', offerData.id], offerData);
+          
+          // Force invalidation of offer detail queries for immediate UI updates
+          queryClient.invalidateQueries({ queryKey: ['offer-details', offerData.id] });
+          
+          // Also invalidate schedule data if it's an important status change
+          if (change.type === 'modified' && (offerData as any).status) {
+            queryClient.invalidateQueries({ queryKey: ['offer-schedule', offerData.id] });
           }
-        });
-      }
+        }
+      });
     }, (error) => {
-      console.error('Error in all offers listener:', error);
+      console.error('❌ Error in all offers listener:', error);
     });
     unsubscribes.push(unsubscribeAllOffers);
 

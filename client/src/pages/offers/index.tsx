@@ -10,10 +10,14 @@ import { useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { firebaseAuthService } from "@/lib/firebase-auth";
+import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
 
 export default function OffersPage() {
   const [location, setLocation] = useLocation();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  
+  // Initialize real-time listeners for this page
+  useFirestoreRealtime();
   
   // Helper function to convert Firebase timestamps
   const convertFirebaseTimestamps = (data: any) => {
