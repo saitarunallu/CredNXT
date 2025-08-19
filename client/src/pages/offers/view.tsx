@@ -403,11 +403,16 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
-  console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') ? 'production' : 'development');
+  console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'crednxt.com' ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);
   console.log('🔍 ViewOffer - Full hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
 
-  // Use unified data service for all data access
+  // Force use of ProductionFallbackView for crednxt.com domain to ensure proper authentication
+  if (typeof window !== 'undefined' && window.location.hostname === 'crednxt.com') {
+    return <ProductionFallbackView offerId={offerId} setLocation={setLocation} />;
+  }
+
+  // Use unified data service for all data access (development and other production domains)
   const { data: offerData, isLoading, error } = useQuery({
     queryKey: ['offer-details', offerId],
     queryFn: async () => {
@@ -695,7 +700,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     console.error('Offer query error:', error);
     
     // If it's a network error and we're in production, show a helpful message
-    if (typeof window !== 'undefined' && window.location.hostname.includes('firebaseapp.com')) {
+    if (typeof window !== 'undefined' && (window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'crednxt.com')) {
       return <ProductionFallbackView offerId={offerId} setLocation={setLocation} />;
     }
     
