@@ -1305,7 +1305,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         </div>
                       </div>
                     )}
-            )}
 
             {/* Current Payment Information - Temporarily disabled due to missing paymentInfoData
             
