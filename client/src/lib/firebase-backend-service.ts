@@ -244,19 +244,34 @@ export class FirebaseBackendService {
       );
       
       // Also search by phone number for offers sent to this user's phone
-      const phoneQuery = currentUserData?.phone ? query(
-        collection(db, 'offers'),
-        where('toUserPhone', '==', currentUserData.phone)
-      ) : null;
+      // Handle both formats: with + and without +
+      const phoneQueries = [];
+      if (currentUserData?.phone) {
+        const phoneWithPlus = currentUserData.phone;
+        const phoneWithoutPlus = currentUserData.phone.startsWith('+') 
+          ? currentUserData.phone.substring(1) 
+          : currentUserData.phone;
+        
+        // Query for phone with + prefix
+        phoneQueries.push(query(
+          collection(db, 'offers'),
+          where('toUserPhone', '==', phoneWithPlus)
+        ));
+        
+        // Query for phone without + prefix (if different)
+        if (phoneWithPlus !== phoneWithoutPlus) {
+          phoneQueries.push(query(
+            collection(db, 'offers'),
+            where('toUserPhone', '==', phoneWithoutPlus)
+          ));
+        }
+      }
 
       const queryPromises = [
         getDocs(sentQuery),
-        getDocs(receivedQuery)
+        getDocs(receivedQuery),
+        ...phoneQueries.map(phoneQuery => getDocs(phoneQuery))
       ];
-      
-      if (phoneQuery) {
-        queryPromises.push(getDocs(phoneQuery));
-      }
 
       const snapshots = await Promise.all(queryPromises);
       const [sentSnapshot, receivedSnapshot, phoneSnapshot] = snapshots;
