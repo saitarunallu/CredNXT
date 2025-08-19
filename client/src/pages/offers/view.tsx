@@ -1307,71 +1307,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                     )}
             )}
 
-            {/* Current Payment Information - Commented out due to missing paymentInfoData */}
-            {/* {offer.status === 'accepted' && paymentInfoData && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Current Payment Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-blue-800">Current Installment #{paymentInfoData.installmentNumber}</span>
-                        <Badge variant={paymentInfoData.isOverdue ? "destructive" : "default"}>
-                          {paymentInfoData.isOverdue ? "Overdue" : "Due"}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Amount Due:</span>
-                          <p className="font-semibold">₹{(paymentInfoData.expectedAmount || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Due Date:</span>
-                          <p className="font-semibold">{formatFirebaseDate(paymentInfoData.dueDate)}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Days {paymentInfoData.isOverdue ? 'Overdue' : 'Remaining'}:</span>
-                          <p className={`font-semibold ${paymentInfoData.isOverdue ? 'text-red-600' : 'text-green-600'}`}>
-                            {Math.abs(paymentInfoData.daysOverdue || paymentInfoData.daysRemaining)}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Remaining Balance:</span>
-                          <p className="font-semibold">₹{(paymentInfoData.remainingBalance || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {canSubmitPayment && (
-                      <div className="p-4 border rounded-lg">
-                        <h4 className="font-medium mb-3">Submit Payment</h4>
-                        <form onSubmit={handleSubmit(onSubmitPayment)} className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label htmlFor="amount">Amount *</Label>
-                              <Input
-                                id="amount"
-                                type="number"
-                                step="0.01"
-                                placeholder={paymentInfoData.expectedAmount?.toString()}
-                                {...register("amount")}
-                                data-testid="input-payment-amount"
-                              />
-                              {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
-                            </div>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )} */
+            {/* Current Payment Information - Temporarily disabled due to missing paymentInfoData
+            
+            This section would show:
+            - Current installment information
+            - Payment amounts and due dates  
+            - Payment submission form
+            - Will be restored when paymentInfoData is available
+            
+            */}
 
 
 
