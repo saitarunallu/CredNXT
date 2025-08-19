@@ -10,6 +10,16 @@ const db = admin.firestore();
 const notificationApp = express();
 notificationApp.use(express.json());
 // Authentication middleware
+/**
+ * Middleware to authenticate requests using Firebase ID tokens.
+ * @example
+ * sync(req, res, next)
+ * // Authenticates the request and sets the userId on the request object if token is valid.
+ * @param {Object} req - Express request object which includes headers and other request information.
+ * @param {Object} res - Express response object used to return HTTP responses.
+ * @param {Function} next - Express next middleware function to pass control to the next middleware.
+ * @returns {void} Sets req.userId if authentication is successful, otherwise sends a 401 response.
+**/
 const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;

@@ -2,6 +2,14 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { wsService } from '@/lib/websocket';
 
+/**
+ * Sets up real-time updates using WebSocket service to keep related data up to date.
+ * @example
+ * useRealtimeUpdates()
+ * // Automatically invalidates and refetches relevant queries based on WebSocket events
+ * @param {none} - This function takes no parameters.
+ * @returns {void} No return value, sets up side effects for real-time updates.
+ */
 export function useRealtimeUpdates() {
   const queryClient = useQueryClient();
 
@@ -14,6 +22,15 @@ export function useRealtimeUpdates() {
     const timeouts: NodeJS.Timeout[] = [];
 
     // Handle offer-related updates
+    /**
+     * Handles real-time offer updates by invalidating and refetching related data.
+     * @example
+     * handleOfferUpdate({ offerId: 123 })
+     * No return value
+     * @param {Object} data - The data related to the real-time update.
+     * @param {number} [data.offerId] - Optional ID of the specific offer to invalidate.
+     * @returns {void} Does not return a value.
+    **/
     const handleOfferUpdate = (data: any) => {
       // Real-time offer update received
       
@@ -51,6 +68,15 @@ export function useRealtimeUpdates() {
     };
 
     // Handle payment updates
+    /**
+     * Handles real-time updates for payment-related queries and refetches data immediately.
+     * @example
+     * handleRealtimeUpdate(data)
+     * undefined
+     * @param {Object} data - The data object containing update information.
+     * @param {string} [data.offerId] - The optional offer ID related to the update.
+     * @returns {void} Does not return a value.
+     */
     const handlePaymentUpdate = (data: any) => {
       // Real-time payment update received
       
@@ -87,6 +113,14 @@ export function useRealtimeUpdates() {
     };
 
     // Handle notification updates
+    /**
+     * Handles real-time notification updates by invalidating and refetching relevant queries.
+     * @example
+     * useRealtimeUpdates(data)
+     * // Updates relevant data without returning a value
+     * @param {any} data - Data received from a real-time update event.
+     * @returns {void} Does not return anything.
+     */
     const handleNotificationUpdate = (data: any) => {
       // Real-time notification update received
       

@@ -72,6 +72,14 @@ const BreadcrumbPage = React.forwardRef<
 ))
 BreadcrumbPage.displayName = "BreadcrumbPage"
 
+/**
+* Renders a breadcrumb list item with optional children and custom class name.
+* @example
+* BreadcrumbItem({ children: <span>Item 1</span>, className: "custom-class" })
+* <li role="presentation" aria-hidden="true" className="custom-class">...</li>
+* @param {React.ComponentProps<"li">} {children, className, ...props} - React component properties for the list item.
+* @returns {JSX.Element} A JSX element representing a list item in a breadcrumb.
+**/
 const BreadcrumbSeparator = ({
   children,
   className,
@@ -88,6 +96,14 @@ const BreadcrumbSeparator = ({
 )
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
 
+/**
+ * Renders a span element with specific styles and an icon for presentation purposes.
+ * @example
+ * renderSpanWithIcon('additional-class', { 'data-test': 'example' })
+ * <span role="presentation" aria-hidden="true" class="flex h-9 w-9 items-center justify-center additional-class"><svg class="h-4 w-4"></svg><span class="sr-only">More</span></span>
+ * @param {Object} { className, ...props } - The properties object containing className for additional styling and any other props to be spread to the span element.
+ * @returns {JSX.Element} A JSX element rendering a styled <span> with an embedded icon component.
+**/
 const BreadcrumbEllipsis = ({
   className,
   ...props

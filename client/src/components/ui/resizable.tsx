@@ -5,6 +5,14 @@ import * as ResizablePrimitive from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Renders a resizable panel group component with specific styling and additional properties passed as props.
+ * @example
+ * renderPanelGroup({ className: "custom-class" })
+ * // Renders a panel group with the combined default and custom class names and any additional props.
+ * @param {Object} props - Props including className and other properties for the ResizablePrimitive.PanelGroup component.
+ * @returns {JSX.Element} A ResizablePrimitive.PanelGroup component with custom styling and additional properties.
+ */
 const ResizablePanelGroup = ({
   className,
   ...props
@@ -20,6 +28,17 @@ const ResizablePanelGroup = ({
 
 const ResizablePanel = ResizablePrimitive.Panel
 
+/**
+ * A component function that renders a resizable panel handle with optional styling and functionality.
+ * @example
+ * YourComponent({ withHandle: true, className: "custom-class" })
+ * // Returns a JSX element representing a resizable panel handle with custom styling.
+ * @param {Object} props - The component properties.
+ * @param {boolean} [props.withHandle] - Determines if the handle icon is displayed.
+ * @param {string} [props.className] - Additional CSS classes for styling.
+ * @param {Object} props...props - Additional props passed to the resizable panel handle.
+ * @returns {JSX.Element} A resizable panel handle element with optional handle icon.
+ */
 const ResizableHandle = ({
   withHandle,
   className,

@@ -95,6 +95,14 @@ export class DatabaseStorage implements IStorage {
     return offer || undefined;
   }
 
+  /**
+   * Retrieves an offer by its ID and includes detailed related data.
+   * @example
+   * getOfferWithDetails('offer123')
+   * // Returns: Promise resolving to an offer object with payments, fromUser, toUser, totalPaid, and pendingAmount properties
+   * @param {string} id - The ID of the offer to retrieve.
+   * @returns {Promise<any>} A promise that resolves to an object containing the offer details, payments, fromUser, toUser, totalPaid, and pendingAmount.
+   */
   async getOfferWithDetails(id: string): Promise<any> {
     const offer = await this.getFirestore().getOfferById(id);
     if (!offer) return null;
@@ -118,6 +126,14 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  /**
+   * Retrieves and enriches user offers with user data and payment summaries.
+   * @example
+   * getUserOffers("12345")
+   * [{...offerObject, fromUser: {...}, toUser: {...}, totalPaid: 200, pendingPayments: 1}]
+   * @param {string} userId - The ID of the user whose offers are being retrieved.
+   * @returns {Promise<any[]>} A promise that resolves to an array of enriched offer objects.
+   */
   async getUserOffers(userId: string): Promise<any[]> {
     const offers = await this.getFirestore().getOffersByUserId(userId);
     
@@ -143,6 +159,14 @@ export class DatabaseStorage implements IStorage {
     return enrichedOffers;
   }
 
+  /**
+   * Retrieves and enriches offers where the specified user is the recipient.
+   * @example
+   * getReceivedOffers('abc123').then(enrichedOffers => console.log(enrichedOffers))
+   * // logs enriched offers with user data and payment summaries
+   * @param {string} userId - The ID of the user for whom to retrieve received offers.
+   * @returns {Promise<any[]>} A promise that resolves to an array of enriched offer objects.
+   */
   async getReceivedOffers(userId: string): Promise<any[]> {
     // Get offers where user is the recipient (toUserId)
     const offers = await this.getFirestore().getReceivedOffersByUserId(userId);
@@ -177,6 +201,15 @@ export class DatabaseStorage implements IStorage {
     return await this.getFirestore().linkOffersToUser(userId, phone);
   }
 
+  /**
+   * Updates an offer with the specified ID using the provided updates, converting Date fields to Firestore Timestamps.
+   * @example
+   * updateOffer("offer123", { startDate: new Date(), dueDate: new Date() })
+   * // Returns: Promise that resolves to an updated Offer object
+   * @param {string} id - The unique identifier of the offer to update.
+   * @param {Partial<InsertOffer>} updates - An object containing the fields to update, with Date fields automatically converted.
+   * @returns {Promise<Offer>} Promise resolving to the updated Offer object, or throws an error if the offer is not found.
+   */
   async updateOffer(id: string, updates: Partial<InsertOffer>): Promise<Offer> {
     // Convert Date fields to Firestore Timestamps if present
     const firestoreUpdates: any = { ...updates };
@@ -291,6 +324,15 @@ export class DatabaseStorage implements IStorage {
     return [];
   }
 
+  /**
+   * Retrieves notification analytics for a given user over a specified number of days.
+   * @example
+   * getNotificationAnalytics('user123', 30)
+   * // Returns a promise resolving to notification analytics data
+   * @param {string} userId - The user ID for which to fetch the analytics.
+   * @param {number} days - The number of days over which to calculate the analytics.
+   * @returns {Promise<any>} A promise that resolves to an object containing notification analytics data, such as totals and breakdowns.
+   **/
   async getNotificationAnalytics(userId: string, days: number): Promise<any> {
     return {
       totalSent: 0,

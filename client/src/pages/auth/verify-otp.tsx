@@ -12,6 +12,13 @@ import { firebaseAuthService } from "@/lib/firebase-auth";
 import { verifyOtpSchema, type VerifyOtpRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
+/**
+ * Verify and submit OTP for phone number verification.
+ * @example
+ * VerifyOtp()
+ * // UI component for OTP verification process
+ * @returns {JSX.Element} Component that renders the OTP verification form with functionalities such as submitting and resending OTP.
+ */
 export default function VerifyOtp() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -96,6 +103,13 @@ export default function VerifyOtp() {
     verifyMutation.mutate(data);
   };
 
+  /**
+   * Sends an OTP to the user's phone number if available.
+   * @example
+   * sync()
+   * // Sends an OTP if a pending phone number exists, otherwise navigates to login page
+   * @returns {Promise<void>} Shows a toast notification with the result of the OTP sending operation.
+   */
   const handleResendOtp = async () => {
     if (pendingPhone) {
       // Clean the phone number before resending

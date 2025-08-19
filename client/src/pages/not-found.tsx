@@ -1,6 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
+/**
+ * Renders a 404 "Page Not Found" component to inform the user that the requested page does not exist.
+ * @example
+ * NotFound()
+ * // Renders a 404 error component with user-friendly message and debug info.
+ * @returns {JSX.Element} Returns a React component that displays a custom 404 error message with additional debugging information.
+ */
 export default function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">

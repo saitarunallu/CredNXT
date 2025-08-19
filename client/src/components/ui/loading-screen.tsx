@@ -4,6 +4,14 @@ interface LoadingScreenProps {
   message?: string;
 }
 
+/**
+ * Displays a loading screen with a customizable message.
+ * @example
+ * LoadingScreen({ message: "Please wait..." })
+ * Renders a loading screen with the message "Please wait...".
+ * @param {object} { message } - The props object containing a message.
+ * @returns {JSX.Element} Returns a JSX element representing the loading screen.
+ */
 export default function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

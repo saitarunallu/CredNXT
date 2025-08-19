@@ -14,6 +14,22 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
+/**
+ * AuthGuard component manages authentication state and redirects for users.
+ * It listens for Firebase authentication state changes and handles access control,
+ * ensuring that only authenticated users can access certain parts of the application.
+ * If the user is not authenticated or needs to complete their profile, it redirects 
+ * them to the appropriate page.
+ *
+ * @example
+ * <AuthGuard>
+ *   ...Protected Components...
+ * </AuthGuard>
+ * 
+ * @param {Object} {children} - React components to render if authenticated.
+ * @returns {JSX.Element|null} JSX of the children elements if authenticated, 
+ * null if loading or unauthorized, and loading screens during authentication checks.
+ */
 export default function AuthGuard({ children }: AuthGuardProps) {
   const [, setLocation] = useLocation();
   const [authStateLoading, setAuthStateLoading] = useState(true);

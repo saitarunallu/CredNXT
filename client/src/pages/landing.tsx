@@ -9,6 +9,13 @@ import InvestorSection from "@/components/landing/investor-section";
 import ContactSection from "@/components/landing/contact-section";
 import Footer from "@/components/landing/footer";
 
+/**
+ * Represents the main landing page component layout.
+ * @example
+ * Landing()
+ * <div>...</div>
+ * @returns {JSX.Element} The complete structure of the landing page combining multiple sections.
+ */
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background">

@@ -7,6 +7,16 @@ interface ErrorFallbackProps {
   resetError: () => void;
 }
 
+/**
+ * Renders a fallback UI when an error occurs in the application.
+ * @example
+ * ErrorFallback({ error: new Error('Sample error'), resetError: () => {} })
+ * <div>This component will display when an error is caught in the application.</div>
+ * @param {Object} props - The component props.
+ * @param {Error} props.error - An error object containing the error message.
+ * @param {function} props.resetError - A callback function to reset the error boundary's state.
+ * @returns {JSX.Element} A React component displaying the error message and options to retry, refresh, or go home.
+ */
 export default function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   const isDevelopment = import.meta.env.DEV;
 

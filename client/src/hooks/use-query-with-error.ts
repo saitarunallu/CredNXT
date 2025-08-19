@@ -8,6 +8,14 @@ interface QueryWithErrorOptions<TData, TError = Error> extends UseQueryOptions<T
   showNetworkError?: boolean;
 }
 
+/**
+ * Enhanced hook to perform queries with error handling, including network error detection and retry logic.
+ * @example
+ * useQueryWithError({ queryKey: 'data-key', queryFn: fetchData })
+ * // { data, error, isLoading, isNetworkError, ... }
+ * @param {QueryWithErrorOptions<TData, TError>} options - Options for the query with error handling, including retry and toast settings.
+ * @returns {UseQueryResult<TData, TError> & { isNetworkError: boolean }} Result of the query with additional `isNetworkError` flag indicating network-related issues.
+ */
 export function useQueryWithError<TData, TError = Error>(
   options: QueryWithErrorOptions<TData, TError>
 ): UseQueryResult<TData, TError> & { isNetworkError: boolean } {

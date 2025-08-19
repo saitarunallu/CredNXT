@@ -12,6 +12,13 @@ import { firebaseAuthService } from "@/lib/firebase-auth";
 import { loginSchema, type LoginRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
+/**
+ * Render the Login page and handle user login with phone number via OTP.
+ * @example
+ * Login()
+ * Renders the login page for user authentication.
+ * @returns {JSX.Element} The rendered login page component.
+ */
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();

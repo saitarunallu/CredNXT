@@ -81,6 +81,18 @@ function convertTenureToDays(tenureValue: number, tenureUnit: string): number {
 }
 
 // Banking standard payment frequency conversion
+/**
+ * Converts payment frequency to the equivalent number of months.
+ * @example
+ * getPaymentFrequencyInMonths('weekly')
+ * // Returns approximately 0.23
+ * @example
+ * getPaymentFrequencyInMonths('monthly')
+ * // Returns 1
+ * @param {string} frequency - The payment frequency which can be 'weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', or 'yearly'.
+ * @returns {number} The number of months equivalent to the given payment frequency.
+ * @throws Will throw an error if the frequency is not one of the supported values.
+ */
 function getPaymentFrequencyInMonths(frequency: string): number {
   switch (frequency) {
     case 'weekly':
@@ -101,6 +113,15 @@ function getPaymentFrequencyInMonths(frequency: string): number {
 }
 
 // Get number of payments per year for different frequencies
+/**
+ * Calculates the number of payments per year based on the given frequency.
+ * @example
+ * getPaymentsPerYear('weekly')
+ * // returns 52
+ * @param {string} frequency - The frequency of payments (e.g., 'weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', 'yearly').
+ * @returns {number} The number of payments per year corresponding to the specified frequency.
+ * @throws {Error} If the frequency is invalid or unsupported.
+ */
 function getPaymentsPerYear(frequency: string): number {
   switch (frequency) {
     case 'weekly':
@@ -121,6 +142,16 @@ function getPaymentsPerYear(frequency: string): number {
 }
 
 // Calculate due dates based on start date and frequency
+/**
+ * Calculates a list of due dates based on the start date, frequency, and number of payments.
+ * @example
+ * calculateDueDates(new Date('2023-01-01'), 'monthly', 3)
+ * // Returns an array of Dates like [Date('2023-02-01'), Date('2023-03-01'), Date('2023-04-01')]
+ * @param {Date} startDate - The initial date from which the due dates are calculated.
+ * @param {string} frequency - The frequency of due dates (e.g., 'weekly', 'monthly').
+ * @param {number} numberOfPayments - The number of due dates to calculate.
+ * @returns {Date[]} An array of calculated due dates.
+ */
 function calculateDueDates(startDate: Date, frequency: string, numberOfPayments: number): Date[] {
   const dueDates: Date[] = [];
   const baseDate = new Date(startDate.getTime());
@@ -156,6 +187,16 @@ function calculateDueDates(startDate: Date, frequency: string, numberOfPayments:
 }
 
 // RBI-compliant EMI calculation using reducing balance method
+/**
+ * Calculates the Equated Monthly Installment (EMI) for a loan.
+ * @example
+ * calculateEMI(100000, 0.005, 12)
+ * 8560.75
+ * @param {number} principal - The principal amount of the loan.
+ * @param {number} periodicRate - The periodic interest rate as a decimal (e.g., 0.005 for 0.5%).
+ * @param {number} numberOfPayments - The total number of payments (e.g., 12 for monthly payments over one year).
+ * @returns {number} The calculated EMI rounded to 2 decimal places.
+ */
 function calculateEMI(principal: number, periodicRate: number, numberOfPayments: number): number {
   // Handle zero interest rate (rare but possible)
   if (periodicRate === 0) {
@@ -174,6 +215,18 @@ function calculateEMI(principal: number, periodicRate: number, numberOfPayments:
 }
 
 // Calculate APR according to RBI guidelines
+/**
+ * Calculate the Annual Percentage Rate (APR) based on given financial parameters.
+ * @example
+ * calculateAPR(1000, 100, 10, 5, 365)
+ * 11.75
+ * @param {number} principal - The principal loan amount.
+ * @param {number} totalInterest - The total interest payable over the loan tenure.
+ * @param {number} processingFee - Any applicable loan processing fee.
+ * @param {number} otherCharges - Any additional charges incurred.
+ * @param {number} tenureInDays - The loan tenure in days.
+ * @returns {number} The APR value rounded to two decimal places.
+ */
 function calculateAPR(
   principal: number, 
   totalInterest: number, 
@@ -222,6 +275,20 @@ function calculateLatePaymentFee(paymentAmount: number, latePaymentPenalty: numb
 }
 
 // Generate EMI schedule for reducing balance
+/**
+ * Generates an EMI payment schedule based on provided loan parameters.
+ * @example
+ * generateEMISchedule(100000, 0.01, 12, [new Date('2023-01-01'), new Date('2023-02-01')], 10000, 5, 0.02)
+ * // Returns an array of PaymentScheduleItem objects with detailed payment information.
+ * @param {number} principal - The initial loan amount on which calculations are based.
+ * @param {number} periodicRate - The interest rate applied in each payment period.
+ * @param {number} totalPayments - The total number of payment installments.
+ * @param {Date[]} dueDates - An array of due dates corresponding to each installment period.
+ * @param {number} emiAmount - The fixed EMI amount to be paid in each period.
+ * @param {number} gracePeriodDays - The number of grace days allowed after each due date.
+ * @param {number} latePaymentPenalty - The penalty rate applied for late payments.
+ * @returns {PaymentScheduleItem[]} Returns an array of PaymentScheduleItem objects containing details of each payment such as principal and interest amounts, remaining balance, and relevant penalties.
+ */
 function generateEMISchedule(
   principal: number, 
   periodicRate: number, 
@@ -269,6 +336,22 @@ function generateEMISchedule(
 }
 
 // Main repayment schedule calculation with banking industry standards
+/**
+ * Calculates the loan repayment schedule based on the provided loan terms.
+ * @example
+ * calculateRepaymentSchedule({
+ *   principal: 50000,
+ *   interestRate: 5,
+ *   interestType: 'fixed',
+ *   tenureValue: 12,
+ *   tenureUnit: 'months',
+ *   repaymentType: 'emi',
+ *   startDate: new Date('2023-01-01')
+ * })
+ * // Returns an object containing payment schedule and loan metrics
+ * @param {LoanTerms} terms - An object containing the loan details such as principal, interest rate, tenure, etc.
+ * @returns {RepaymentSchedule} An object containing the repayment schedule, total interest, total amount, and other loan metrics.
+ */
 export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule {
   const { 
     principal, 
@@ -416,6 +499,17 @@ export function calculateRepaymentSchedule(terms: LoanTerms): RepaymentSchedule 
 }
 
 // Validation function to check payment amounts against schedule
+/**
+ * Validates if the payment amount matches the expected amount for a specific installment.
+ * @example
+ * validatePaymentAmount("offer123", 1500, 1, paymentSchedule)
+ * // { isValid: true, message: 'Payment amount is correct' }
+ * @param {string} offerId - The unique identifier of the offer.
+ * @param {number} paymentAmount - The actual amount being paid.
+ * @param {number} installmentNumber - The installment number being validated.
+ * @param {PaymentScheduleItem[]} schedule - The array of payments in the schedule.
+ * @returns {{ isValid: boolean, message: string, expectedAmount?: number }} An object indicating if the payment is valid, a message, and optionally, the expected amount.
+ */
 export function validatePaymentAmount(
   offerId: string,
   paymentAmount: number,

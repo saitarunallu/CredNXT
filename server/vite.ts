@@ -19,6 +19,15 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+/**
+ * Sets up Vite with an Express application and a server instance for middleware and hot module replacement.
+ * @example
+ * setupVite(app, server)
+ * // Sets up Vite middleware and handles requests to transform and serve HTML pages.
+ * @param {Express} app - The Express application instance where Vite middleware will be applied.
+ * @param {Server} server - The server instance for handling Vite's hot module replacement (HMR) features.
+ * @returns {Promise<void>} Resolves when Vite is successfully set up and ready to serve content.
+ */
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -67,6 +76,14 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+/**
+ * Serves static files from the "public" directory using an Express app.
+ * @example
+ * serveStatic(app)
+ * // The app serves static files and falls back to index.html for unmatched routes.
+ * @param {Express} app - The Express application instance to which the static file serving is attached.
+ * @returns {void} Does not return a value. It sets up middleware for serving static files and a fallback to index.html.
+ */
 export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
 

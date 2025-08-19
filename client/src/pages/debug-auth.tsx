@@ -6,11 +6,25 @@ import { firebaseAuthService } from '@/lib/firebase-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+/**
+ * Debugs Firebase authentication and Firestore connectivity and returns the collected debug information.
+ * @example
+ * DebugAuth()
+ * Returns a React component displaying authentication and database test results.
+ * @returns {JSX.Element} A React component rendering the results of authentication and database tests, or a loading message while tests are running.
+ */
 export default function DebugAuth() {
   const [debugInfo, setDebugInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
+    /**
+     * Synchronizes and gathers environment and Firebase information for debugging purposes.
+     * @example
+     * sync()
+     * undefined
+     * @returns {Promise<void>} Resolves when the information gathering and setting state has completed.
+     */
     const runDebugTests = async () => {
       const info: any = {
         timestamp: new Date().toISOString(),

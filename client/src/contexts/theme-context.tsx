@@ -11,6 +11,14 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * Provides a theme context and handles theme setting logic for its children.
+ * @example
+ * ThemeProvider({ children: <YourComponent /> })
+ * // Wraps `YourComponent` with theme context
+ * @param {Object} { children: React.ReactNode } - The children components that require access to the theme context.
+ * @returns {JSX.Element} A ThemeContext.Provider component wrapping the provided children with theme context.
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Always use light theme
   const theme: Theme = "light";

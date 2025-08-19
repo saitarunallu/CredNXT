@@ -58,6 +58,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Enhanced helper methods for Firebase data operations
+  /**
+   * Converts a given Firestore timestamp to a JavaScript Date object.
+   * @example
+   * timestampToDate(firebaseTimestamp)
+   * // Returns a Date object corresponding to the provided Firebase Timestamp.
+   * @param {any} timestamp - The timestamp object or value to convert into a Date. Can be a Firebase Timestamp, Firestore timestamp, ISO string, or regular date.
+   * @returns {Date} A JavaScript Date object representing the equivalent date and time of the given timestamp.
+   */
   private timestampToDate(timestamp: any): Date {
     if (!timestamp) return new Date();
     
@@ -80,6 +88,14 @@ class FirestoreStorage implements IFirestoreStorage {
     }
   }
 
+  /**
+   * Converts a provided date into a Timestamp.
+   * @example
+   * dateToTimestamp(new Date());
+   * // returns a Timestamp object based on the current date
+   * @param {(Date|string|any)} date - The date to convert to a Timestamp, which can be a Date object, a date string, or any object with a _seconds property.
+   * @returns {Timestamp} The function returns a Timestamp object representing the provided date. If conversion fails, it returns the current Timestamp.
+   */
   private dateToTimestamp(date: Date | string | any): Timestamp {
     try {
       if (date instanceof Date) {
@@ -98,6 +114,14 @@ class FirestoreStorage implements IFirestoreStorage {
     }
   }
 
+  /**
+   * Converts specific fields in an object from their original format to a Timestamp format if applicable.
+   * @example
+   * convertTimestampFields({ createdAt: someValue })
+   * // Returns the object with 'createdAt' converted to a Timestamp if applicable
+   * @param {any} data - The data object that contains fields to be converted.
+   * @returns {any} The data object with specific fields converted to Timestamps if they have a 'toDate' method.
+   */
   private convertTimestampFields(data: any): any {
     if (!data) return data;
     const converted = { ...data };
@@ -115,6 +139,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Enhanced error handling with retry logic
+  /**
+   * Executes an asynchronous operation with automatic retries for retryable errors.
+   * @example
+   * executeWithRetry(() => databaseOperation(), 5)
+   * @param {() => Promise<T>} operation - The asynchronous operation to be attempted with retries.
+   * @param {number} maxRetries - The maximum number of retry attempts before failing, default is 3.
+   * @returns {Promise<T>} Resolves with the result of the operation if successful, or throws an error if all retries fail.
+   */
   private async executeWithRetry<T>(operation: () => Promise<T>, maxRetries: number = 3): Promise<T> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -141,6 +173,15 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Enhanced data validation
+  /**
+  * Validates and cleans the input data by removing undefined values and specified fields.
+  * @example
+  * validateAndCleanData({ name: "John", age: undefined, password: "12345" }, ["password"])
+  * // Returns: { name: "John" }
+  * @param {any} data - The input data object that needs validation and cleaning.
+  * @param {string[]} [excludeFields=[]] - An array of field names to be excluded from the cleaned data.
+  * @returns {any} A new object with undefined values and specified fields removed.
+  **/
   private validateAndCleanData(data: any, excludeFields: string[] = []): any {
     if (!data) return data;
     
@@ -157,6 +198,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // User operations
+  /**
+  * Creates a new user in the database by validating and cleaning the provided user data.
+  * @example
+  * createUser({ name: 'John Doe', email: 'john.doe@example.com', phone: '1234567890' })
+  * returns Promise resolving to the created User object with additional metadata like id and timestamps.
+  * @param {InsertUser} userData - The user data object containing details like name, email, and phone.
+  * @returns {Promise<User>} A promise that resolves to a User object containing the stored user data with additional attributes like id, createdAt, and updatedAt.
+  **/
   async createUser(userData: InsertUser): Promise<User> {
     return this.executeWithRetry(async () => {
       const id = this.generateId();
@@ -179,6 +228,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Retrieves a user by their phone number from the Firestore database.
+   * @example
+   * getUserByPhone('+1234567890')
+   * // returns Promise<User | null> with the user's data or null if not found
+   * @param {string} phone - The phone number to search for in the database.
+   * @returns {Promise<User | null>} A Promise that resolves to a User object or null if no user is found.
+   */
   async getUserByPhone(phone: string): Promise<User | null> {
     return this.executeWithRetry(async () => {
       const snapshot = await this.db.collection('users').where('phone', '==', phone).limit(1).get();
@@ -203,6 +260,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+  * Retrieves a user by their ID from the Firestore database.
+  * @example
+  * getUserById('12345')
+  * Promise<User | null>
+  * @param {string} id - The ID of the user to retrieve.
+  * @returns {Promise<User | null>} A promise that resolves to a User object if found, or null if the user does not exist.
+  **/
   async getUserById(id: string): Promise<User | null> {
     return this.executeWithRetry(async () => {
       const doc = await this.db.collection('users').doc(id).get();
@@ -227,6 +292,15 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+  * Updates a user document in the database with specified fields and returns the updated user or null if not found.
+  * @example
+  * updateUser('userId123', {name: 'John Doe'})
+  * // Returns: { id: 'userId123', name: 'John Doe', updatedAt: ... }
+  * @param {string} id - The ID of the user document to update.
+  * @param {Partial<User>} updates - An object containing the fields to be updated in the user document.
+  * @returns {Promise<User | null>} The updated user object or null if the document does not exist.
+  **/
   async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
     const userRef = this.db.collection('users').doc(id);
     const updateData = {
@@ -242,6 +316,27 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Offer operations
+  /**
+   * Creates a new offer and stores it in the database.
+   * @example
+   * createOffer({
+   *   fromUserId: 'user123',
+   *   toUserPhone: '1234567890',
+   *   toUserName: 'John Doe',
+   *   offerType: 'loan',
+   *   amount: 1000,
+   *   interestRate: 5,
+   *   interestType: 'fixed',
+   *   tenureValue: 12,
+   *   tenureUnit: 'months',
+   *   repaymentType: 'EMI',
+   *   startDate: new Date(),
+   *   dueDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+   * })
+   * // Returns a Promise resolving to an Offer object
+   * @param {InsertOffer} offerData - The data required to create an offer, including user IDs, amount, interest details, tenure, and more.
+   * @returns {Promise<Offer>} A promise that resolves to the created Offer object.
+   */
   async createOffer(offerData: InsertOffer): Promise<Offer> {
     const id = this.generateId();
     const now = Timestamp.now();
@@ -312,6 +407,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Retrieves and sorts offers created by a specific user.
+   * @example
+   * getOffersByUserId('user123')
+   * Promise resolving to an array of Offer objects sorted by creation date in descending order.
+   * @param {string} userId - The ID of the user for which to retrieve offers.
+   * @returns {Promise<Offer[]>} A promise that resolves to an array of offers created by the specified user, sorted by creation date in descending order.
+   */
   async getOffersByUserId(userId: string): Promise<Offer[]> {
     return this.executeWithRetry(async () => {
       // Get offers where user is the creator (fromUserId)
@@ -333,6 +436,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Retrieves and returns the received offers for a user by their userId.
+   * @example
+   * getReceivedOffersByUserId('user123')
+   * Promise resolves to a sorted array of Offer objects
+   * @param {string} userId - The ID of the user for whom to retrieve received offers.
+   * @returns {Promise<Offer[]>} A promise that resolves to an array of offers, sorted in descending order by creation date.
+   */
   async getReceivedOffersByUserId(userId: string): Promise<Offer[]> {
     return this.executeWithRetry(async () => {
       // Get offers where user is the recipient by userId (already linked offers)
@@ -356,6 +467,15 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Links offers in the database to a user based on their phone number.
+   * @example
+   * linkOffersToUser('123456', '+919876543210')
+   * // Returns a promise that resolves when the offers are linked and notifications are created
+   * @param {string} userId - The ID of the user to whom the offers will be linked.
+   * @param {string} phone - The phone number used to find offers in the database.
+   * @returns {Promise<void>} A promise that resolves when the offers are successfully linked to the user.
+   */
   async linkOffersToUser(userId: string, phone: string): Promise<void> {
     try {
       // With consistent phone normalization, we only need to check one format
@@ -399,6 +519,16 @@ class FirestoreStorage implements IFirestoreStorage {
     }
   }
 
+  /**
+   * Retrieves and paginates offers made by a specific user.
+   * @example
+   * getOffersByUserIdWithPagination('user123', 10, 'docId456')
+   * // Returns: Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }>
+   * @param {string} userId - The ID of the user whose offers need to be retrieved.
+   * @param {number} limit - The maximum number of offers to return.
+   * @param {string} [startAfter] - The document ID after which to start retrieving offers.
+   * @returns {Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }>} An object containing the paginated offers, a flag indicating if there are more offers, and optionally the document ID of the last offer retrieved.
+   */
   async getOffersByUserIdWithPagination(userId: string, limit: number, startAfter?: string): Promise<{ offers: Offer[], hasMore: boolean, lastDoc?: string }> {
     // For now, get all offers and handle pagination on client side to avoid composite index
     const snapshot = await this.db.collection('offers')
@@ -429,6 +559,15 @@ class FirestoreStorage implements IFirestoreStorage {
     return { offers, hasMore, lastDoc };
   }
 
+  /**
+   * Updates an existing offer in the database with the specified updates and returns the updated offer.
+   * @example
+   * updateOffer("offer123", { price: 99.99 })
+   * // Returns the updated offer object or null if not found
+   * @param {string} id - The unique identifier of the offer to update.
+   * @param {Partial<Offer>} updates - An object containing the fields to update with their new values.
+   * @returns {Promise<Offer|null>} Returns a promise that resolves to the updated offer object or null if the offer does not exist.
+   */
   async updateOffer(id: string, updates: Partial<Offer>): Promise<Offer | null> {
     const offerRef = this.db.collection('offers').doc(id);
     const updateData = {
@@ -444,6 +583,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Payment operations
+  /**
+   * Asynchronously creates a payment record in the database and returns the created payment object.
+   * @example
+   * createPayment({ offerId: '123', amount: 100, installmentNumber: 1, paymentMode: 'credit', refString: 'REF123', status: 'completed' })
+   * // Returns a promise that resolves to the created Payment object
+   * @param {InsertPayment} paymentData - The payment data to be validated, cleaned, and stored in the database.
+   * @returns {Promise<Payment>} A promise that resolves to the payment object created in the database.
+   */
   async createPayment(paymentData: InsertPayment): Promise<Payment> {
     return this.executeWithRetry(async () => {
       const id = this.generateId();
@@ -474,6 +621,14 @@ class FirestoreStorage implements IFirestoreStorage {
     return doc.data() as Payment;
   }
 
+  /**
+   * Retrieves a list of payments associated with a specific offer ID, sorted by creation date in descending order.
+   * @example
+   * getPaymentsByOfferId('offer123')
+   * // Returns a promise that resolves to an array of Payment objects associated with 'offer123'
+   * @param {string} offerId - The unique identifier of the offer for which payments need to be retrieved.
+   * @returns {Promise<Payment[]>} A promise that resolves to an array of Payment objects sorted by creation date in descending order.
+   */
   async getPaymentsByOfferId(offerId: string): Promise<Payment[]> {
     return this.executeWithRetry(async () => {
       if (!offerId || offerId === 'undefined') {
@@ -499,6 +654,15 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+  * Updates the specified payment with the provided changes and returns the updated payment data.
+  * @example
+  * updatePayment("paymentId123", { amount: 100, paidAt: new Date() })
+  * { id: "paymentId123", amount: 100, paidAt: "2023-09-21T14:52:00.000Z" }
+  * @param {string} id - The ID of the payment document to update.
+  * @param {UpdatePayment} updates - The payment updates to apply.
+  * @returns {Promise<Payment | null>} The updated payment data or null if the document does not exist.
+  **/
   async updatePayment(id: string, updates: UpdatePayment): Promise<Payment | null> {
     const paymentRef = this.db.collection('payments').doc(id);
     const updateData: any = { ...updates };
@@ -526,6 +690,25 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Notification operations
+  /**
+   * Creates and saves a notification in the database with given data.
+   * @example
+   * createNotification({
+   *   userId: 'user123',
+   *   offerId: 'offer456',
+   *   type: 'info',
+   *   priority: 'high',
+   *   title: 'Sample Title',
+   *   message: 'Sample message content',
+   *   scheduledFor: new Date('2023-10-05'),
+   *   expiresAt: new Date('2023-10-10'),
+   *   metadata: {},
+   *   batchId: 'batch789'
+   * }).then(notification => console.log(notification))
+   * // Returns the notification object saved in the database.
+   * @param {InsertNotification} notificationData - An object containing all necessary notification details.
+   * @returns {Promise<Notification>} A promise that resolves to the created notification object.
+   */
   async createNotification(notificationData: InsertNotification): Promise<Notification> {
     return this.executeWithRetry(async () => {
       const id = this.generateId();
@@ -554,6 +737,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Retrieves notifications for a specific user, ordered by creation date in descending order.
+   * @example
+   * getNotificationsByUserId('userId123')
+   * // Returns: Promise resolving to an array of notifications
+   * @param {string} userId - The ID of the user whose notifications are to be retrieved.
+   * @returns {Promise<Notification[]>} A promise that resolves to an array of Notification objects.
+   */
   async getNotificationsByUserId(userId: string): Promise<Notification[]> {
     return this.executeWithRetry(async () => {
       const snapshot = await this.db.collection('notifications')
@@ -574,6 +765,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+  * Marks a notification as read in the database and returns a promise with the operation result.
+  * @example
+  * markNotificationAsRead('notificationId123')
+  * // returns Promise<boolean>
+  * @param {string} id - The ID of the notification to be marked as read.
+  * @returns {Promise<boolean>} A promise that resolves to true if the notification was successfully marked as read, or false if an error occurred.
+  **/
   async markNotificationAsRead(id: string): Promise<boolean> {
     return this.executeWithRetry(async () => {
       try {
@@ -590,6 +789,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // OTP operations
+  /**
+   * Generates and stores a one-time password (OTP) for a given phone number.
+   * @example
+   * createOTP("+1234567890", "123456").then(otp => console.log(otp));
+   * @param {string} phone - The phone number for which the OTP is generated.
+   * @param {string} code - The OTP code to be stored.
+   * @returns {Promise<OTPCode>} A promise that resolves to the created OTP code object.
+   */
   async createOTP(phone: string, code: string): Promise<OTPCode> {
     return this.executeWithRetry(async () => {
       const id = this.generateId();
@@ -610,6 +817,15 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+   * Retrieves a valid OTP code for the given phone and code combination.
+   * @example
+   * getValidOTP('+1234567890', '123456')
+   * // returns a Promise resolving to an OTPCode object or null
+   * @param {string} phone - The phone number associated with the OTP.
+   * @param {string} code - The OTP code to validate.
+   * @returns {Promise<OTPCode | null>} A promise that resolves to the valid OTPCode object if found, or null if not.
+   */
   async getValidOTP(phone: string, code: string): Promise<OTPCode | null> {
     return this.executeWithRetry(async () => {
       const now = Timestamp.now();
@@ -639,6 +855,13 @@ class FirestoreStorage implements IFirestoreStorage {
     }
   }
 
+  /**
+   * Cleans up expired OTP entries from the 'otp_codes' Firestore collection.
+   * @example
+   * cleanupExpiredOTPs().then((deletedCount) => console.log(deletedCount))
+   * // Sample output: 12
+   * @returns {Promise<number>} A promise that resolves to the number of expired OTP entries deleted.
+   */
   async cleanupExpiredOTPs(): Promise<number> {
     return this.executeWithRetry(async () => {
       const now = Timestamp.now();
@@ -670,6 +893,14 @@ class FirestoreStorage implements IFirestoreStorage {
   }
 
   // Pending offer notifications for unregistered users
+  /**
+   * Creates and stores a pending offer notification in the database.
+   * @example
+   * createPendingOfferNotification({ someData: 'value', createdAt: '2023-10-01', expiresAt: '2023-10-10' })
+   * Returns the stored notification object.
+   * @param {Object} data - The data for the pending offer notification, including createdAt and expiresAt dates.
+   * @returns {Promise<Object>} A promise that resolves to the notification object stored in the database.
+   */
   async createPendingOfferNotification(data: any): Promise<any> {
     return this.executeWithRetry(async () => {
       const id = this.generateId();
@@ -687,6 +918,14 @@ class FirestoreStorage implements IFirestoreStorage {
     });
   }
 
+  /**
+  * Retrieves pending offer notifications for a given phone number from the database
+  * @example
+  * getPendingOfferNotificationsByPhone('123456789')
+  * [{...}, {...}]
+  * @param {string} phone - Phone number used to filter pending offer notifications.
+  * @returns {Promise<any[]>} A promise that resolves to an array of pending offer notifications.
+  **/
   async getPendingOfferNotificationsByPhone(phone: string): Promise<any[]> {
     return this.executeWithRetry(async () => {
       const snapshot = await this.db.collection('pending_offer_notifications')

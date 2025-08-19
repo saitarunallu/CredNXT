@@ -1,6 +1,13 @@
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK
+/**
+ * Initializes the Firebase Admin SDK if it hasn't been initialized yet, using environment variables for configuration.
+ * @example
+ * initializeFirebase()
+ * // returns true if SDK is initialized successfully, otherwise false if there's an error or missing credentials.
+ * @returns {boolean} True if Firebase Admin SDK was initialized successfully, false otherwise.
+ */
 function initializeFirebase() {
   if (admin.apps.length === 0) {
     // Prioritize service account JSON config for security

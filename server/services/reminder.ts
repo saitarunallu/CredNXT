@@ -22,6 +22,13 @@ export class ReminderService {
     }
   }
 
+  /**
+   * Sends payment reminders for due and overdue offers, and cleans up expired OTPs.
+   * @example
+   * processReminders()
+   * // No return value
+   * @returns {Promise<void>} No return value.
+   */
   private async processReminders(): Promise<void> {
     try {
       // Get offers due in 7, 3, 1 days and overdue

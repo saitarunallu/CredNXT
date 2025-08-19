@@ -55,6 +55,14 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+/**
+* Starts a timeout for removing a toast notification if it doesn't already exist.
+* @example
+* manageToastTimeout('toast123')
+* undefined
+* @param {string} toastId - Unique identifier for the toast notification.
+* @returns {void} Does not return a value.
+**/
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
@@ -71,6 +79,15 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+/**
+ * Handles different actions to modify the state of toast notifications.
+ * @example
+ * modifyToastState(existingState, { type: "ADD_TOAST", toast: newToast })
+ * // Returns a new state with the new toast added, respecting TOAST_LIMIT
+ * @param {State} state - The current state of the application.
+ * @param {Action} action - The action to perform on the state.
+ * @returns {State} The new state after applying the action.
+ */
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -139,6 +156,14 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+/**
+ * Creates and manages a toast notification with the ability to update or dismiss it.
+ * @example
+ * toast({ message: "Network error", duration: 3000 })
+ * // Returns an object with the id, dismiss, and update functions
+ * @param {Object} props - The properties for the toast notification.
+ * @returns {Object} An object containing the id, update function, and dismiss function for the toast.
+ */
 function toast({ ...props }: Toast) {
   const id = genId()
 
@@ -168,6 +193,14 @@ function toast({ ...props }: Toast) {
   }
 }
 
+/**
+ * Hook for managing toast notifications state and providing functions to display or dismiss them.
+ * @example
+ * const { toast, dismiss } = useToast();
+ * toast({ message: 'Hello, World!' });
+ * dismiss('toastId');
+ * @returns {Object} An object containing the current state of toasts along with methods to trigger or dismiss them.
+ */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 

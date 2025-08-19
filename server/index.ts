@@ -9,6 +9,13 @@ import { initializeFirebase } from "./firebase-config";
 const app = express();
 
 // Validate critical environment variables
+/**
+ * Validates the presence of required Firebase environment variables.
+ * @example
+ * validateEnvironment()
+ * true
+ * @returns {boolean} Returns true if all required environment variables are present. Returns false in development mode if some variables are missing; otherwise, exits the process in production mode.
+ */
 function validateEnvironment() {
   const requiredVars = [
     'FIREBASE_PROJECT_ID',
@@ -187,6 +194,14 @@ app.use((req, res, next) => {
   });
   
   // Graceful shutdown handlers
+  /**
+   * Handles server shutdown gracefully upon receiving a termination signal.
+   * @example
+   * signal('SIGTERM')
+   * // Logs 'Received SIGTERM. Starting graceful shutdown...' and shuts down the server.
+   * @param {string} signal - The termination signal received.
+   * @returns {void} Does not return a value.
+   */
   const gracefulShutdown = (signal: string) => {
     console.log(`Received ${signal}. Starting graceful shutdown...`);
     server.close(() => {

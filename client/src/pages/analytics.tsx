@@ -7,6 +7,13 @@ import { TrendingUp, TrendingDown, IndianRupee, Users, Calendar } from "lucide-r
 import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 
+/**
+ * Displays a detailed analytics dashboard for tracking lending and borrowing performance.
+ * @example
+ * Analytics()
+ * // Renders the analytics page with offers and stats
+ * @returns {JSX.Element} Rendered component displaying the analytics dashboard.
+ */
 export default function Analytics() {
   // Get offers data directly using the same logic as dashboard
   const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({

@@ -74,6 +74,15 @@ const SheetContent = React.forwardRef<
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
+/**
+* Combines additional properties with a default set of classes in a flexible, column-style div.
+* @example
+* sheetComponent({ className: 'custom-class', id: 'sheetComponent' })
+* Returns a styled div component with merged class names and additional HTML attributes.
+* @param {Object} props - The React HTML attributes and custom class name to be applied.
+* @param {string} [props.className] - An additional className string to add custom styling.
+* @returns {JSX.Element} A JSX element representing the styled div component.
+**/
 const SheetHeader = ({
   className,
   ...props
@@ -88,6 +97,14 @@ const SheetHeader = ({
 )
 SheetHeader.displayName = "SheetHeader"
 
+/**
+ * A react component that renders a responsive flex container with optional additional class names and props.
+ * @example
+ * <ComponentName className="custom-class" id="component-id" />
+ * <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 custom-class" id="component-id"></div>
+ * @param {object} props - An object containing extra props and additional class names.
+ * @returns {JSX.Element} A JSX element representing a styled flex container.
+ */
 const SheetFooter = ({
   className,
   ...props

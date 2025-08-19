@@ -122,6 +122,15 @@ const CommandItem = React.forwardRef<
 
 CommandItem.displayName = CommandPrimitive.Item.displayName
 
+/**
+* Renders a span element with specific styles and additional passed properties.
+* @example
+* <Component className="custom-class" onClick={() => console.log('clicked')} />
+* // Returns a span element with the specified class and handlers
+* @param {string} className - Optional class name to apply additional styling.
+* @param {React.HTMLAttributes<HTMLSpanElement>} props - Additional HTML attributes to be passed to the span element.
+* @returns {JSX.Element} A span element with predefined and custom styling and attributes.
+**/
 const CommandShortcut = ({
   className,
   ...props

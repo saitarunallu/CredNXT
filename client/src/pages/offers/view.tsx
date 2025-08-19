@@ -39,6 +39,14 @@ interface ViewOfferProps {
 }
 
 // Helper function to format Firebase timestamps (moved outside components for reusability)
+/**
+ * Converts various timestamp formats to a localized date string.
+ * @example
+ * formatTimestamp(timestamp)
+ * // Returns a formatted string like "31 October 2023"
+ * @param {any} timestamp - The timestamp in various formats (Date object, Firebase Timestamp, Firestore toDate method, ISO string, or epoch number).
+ * @returns {string} A formatted date string in "day month year" format, or 'N/A' if the timestamp is invalid or an error occurs.
+ */
 const formatFirebaseDate = (timestamp: any): string => {
   if (!timestamp || timestamp === null || timestamp === undefined) return 'N/A';
   
@@ -86,12 +94,32 @@ const formatFirebaseDate = (timestamp: any): string => {
 };
 
 // Production fallback component with direct Firestore access
+/**
+ * Handles direct loading of offer details in production, potentially bypassing authentication for specific test cases.
+ * @example
+ * ProductionFallbackView({ offerId: 'test-offer-123', setLocation: console.log })
+ * // Renders the offer details view with direct access mechanics.
+ * @param {object} arguments - The argument object.
+ * @param {string} arguments.offerId - The ID of the offer to load.
+ * @param {Function} arguments.setLocation - Function to update navigation state, typically used to redirect users.
+ * @returns {JSX.Element} Rendered component that displays either the offer details, loading state, or error messages.
+ */
 function ProductionFallbackView({ offerId, setLocation }: { offerId: string, setLocation: Function }) {
   const [isLoading, setIsLoading] = useState(true);
   const [offerData, setOfferData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    /**
+     * Handles the offer load process for the production environment with authentication and access checks.
+     * @example
+     * sync()
+     * // Initiates the offer load process, logs various status messages, handles user authentication, 
+     * // and fetches offer data from Firestore.
+     * @async
+     * @returns {void} No return value, function execution manages the loading of offers, authentication checks, 
+     * and sets error or offer data states based on the process outcome.
+     */
     const loadOfferDirectly = async () => {
       try {
         console.log('🔄 ProductionFallbackView: Starting offer load process...');
@@ -665,6 +693,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     submitPaymentMutation.mutate(data);
   };
 
+  /**
+   * Downloads a contract PDF and displays a toast notification based on the result.
+   * @example
+   * downloadContractPDFWithNotification(offerId)
+   * undefined
+   * @param {string} offerId - The unique identifier for the offer whose contract is to be downloaded.
+   * @returns {void} Does not return a value.
+   */
   const downloadContract = async () => {
     try {
       await firebaseBackend.downloadContractPDF(offerId);
@@ -682,6 +718,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
+  /**
+  * Downloads a KFS PDF and notifies the user of the success or failure.
+  * @example
+  * sync()
+  * No return value
+  * @param {string} offerId - The ID of the offer for which the KFS document is to be downloaded.
+  * @returns {void} This function does not return any value.
+  **/
   const downloadKFS = async () => {
     try {
       await firebaseBackend.downloadKFSPDF(offerId);
@@ -699,6 +743,13 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   };
 
+  /**
+   * Initiates the download of a repayment schedule for a given offer.
+   * @example
+   * sync()
+   * // Initiates download and displays success or error toast notification.
+   * @returns {void} Initiates download of the repayment schedule PDF and displays a toast notification indicating success or failure.
+   */
   const downloadRepaymentSchedule = async () => {
     try {
       console.log('📄 Starting repayment schedule download...');
@@ -976,6 +1027,16 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   };
 
   // Get the display text from current user's perspective
+  /**
+   * Determines the offer description based on whether the user is the receiver or sender and the type of offer.
+   * @example
+   * getOfferDescription(true, { offerType: 'lend' }) 
+   * // { type: 'Loan Offer', description: 'Someone wants to lend money to you', acceptText: 'Accept Loan', actionContext: 'borrowing' }
+   * @param {boolean} isReceiver - Indicates if the current user is the receiver of the offer.
+   * @param {Object} offer - The offer object containing details about the offer.
+   * @param {string} offer.offerType - The type of offer, either 'lend' or any other type indicating borrow.
+   * @returns {Object} Offer description, including type, description, accept action text, and context.
+   */
   const getOfferDisplayText = () => {
     if (isReceiver) {
       // Received offer: flip the perspective
@@ -1614,6 +1675,14 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 {payments.length > 0 ? (
                   <div className="space-y-3">
                     {payments.map((payment: any) => {
+                      /**
+                      * Renders a styled badge component based on the status input.
+                      * @example
+                      * status('pending')
+                      * // Returns a badge component with yellow coloring and a pending label.
+                      * @param {string} status - The status of the offer, such as 'pending', 'paid', or 'rejected'.
+                      * @returns {JSX.Element} A Badge component with color and icon corresponding to the given status.
+                      **/
                       const getStatusBadge = (status: string) => {
                         switch (status) {
                           case 'pending':

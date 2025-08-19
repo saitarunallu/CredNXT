@@ -42,6 +42,13 @@ export class ComplianceService {
     this.initializeRules();
   }
 
+  /**
+   * Initializes a set of rules for compliance checks related to KYC, loan amounts, interest rates, and payment authenticity.
+   * @example
+   * initializeRules()
+   * // sets up rules for validation operations
+   * @returns {void} Initializes rules in the service without returning a value.
+   */
   private initializeRules() {
     this.rules = [
       {

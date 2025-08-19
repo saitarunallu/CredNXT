@@ -10,6 +10,13 @@ interface PerformanceMetrics {
   isSlowConnection: boolean;
 }
 
+/**
+ * Displays and manages performance metrics of the application in a development environment.
+ * @example
+ * PerformanceMonitor()
+ * null // Only renders in development mode, otherwise returns null.
+ * @returns {JSX.Element | null} Returns a JSX element displaying performance metrics if in development mode and visible; otherwise null.
+ */
 export const PerformanceMonitor = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -18,6 +25,13 @@ export const PerformanceMonitor = () => {
     // Only show in development mode
     if (import.meta.env.MODE !== 'development') return;
 
+    /**
+     * Capture and set performance metrics such as load time, render time, and memory usage.
+     * @example
+     * performanceMonitor()
+     * // Sets metrics like loadTime, renderTime, etc.
+     * @returns {void} No return value; sets metrics in a global state.
+     */
     const measurePerformance = () => {
       const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
       const connection = (navigator as any).connection;

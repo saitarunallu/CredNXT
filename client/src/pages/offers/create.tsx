@@ -47,6 +47,21 @@ export default function CreateOffer() {
   };
 
   // Helper function to ensure phone number has +91 prefix for storage
+  /**
+   * Formats a phone number to include the +91 country code if not already present.
+   * @example
+   * formatPhoneNumber('9876543210') // '+919876543210'
+   * @example
+   * formatPhoneNumber('919876543210') // '+919876543210'
+   * @example
+   * formatPhoneNumber('+919876543210') // '+919876543210'
+   * @example
+   * formatPhoneNumber(null) // ''
+   * @example
+   * formatPhoneNumber('') // ''
+   * @param {string | undefined | null} phone - The phone number to format.
+   * @returns {string} The formatted phone number, or an empty string if invalid.
+   */
   const formatPhoneForStorage = (phone: string | undefined | null) => {
     if (!phone || typeof phone !== 'string') return '';
     const cleaned = phone.replace(/\D/g, '');
@@ -100,6 +115,24 @@ export default function CreateOffer() {
   const collateral = watch("collateral");
 
   // Check if all required fields are filled
+  /**
+   * Validates offer creation inputs to determine if all required fields are correctly populated and valid.
+   * @example
+   * validateOfferInputs('personal', '1000', '5', '12', 'months', 'monthly', 'fixed', '1234567890', 'John Doe', false)
+   * // returns true
+   * @param {string} offerType - The type of offer being created.
+   * @param {string} amount - The amount for the offer, which must be a positive number.
+   * @param {string} interestRate - The interest rate for the offer, which must be zero or a positive number.
+   * @param {string} tenure - The tenure duration for the offer, which must be a positive number.
+   * @param {string} tenureUnit - The unit of the tenure duration, such as 'months' or 'years'.
+   * @param {string} repaymentType - The type of repayment, either 'lumpsum' or based on repayment frequency.
+   * @param {string} repaymentFrequency - The frequency of repayments, required if the repayment type is not 'lumpsum'.
+   * @param {string} interestType - The type of interest calculation used for the offer.
+   * @param {string} contactPhone - The contact phone number for the offer.
+   * @param {string} contactName - The contact name for the offer.
+   * @param {boolean} phoneError - A flag indicating whether there is an error with the phone number.
+   * @returns {boolean} Returns true if all input fields are valid and properly filled; otherwise, false.
+   */
   const allRequiredFieldsFilled = () => {
     return (
       offerType &&
@@ -120,6 +153,16 @@ export default function CreateOffer() {
   };
 
   // Calculate due date
+  /**
+  * Calculates the due date based on the provided start date, tenure, and tenure unit.
+  * @example
+  * calculateDueDate('2022-01-01', '2', 'months')
+  * // Returns: Date object representing the due date, e.g., 2022-03-01T00:00:00.000Z
+  * @param {string} startDate - The start date in string format.
+  * @param {string} tenure - The tenure duration as a string.
+  * @param {string} tenureUnit - The unit of the tenure ('days', 'weeks', 'months', or 'years').
+  * @returns {Date|null} Date object representing the calculated due date, or null if inputs are invalid.
+  **/
   const calculateDueDate = () => {
     if (!startDate || !tenure || !tenureUnit) return null;
     
@@ -164,6 +207,14 @@ export default function CreateOffer() {
   // Store recipient user data for submission
   const [recipientUserId, setRecipientUserId] = useState<string>("");
 
+  /**
+   * Synchronize and validate the provided phone number with the database.
+   * @example
+   * sync("+1234567890")
+   * 
+   * @param {string} phoneNumber - The phone number to be checked for registration and validated against the current user's phone.
+   * @returns {void} No value is returned; the function updates state and UI components based on the phone number validation and lookup.
+   */
   const checkContact = async (phoneNumber: string) => {
     // Clear previous errors
     setPhoneError("");
@@ -255,6 +306,20 @@ export default function CreateOffer() {
     }
   });
 
+  /**
+   * Validates and prepares data for a loan offer creation, ensuring all required fields are filled
+   * and formatted correctly before submission.
+   * @example
+   * prepareOfferData({ amount: '1000', interestRate: '5', tenure: '12', purpose: 'business' })
+   * // Returns: undefined (side-effect: triggers mutation to create offer)
+   * @param {Object} data - The input data containing details about the offer.
+   * @param {string} data.amount - The amount for the offer.
+   * @param {string} data.interestRate - The interest rate for the offer.
+   * @param {string} data.tenure - The tenure of the offer.
+   * @param {string} data.purpose - The purpose of the loan offer.
+   * @returns {void} Does not return a value but could potentially trigger a toast notification
+   * indicating missing or incorrectly formatted fields.
+   */
   const onSubmit = (data: any) => {
     // Validate contact information
     if (phoneError) {

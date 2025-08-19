@@ -3,6 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/navbar";
 
+/**
+ * Component for debugging and testing the loading of offer data with Firebase integration.
+ * @example
+ * <DebugOffer />
+ * 
+ * @returns {JSX.Element} A React component that provides a user interface for running offer load tests and displaying results, including logs, errors, and offer data.
+ */
 export default function DebugOffer() {
   const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +20,13 @@ export default function DebugOffer() {
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
   };
 
+  /**
+   * Executes synchronization operations for testing Firebase offers.
+   * @example
+   * sync()
+   * Returns null if successful or sets error state if failed.
+   * @returns {void} No return value, sets logs and offer data in state.
+   */
   const testOfferLoad = async () => {
     setLogs([]);
     setError(null);

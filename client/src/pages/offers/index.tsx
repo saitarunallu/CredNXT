@@ -20,6 +20,20 @@ export default function OffersPage() {
   useFirestoreRealtime();
   
   // Helper function to convert Firebase timestamps
+  /**
+   * Converts timestamp fields in a data object to JavaScript Date objects.
+   * @example
+   * convertTimestamps({
+   *   createdAt: { _seconds: 1617744000, _nanoseconds: 0 },
+   *   updatedAt: '2021-04-06T12:00:00Z'
+   * })
+   * // Returns: {
+   * //   createdAt: Date object,
+   * //   updatedAt: Date object
+   * // }
+   * @param {Object} data - The data object containing potential timestamp fields.
+   * @returns {Object} A new object with the timestamp fields converted to Date objects.
+   */
   const convertFirebaseTimestamps = (data: any) => {
     if (!data) return data;
     
@@ -49,6 +63,13 @@ export default function OffersPage() {
       let retryCount = 0;
       const maxRetries = 3;
       
+      /**
+       * Fetches and processes offers for the current user from the Firestore database.
+       * @example
+       * sync()
+       * // Returns either user-specific or demo offers classified into sent and received categories.
+       * @returns {Object} An object containing two arrays: sentOffers and receivedOffers, each representing the offers sent by and received by the current user, respectively.
+       */
       const executeWithRetry = async () => {
         try {
           const currentUser = firebaseAuthService.getUser();
@@ -299,6 +320,14 @@ export default function OffersPage() {
 
   // Parse filter from URL query parameters and sessionStorage
   useEffect(() => {
+    /**
+     * Sets the active filter for offers based on session storage or URL parameters.
+     * @example
+     * setActiveFilterFromSessionOrURL()
+     * // Assuming a pending filter is stored in sessionStorage:
+     * // Sets the active filter to the pending filter and updates the URL.
+     * @returns {void} Sets the active filter and updates the URL or sessionStorage accordingly.
+     */
     const updateFilterFromUrl = () => {
       // First check if there's a pending filter from navigation
       const pendingFilter = sessionStorage.getItem('pendingFilter');
@@ -441,6 +470,14 @@ export default function OffersPage() {
   };
 
   // Get filter display info
+  /**
+   * Returns an object containing title, subtitle, and color based on the active filter.
+   * @example
+   * getOfferDetails('lent');
+   * // { title: 'Lent Offers', subtitle: 'Money you have given out', color: 'text-emerald-600 bg-emerald-50' }
+   * @param {string} activeFilter - Filter to determine which offer details to return.
+   * @returns {Object|null} An object containing the offer details or null if the filter is not recognized.
+  **/
   const getFilterInfo = () => {
     switch (activeFilter) {
       case 'lent':

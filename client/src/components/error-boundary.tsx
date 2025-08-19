@@ -25,6 +25,15 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  /**
+   * Handles errors by updating state and logging error details
+   * @example
+   * componentDidCatch(new Error('Sample error'), { componentStack: '' })
+   * No return value
+   * @param {Error} error - The error that was thrown.
+   * @param {React.ErrorInfo} errorInfo - Additional information about the error, including the component stack.
+   * @returns {void} No return value.
+   */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo });
     
@@ -64,6 +73,21 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  /**
+  * ErrorBoundary component serves as a boundary to catch JavaScript errors in its child component tree, allowing graceful handling through a fallback UI.
+  * @component
+  * @example
+  *   <ErrorBoundary fallback={<div>Something went wrong!</div>}>
+  *     <ChildComponent />
+  *   </ErrorBoundary>
+  * @prop {React.ReactNode} fallback - A ReactNode to render when an error is caught. If not provided, a default error display is shown.
+  * @state {boolean} hasError - Determines if an error has been caught in the component tree.
+  * @state {Error | null} error - Contains details about the error if one occurs, used for rendering debug information.
+  * @state {ErrorInfo | null} errorInfo - Provides additional component stack information when an error is caught, useful for debugging.
+  * @method handleReset - Resets error state, allowing child components to re-render and attempt error recovery.
+  * @method handleRefresh - Triggers a page-refresh action which may be used to reload the current page, potentially resolving transient issues.
+  * @returns {React.ReactNode} - Returns the children components if no error has been caught; otherwise, returns the fallback content or default error UI.
+  **/
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {

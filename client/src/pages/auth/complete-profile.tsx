@@ -11,6 +11,13 @@ import { firebaseAuthService } from "@/lib/firebase-auth";
 import { completeProfileSchema, type CompleteProfileRequest } from "@shared/firestore-schema";
 import { Shield, IndianRupee } from "lucide-react";
 
+/**
+ * Renders a form for completing a user profile with validation, mutation handling, and toast notifications upon success or error.
+ * @example
+ * CompleteProfile()
+ * Renders a profile completion form and handles form submission.
+ * @returns {JSX.Element} A React component that renders the profile completion form and handles submission logic.
+ */
 export default function CompleteProfile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -56,6 +63,14 @@ export default function CompleteProfile() {
     }
   });
 
+  /**
+   * Submits a user profile form with validation.
+   * @example
+   * submitProfileForm({ name: "John" })
+   * undefined
+   * @param {CompleteProfileRequest} data - The profile data including the user's name.
+   * @returns {void} No return value; executes profile form submission logic.
+   */
   const onSubmit = (data: CompleteProfileRequest) => {
     console.log('Submitting profile form:', data);
     

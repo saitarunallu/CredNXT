@@ -45,6 +45,15 @@ class PdfService {
         this.bucket = admin.storage().bucket();
         console.log('📁 PDF Service: Using Firebase Storage');
     }
+    /**
+     * Generates a PDF contract for a given offer and uploads it to Firebase Storage.
+     * @example
+     * generateContract(offer, fromUser)
+     * 'contracts/12345-1609459200000.pdf'
+     * @param {Object} offer - The offer object containing details for the contract.
+     * @param {Object} fromUser - The user object representing the individual initiating the contract.
+     * @returns {string} The storage key of the uploaded PDF contract in Firebase.
+     */
     async generateContract(offer, fromUser) {
         const fileName = `${offer.id}-${Date.now()}.pdf`;
         const contractKey = `contracts/${fileName}`;
@@ -67,6 +76,15 @@ class PdfService {
             throw error;
         }
     }
+    /**
+     * Generates a Key Facts Statement (KFS) PDF for a given offer and uploads it to Firebase Storage.
+     * @example
+     * generateKFS(offerObject, userObject)
+     * 'kfs/12345-kfs-1627888888888.pdf'
+     * @param {Object} offer - The offer object containing details used in the KFS PDF generation.
+     * @param {Object} fromUser - The user object representing the user requesting the KFS.
+     * @returns {string} The storage key of the newly generated and uploaded KFS PDF.
+     */
     async generateKFS(offer, fromUser) {
         const fileName = `${offer.id}-kfs-${Date.now()}.pdf`;
         const kfsKey = `kfs/${fileName}`;
@@ -89,6 +107,15 @@ class PdfService {
             throw error;
         }
     }
+    /**
+     * Generates a repayment schedule PDF for a given offer and uploads it to Firebase Storage.
+     * @example
+     * generateRepaymentSchedule(offerObject, userObject)
+     * 'schedules/12345-schedule-1618231234567.pdf'
+     * @param {Object} offer - The offer object containing details for which the schedule is to be generated.
+     * @param {Object} fromUser - The user object representing the user requesting the schedule.
+     * @returns {string} The storage key path where the generated schedule PDF is uploaded.
+     */
     async generateRepaymentSchedule(offer, fromUser) {
         const fileName = `${offer.id}-schedule-${Date.now()}.pdf`;
         const scheduleKey = `schedules/${fileName}`;
@@ -111,6 +138,15 @@ class PdfService {
             throw error;
         }
     }
+    /**
+     * Generates a PDF document for a loan agreement contract based on provided offer details and user information.
+     * @example
+     * createPdfContract(offer, fromUser)
+     * // Returns a Buffer of the generated PDF
+     * @param {Object} offer - Object containing offer details including id, toUserName, amount, interestRate, tenureValue, tenureUnit, and purpose.
+     * @param {Object} fromUser - Object containing information about the lender, specifically the name.
+     * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the generated PDF document.
+     */
     async createPdfContract(offer, fromUser) {
         return new Promise((resolve, reject) => {
             const doc = new pdfkit_1.default({ margin: 50 });
@@ -152,6 +188,20 @@ class PdfService {
             doc.end();
         });
     }
+    /**
+     * Generates a PDF Key Fact Statement (KFS) document for a loan offer.
+     * @example
+     * createPdfKFS({ amount: 50000, interestRate: 10, tenureValue: 5, tenureUnit: 'Years', repaymentFrequency: 'Monthly' }, 'user123')
+     * // Returns a Promise that resolves to a Buffer containing PDF data.
+     * @param {Object} offer - The loan offer details.
+     * @param {number} offer.amount - The loan amount in currency value.
+     * @param {number} offer.interestRate - The interest rate as a percentage per annum.
+     * @param {number} offer.tenureValue - The value of the loan tenure.
+     * @param {string} offer.tenureUnit - The unit of the loan tenure (e.g., 'Years', 'Months').
+     * @param {string} offer.repaymentFrequency - The frequency of loan repayment (e.g., 'Monthly', 'Quarterly').
+     * @param {string} fromUser - Identifier for the user requesting the PDF creation.
+     * @returns {Promise<Buffer>} - A Promise that resolves to a Buffer of the generated PDF document.
+     */
     async createPdfKFS(offer, fromUser) {
         return new Promise((resolve, reject) => {
             const doc = new pdfkit_1.default({ margin: 50 });
@@ -178,6 +228,20 @@ class PdfService {
             doc.end();
         });
     }
+    /**
+     * Generates a PDF document for the repayment schedule of a loan offer.
+     * @example
+     * createPdfSchedule({id: 123, amount: 50000, interestRate: 10, tenureUnit: 'months', tenureValue: 24}, false)
+     * // Returns a Promise that resolves to a Buffer containing the PDF document.
+     * @param {Object} offer - The loan offer details.
+     * @param {number} offer.id - The unique identifier for the loan.
+     * @param {number} offer.amount - The principal amount of the loan.
+     * @param {number} offer.interestRate - Annual interest rate of the loan.
+     * @param {string} offer.tenureUnit - The time unit of the loan tenure ('years' or 'months').
+     * @param {number} offer.tenureValue - The duration of the loan.
+     * @param {boolean} fromUser - A flag indicating the source of the request.
+     * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the generated PDF document.
+     */
     async createPdfSchedule(offer, fromUser) {
         return new Promise((resolve, reject) => {
             const doc = new pdfkit_1.default({ margin: 50 });
@@ -227,6 +291,14 @@ class PdfService {
 // Initialize PDF Service
 const pdfService = new PdfService();
 // Utility functions
+/**
+* Normalize a phone number by removing country code and non-digit characters.
+* @example
+* normalizePhoneNumber('+919876543210')
+* '9876543210'
+* @param {string} phone - The phone number input as a string.
+* @returns {string} A normalized 10-digit phone number.
+**/
 function normalizePhoneNumber(phone) {
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.startsWith('91') && cleaned.length === 12) {
@@ -272,6 +344,16 @@ app.use((req, res, next) => {
     next();
 });
 // Authentication middleware
+/**
+ * Middleware function to verify and authenticate a user token.
+ * @example
+ * sync(req, res, next)
+ * // Performs authentication and calls next() if successful
+ * @param {Object} req - Express HTTP request object containing headers.
+ * @param {Object} res - Express HTTP response object to send responses.
+ * @param {Function} next - Express function to pass control to next middleware.
+ * @returns {void} Sends a 401 response if authentication fails, otherwise calls next().
+ */
 const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -627,6 +709,15 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
     timeoutSeconds: 300,
 });
 // Simple PDF generation functions
+/**
+ * Generates a PDF buffer for a loan agreement contract based on provided offer data.
+ * @example
+ * generateContractPDFBuffer(offerData, fromUser)
+ * // Returns a promise that resolves to a Buffer containing the PDF data.
+ * @param {Object} offerData - An object containing the data for the loan offer, including contract ID, amount, interest rate, and other details.
+ * @param {Object} fromUser - An object representing the lender, with properties such as name and phone number. Can be null.
+ * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the generated PDF document.
+ */
 function generateContractPDFBuffer(offerData, fromUser) {
     return new Promise((resolve, reject) => {
         var _a;
@@ -665,6 +756,15 @@ function generateContractPDFBuffer(offerData, fromUser) {
         }
     });
 }
+/**
+* Generates a PDF buffer for the Key Fact Sheet (KFS) using the provided offer data.
+* @example
+* generateKFSPDFBuffer(offerData, fromUser)
+* Promise<Buffer> // Returns a Promise that resolves to a Buffer containing the PDF data.
+* @param {Object} offerData - The loan offer data containing details such as amount, interest rate, and duration.
+* @param {string} fromUser - The user creating the KFS document.
+* @returns {Promise<Buffer>} A Promise that resolves to a Buffer of the generated PDF content.
+**/
 function generateKFSPDFBuffer(offerData, fromUser) {
     return new Promise((resolve, reject) => {
         var _a;
@@ -700,6 +800,15 @@ function generateKFSPDFBuffer(offerData, fromUser) {
         }
     });
 }
+/**
+ * Generates a PDF buffer for the repayment schedule using given offer and payment data.
+ * @example
+ * generateSchedulePDFBuffer(offerData, payments)
+ * Promise<Buffer>
+ * @param {Object} offerData - The data related to the loan offer, including id and amount.
+ * @param {Array} payments - An array of payment objects containing dueDate, amount, and status.
+ * @returns {Promise<Buffer>} A promise resolving to a buffer containing the generated PDF.
+ */
 function generateSchedulePDFBuffer(offerData, payments) {
     return new Promise((resolve, reject) => {
         var _a;

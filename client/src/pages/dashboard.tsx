@@ -13,6 +13,13 @@ import { firebaseBackend } from "@/lib/firebase-backend-service";
 import { firebaseAuthService } from "@/lib/firebase-auth";
 import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
 
+/**
+ * Dashboard component for managing and displaying lending and borrowing activities.
+ * @example
+ * <Dashboard />
+ * Renders the Dashboard UI with offers and statistics.
+ * @returns {JSX.Element} The rendered dashboard component.
+ */
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   
@@ -20,6 +27,17 @@ export default function Dashboard() {
   useFirestoreRealtime();
 
   // Helper function to convert Firebase timestamps
+  /**
+  * Converts timestamp fields in an object to Date objects, handling various timestamp formats.
+  * @example
+  * convertTimestamps({
+  *   createdAt: { _seconds: 1609459200 },
+  *   nextPaymentDueDate: "2021-01-01T00:00:00Z"
+  * })
+  * // returns an object with Date objects for the specified fields.
+  * @param {Object} data - The data object containing possible timestamp fields.
+  * @returns {Object} The data object with converted Date objects for timestamp fields.
+  **/
   const convertFirebaseTimestamps = (data: any) => {
     if (!data) return data;
     

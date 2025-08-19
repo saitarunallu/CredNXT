@@ -12,6 +12,15 @@ import { firebaseAuthService } from "@/lib/firebase-auth";
 import { User, LogOut, Shield, Bell, HelpCircle } from "lucide-react";
 import type { User as UserType } from "@shared/firestore-schema";
 
+/**
+ * A functional component rendering the user's profile page with options to edit personal information, manage security and notifications, and access support.
+ * 
+ * @example
+ * <Profile />
+ * Renders the user profile page with various settings and options.
+ * 
+ * @returns {JSX.Element | null} Returns the profile page JSX if the user is authenticated; otherwise, redirects to login or complete profile pages as necessary.
+ */
 export default function Profile() {
   const [, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
@@ -20,6 +29,16 @@ export default function Profile() {
   
   // Use Firebase Auth directly instead of API calls
   useEffect(() => {
+    /**
+     * Synchronizes user authentication state with Firebase and updates the UI accordingly.
+     * @example
+     * sync()
+     * // Console output: 'Loaded user from Firebase: [user data]'
+     * // or 'No user found in Firebase, redirecting to login'
+     * @async
+     * @function
+     * @returns {Promise<void>} Resolves when the user authentication state has been synchronized and UI has been updated.
+     */
     const loadUserData = async () => {
       setIsLoading(true);
       

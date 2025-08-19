@@ -14,6 +14,16 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Authentication middleware
+/**
+ * Middleware to authenticate a user using a Bearer token from the request headers.
+ * @example
+ * sync(req, res, next)
+ * // If authentication is successful, `next` is called. Otherwise, a 401 response is sent.
+ * @param {Object} req - The HTTP request object containing headers.
+ * @param {Object} res - The HTTP response object used to send back the response.
+ * @param {Function} next - The callback to invoke the next middleware upon successful authentication.
+ * @returns {void} Responds with a 401 status and an error message if authentication fails; otherwise calls next middleware.
+ */
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -375,6 +385,14 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
 });
 
 // PDF generation functions using PDFKit
+/**
+ * Generates a PDF document for a loan contract based on the provided offer data and user information.
+ * @example
+ * generateContractPDF(offerData, fromUser).then((pdfData) => console.log(pdfData));
+ * @param {Object} offerData - An object containing offer details such as amount, interest rate, duration, etc.
+ * @param {Object} fromUser - An object containing information about the lender, typically with keys like `name` and `phone`.
+ * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the PDF data of the generated contract.
+ */
 function generateContractPDF(offerData, fromUser) {
   return new Promise((resolve, reject) => {
     try {
@@ -438,6 +456,30 @@ function generateContractPDF(offerData, fromUser) {
   });
 }
 
+/**
+ * Generates a PDF document for a Key Fact Sheet (KFS) based on provided offer data.
+ * @example
+ * generateKFSPDF({
+ *   amount: 500000,
+ *   interestRate: 8.5,
+ *   duration: 12,
+ *   durationUnit: 'months',
+ *   repaymentType: 'EMI',
+ *   purpose: 'Personal Loan'
+ * }).then(pdfData => {
+ *   // handle the generated PDF buffer
+ * }).catch(error => {
+ *   // handle error
+ * });
+ * @param {Object} offerData - The offer data used to generate the PDF.
+ * @param {number} offerData.amount - The loan amount in Indian Rupees.
+ * @param {number} offerData.interestRate - The interest rate per annum.
+ * @param {number|string} [offerData.duration] - The duration of the loan.
+ * @param {string} [offerData.durationUnit] - The unit of the loan duration (e.g., 'months').
+ * @param {string} [offerData.repaymentType] - The type of repayment (e.g., 'EMI').
+ * @param {string} [offerData.purpose] - The purpose of the loan.
+ * @returns {Promise<Buffer>} Resolves with a Buffer containing the generated PDF data.
+ */
 function generateKFSPDF(offerData) {
   return new Promise((resolve, reject) => {
     try {
@@ -499,6 +541,15 @@ function generateKFSPDF(offerData) {
   });
 }
 
+/**
+ * Generates a PDF document for a repayment schedule.
+ * @example
+ * generateSchedulePDF(offerData, payments)
+ * // Returns a Promise that resolves with the generated PDF data as a Buffer
+ * @param {Object} offerData - The loan offer details including amount, interest rate, duration, and repayment type.
+ * @param {Array} payments - An array of payment objects, each containing dueDate, amount, and status.
+ * @returns {Promise<Buffer>} A Promise that resolves with the generated PDF data as a Buffer.
+ */
 function generateSchedulePDF(offerData, payments) {
   return new Promise((resolve, reject) => {
     try {
@@ -574,6 +625,20 @@ function generateSchedulePDF(offerData, payments) {
 }
 
 // Helper calculation functions
+/**
+ * Calculates the total interest based on the provided offer data.
+ * @example
+ * calculateTotalInterest({amount: '1000', interestRate: '5', duration: '12', durationUnit: 'months'})
+ * 50
+ * @param {Object} offerData - An object containing offer details. 
+ * @param {string} offerData.amount - The principal amount.
+ * @param {string} offerData.interestRate - The annual interest rate as a percentage.
+ * @param {string|undefined} [offerData.duration] - The duration of the loan or investment; defaults to 12 if not provided.
+ * @param {string|undefined} [offerData.durationUnit] - The unit of duration; defaults to 'months' if not specified.
+ * @param {string|undefined} [offerData.tenureValue] - Alternative property for duration if 'duration' is not provided.
+ * @param {string|undefined} [offerData.tenureUnit] - Alternative property for duration unit if 'durationUnit' is not provided.
+ * @returns {number} The total interest calculated, rounded to the nearest whole number.
+ */
 function calculateTotalInterest(offerData) {
   const principal = parseFloat(offerData.amount);
   const rate = parseFloat(offerData.interestRate) / 100;
@@ -593,6 +658,18 @@ function calculateTotalRepayment(offerData) {
   return principal + interest;
 }
 
+/**
+ * Calculates the Equated Monthly Installment (EMI) based on the offer data.
+ * @example
+ * calculateEMI({ totalRepayment: 12000, duration: 12, durationUnit: 'months', frequency: 'monthly' })
+ * // Returns 1000
+ * @param {Object} offerData - Offer data containing total repayment details and time-related information.
+ * @param {number} offerData.totalRepayment - The total repayment amount.
+ * @param {number} [offerData.duration=12] - The duration of the loan, defaulting to 12 if not provided.
+ * @param {string} [offerData.durationUnit='months'] - The unit of duration, defaulting to 'months' if not provided.
+ * @param {string} [offerData.frequency='monthly'] - The frequency of repayment, defaulting to 'monthly' if not provided.
+ * @returns {number} The calculated EMI value evenly divided over the specified duration and frequency.
+ */
 function calculateEMI(offerData) {
   const totalRepayment = calculateTotalRepayment(offerData);
   const duration = parseFloat(offerData.duration || offerData.tenureValue || 12);

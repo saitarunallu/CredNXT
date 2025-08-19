@@ -2,6 +2,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 // Loading skeleton for offer cards
+/**
+ * Renders the skeleton placeholder UI for an offer card during loading states.
+ * @example
+ * OfferCardSkeleton()
+ * <div className="skeleton-placeholder">...</div>
+ * @returns {JSX.Element} The markup for a skeleton offer card with various placeholder sections.
+ */
 export function OfferCardSkeleton() {
   return (
     <Card data-testid="offer-card-skeleton">
@@ -28,6 +35,13 @@ export function OfferCardSkeleton() {
 }
 
 // Loading skeleton for dashboard stats
+/**
+ * Renders a skeleton placeholder for dashboard statistics.
+ * @example
+ * DashboardStatsSkeleton()
+ * // Renders a grid with 4 skeleton card components as placeholders
+ * @returns {JSX.Element} A JSX element representing the skeleton structure for dashboard statistics with 4 placeholder cards.
+ */
 export function DashboardStatsSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4" data-testid="dashboard-stats-skeleton">
@@ -48,6 +62,13 @@ export function DashboardStatsSkeleton() {
 }
 
 // Loading skeleton for payment list
+/**
+ * Renders a skeleton screen for a payment list during loading state.
+ * @example
+ * PaymentListSkeleton()
+ * // Returns a JSX element representing the skeleton structure.
+ * @returns {JSX.Element} A JSX element representing the skeleton structure for a payment list.
+ */
 export function PaymentListSkeleton() {
   return (
     <div className="space-y-3" data-testid="payment-list-skeleton">
@@ -75,6 +96,13 @@ export function PaymentListSkeleton() {
 }
 
 // Loading skeleton for profile page
+/**
+ * Renders a skeleton loader for a profile component to indicate loading state visually
+ * @example
+ * ProfileSkeleton()
+ * <div className="space-y-6" data-testid="profile-skeleton">...skeleton loaders...</div>
+ * @returns {JSX.Element} A JSX element representing the skeleton UI of a profile.
+ */
 export function ProfileSkeleton() {
   return (
     <div className="space-y-6" data-testid="profile-skeleton">
@@ -108,6 +136,13 @@ export function ProfileSkeleton() {
 }
 
 // Loading skeleton for analytics charts
+/**
+ * Renders a skeleton loader for an analytics chart, simulating the loading state of the chart component.
+ * @example
+ * AnalyticsChartSkeleton()
+ * // Returns a JSX element with skeleton structure
+ * @returns {JSX.Element} JSX element representing the skeleton structure of an analytics chart.
+ */
 export function AnalyticsChartSkeleton() {
   return (
     <Card data-testid="analytics-chart-skeleton">
@@ -123,6 +158,14 @@ export function AnalyticsChartSkeleton() {
 }
 
 // Generic loading spinner
+/**
+* Renders a loading spinner with customizable size.
+* @example
+* LoadingSpinner({ size: "sm" })
+* // Returns a small loading spinner element
+* @param {Object} size - The size of the spinner. Optional property with values: "sm", "default", or "lg".
+* @returns {JSX.Element} A spinning loading indicator element.
+**/
 export function LoadingSpinner({ size = "default" }: { size?: "sm" | "default" | "lg" }) {
   const sizeClasses = {
     sm: "h-4 w-4",
@@ -143,6 +186,15 @@ export function LoadingSpinner({ size = "default" }: { size?: "sm" | "default" |
 }
 
 // Full page loading state
+/**
+* Component that renders a loading page with a spinner and a message.
+* @example
+* PageLoading({ message: "Please wait..." })
+* Renders a loading spinner with the message "Please wait...".
+* @param {Object} param0 - The props object.
+* @param {string} [param0.message] - Optional loading message to display. Defaults to "Loading...".
+* @returns {JSX.Element} A JSX element representing the loading screen with a spinner and message.
+**/
 export function PageLoading({ message = "Loading..." }: { message?: string }) {
   return (
     <div 

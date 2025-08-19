@@ -333,6 +333,14 @@ export class PdfService {
     });
   }
 
+  /**
+   * Checks if a contract exists either in cloud storage or in a local file directory.
+   * @example
+   * contractExists('contract123')
+   * true
+   * @param {string} contractKey - The key or path of the contract to check existence for.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the existence of the contract.
+   */
   async contractExists(contractKey: string): Promise<boolean> {
     try {
       await this.initializeBucket();
@@ -355,6 +363,14 @@ export class PdfService {
     }
   }
 
+  /**
+   * Downloads a contract as a PDF buffer either from cloud storage or local filesystem.
+   * @example
+   * downloadContract('contractKey123').then(buffer => console.log(buffer)).catch(err => console.error(err));
+   * // Returns a buffer of the contract PDF if successful
+   * @param {string} contractKey - The key or path to identify the contract PDF file.
+   * @returns {Promise<Buffer>} Resolves with the contract PDF as a buffer, or rejects with an error if download fails.
+   */
   async downloadContract(contractKey: string): Promise<Buffer> {
     try {
       await this.initializeBucket();
@@ -382,6 +398,15 @@ export class PdfService {
     }
   }
 
+  /**
+  * Generates a KFS document as a PDF and uploads it to cloud storage or saves it locally.
+  * @example
+  * generateKFS(offerObject, userObject)
+  * Returns a string key representing the location where the KFS is stored.
+  * @param {Offer} offer - The offer object containing the details required for generating the KFS.
+  * @param {User} fromUser - The user object representing the user who initiated the KFS generation.
+  * @returns {Promise<string>} Resolves with a string key representing the storage location of the generated KFS PDF.
+  **/
   async generateKFS(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `kfs-${offer.id}-${Date.now()}.pdf`;
     const kfsKey = `kfs/${fileName}`;
@@ -423,6 +448,14 @@ export class PdfService {
     }
   }
 
+  /**
+   * Checks if a given KFS file exists either in cloud storage or local file system.
+   * @example
+   * kfsExists('some_kfs_key')
+   * // returns true or false
+   * @param {string} kfsKey - The key or path identifier for the KFS file to check.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean value indicating whether the file exists.
+   */
   async kfsExists(kfsKey: string): Promise<boolean> {
     try {
       await this.initializeBucket();
@@ -445,6 +478,14 @@ export class PdfService {
     }
   }
 
+  /**
+   * Downloads a file from either a cloud storage bucket or a local filesystem and returns it as a buffer.
+   * @example
+   * downloadKFS('exampleKey')
+   * Promise<Buffer>
+   * @param {string} kfsKey - The key or path of the file to download.
+   * @returns {Promise<Buffer>} A promise that resolves to the file content as a buffer.
+   */
   async downloadKFS(kfsKey: string): Promise<Buffer> {
     try {
       await this.initializeBucket();
@@ -472,6 +513,15 @@ export class PdfService {
     }
   }
 
+  /**
+   * Generates a repayment schedule as a PDF document for a given offer and user.
+   * @example
+   * generateRepaymentSchedule(offer, fromUser)
+   * 'schedules/schedule-1234567890-1625678901234.pdf'
+   * @param {Offer} offer - The offer object containing details for which the repayment schedule needs to be generated.
+   * @param {User} fromUser - The user who requests the generation of the repayment schedule.
+   * @returns {Promise<string>} A promise that resolves to the storage key of the generated PDF schedule.
+   */
   async generateRepaymentSchedule(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `schedule-${offer.id}-${Date.now()}.pdf`;
     const scheduleKey = `schedules/${fileName}`;
@@ -513,6 +563,14 @@ export class PdfService {
     }
   }
 
+  /**
+   * Checks if a schedule with the given key exists either in cloud storage or locally.
+   * @example
+   * scheduleExists('my-schedule-key')
+   * true
+   * @param {string} scheduleKey - Key representing the schedule to check for existence.
+   * @returns {Promise<boolean>} True if the schedule exists, otherwise false.
+   */
   async scheduleExists(scheduleKey: string): Promise<boolean> {
     try {
       await this.initializeBucket();
@@ -535,6 +593,14 @@ export class PdfService {
     }
   }
 
+  /**
+   * Downloads the repayment schedule as a buffer, either from cloud storage or a local directory.
+   * @example
+   * downloadRepaymentSchedule('scheduleKey123')
+   * // Returns a Promise resolving to a Buffer containing the file contents.
+   * @param {string} scheduleKey - The key or filename of the repayment schedule to be downloaded.
+   * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the contents of the schedule file.
+   */
   async downloadRepaymentSchedule(scheduleKey: string): Promise<Buffer> {
     try {
       await this.initializeBucket();
@@ -562,6 +628,15 @@ export class PdfService {
     }
   }
 
+  /**
+   * Creates a repayment schedule document as a PDF from the provided loan offer details.
+   * @example
+   * createRepaymentScheduleDocument(sampleOffer, sampleUser)
+   * Promise resolves to <Buffer ...> containing PDF data
+   * @param {Offer} offer - The loan offer details containing terms such as amount, interest rate, tenure, etc.
+   * @param {User} fromUser - The user object representing the entity generating the document, either borrower or lender.
+   * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the PDF document data.
+   */
   private async createRepaymentScheduleDocument(offer: Offer, fromUser: User): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
@@ -680,6 +755,15 @@ export class PdfService {
     });
   }
 
+  /**
+   * Creates a Key Fact Statement (KFS) document as a PDF based on the provided offer and user.
+   * @example
+   * createKFSDocument(offer, fromUser)
+   * // Returns a promise that resolves to a Buffer containing the PDF document.
+   * @param {Offer} offer - The offer object that contains loan terms and details.
+   * @param {User} fromUser - The user object representing the user who requested the KFS document.
+   * @returns {Promise<Buffer>} A promise that resolves to a Buffer containing the generated PDF document.
+   */
   private async createKFSDocument(offer: Offer, fromUser: User): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
@@ -765,6 +849,22 @@ export class PdfService {
     doc.moveDown(2);
   }
 
+  /**
+   * Adds the loan details to the PDF document in a tabulated format.
+   * @example
+   * addLoanDetailsTable(doc, offer, 50000, 12, 4500, 10, 500, 50, 12)
+   * // Adds the loan details table to the PDF document.
+   * @param {PDFKit.PDFDocument} doc - The PDF document where the details will be added.
+   * @param {Offer} offer - The offer object containing offer-related details.
+   * @param {number} principal - The principal amount of the loan.
+   * @param {number} installments - The number of installments for loan repayment.
+   * @param {number} emiAmount - The equated monthly installment amount.
+   * @param {number} interestRate - The interest rate for the loan.
+   * @param {number} processingFee - The processing fee for the loan.
+   * @param {number} gst - The GST applicable on the processing fee.
+   * @param {number} apr - The Annual Percentage Rate for the loan.
+   * @returns {void} Does not return any value.
+   */
   private addLoanDetailsTable(doc: PDFKit.PDFDocument, offer: Offer, principal: number, installments: number, emiAmount: number, interestRate: number, processingFee: number, gst: number, apr: number) {
     let y = doc.y + 20;
     const leftCol = 40;
@@ -897,6 +997,15 @@ export class PdfService {
     doc.y = y;
   }
 
+  /**
+   * Adds additional disclosures to a PDF document for a given loan offer.
+   * @example
+   * addAdditionalDisclosures(doc, offer)
+   * // Modifies the PDF document to include additional loan disclosures.
+   * @param {PDFKit.PDFDocument} doc - The PDF document where disclosures will be added.
+   * @param {Offer} offer - The loan offer data for which the disclosures are made.
+   * @returns {void} No return value; the PDF document is modified directly.
+   */
   private addAdditionalDisclosures(doc: PDFKit.PDFDocument, offer: Offer) {
     doc.addPage();
     
@@ -964,6 +1073,15 @@ export class PdfService {
     doc.y = y + 30;
   }
 
+  /**
+   * Adds a repayment schedule to a PDF document.
+   * @example
+   * addRepaymentSchedule(doc, schedule)
+   * // This will add a table with payment schedule details to your PDF document.
+   * @param {PDFKit.PDFDocument} doc - The PDF document to which the repayment schedule will be added.
+   * @param {PaymentScheduleItem[]} schedule - An array of payment schedule items, each containing details like due date, principal amount, interest amount, total amount, and remaining balance.
+   * @returns {void} This function does not return anything.
+   */
   private addRepaymentSchedule(doc: PDFKit.PDFDocument, schedule: PaymentScheduleItem[]) {
     // Add new page for the schedule table
     doc.addPage();
@@ -1037,6 +1155,21 @@ export class PdfService {
     doc.y = y + 20;
   }
 
+  /**
+   * Adds an illustration to the PDF document for the computation of the Annual Percentage Rate (APR).
+   * @example
+   * addAPRIllustration(doc, 50000, 12, 5000, 750, 49250, 55000, 12.5)
+   * // Generates a PDF page with the provided financial details
+   * @param {PDFKit.PDFDocument} doc - The PDF document to which the illustration will be added.
+   * @param {number} principal - The principal amount of the loan.
+   * @param {number} tenureInMonths - The loan tenure in months.
+   * @param {number} totalInterest - The total interest amount charged over the loan tenure.
+   * @param {number} totalFees - The total fees and charges payable.
+   * @param {number} netDisbursed - The net amount disbursed to the borrower.
+   * @param {number} totalAmount - The total amount to be paid by the borrower.
+   * @param {number} apr - The annual percentage rate, representing the effective annualized interest rate.
+   * @returns {void} Does not return a value; modifies the PDF document in place.
+   */
   private addAPRIllustration(doc: PDFKit.PDFDocument, principal: number, tenureInMonths: number, totalInterest: number, totalFees: number, netDisbursed: number, totalAmount: number, apr: number) {
     doc.addPage();
     

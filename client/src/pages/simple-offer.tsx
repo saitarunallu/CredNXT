@@ -4,6 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
+/**
+ * Displays a simple offer view, fetching offer details from Firestore based on the URL path and handles loading and error states.
+ * @example
+ * SimpleOfferView()
+ * // Renders the offer view or error/loading UI based on the component state
+ * @returns {JSX.Element} Rendered JSX element for offer details, loading state, or error state.
+ */
 export default function SimpleOfferView() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +20,14 @@ export default function SimpleOfferView() {
   useEffect(() => {
     console.log('🔄 SimpleOfferView: Component mounted');
     
+    /**
+     * Loads and processes offer data based on the current URL.
+     * @example
+     * sync()
+     * // Logs process details and loads offer data if available or handles errors
+     * @param {none} - This function takes no parameters.
+     * @returns {void} Logs the process details to console and updates state with offer data or errors.
+     */
     const loadOffer = async () => {
       try {
         console.log('🔍 Starting simple offer load...');

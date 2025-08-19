@@ -10,6 +10,16 @@ const db = admin.firestore();
 const paymentApp = express();
 paymentApp.use(express.json());
 // Authentication middleware
+/**
+ * Middleware function to verify and decode a Bearer token from the Authorization header.
+ * @example
+ * sync(req, res, next)
+ * // On success: proceeds to the next middleware; On failure: responds with 401 status code and error message.
+ * @param {Object} req - The request object containing headers and other request information.
+ * @param {Object} res - The response object used to return a response to the client.
+ * @param {Function} next - The function to pass control to the next middleware function.
+ * @returns {Object|undefined} Returns an error response in case of an invalid token; otherwise, proceeds to the next middleware.
+ */
 const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;

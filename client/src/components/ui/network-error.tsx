@@ -11,6 +11,17 @@ interface NetworkErrorProps {
   showNetworkStatus?: boolean;
 }
 
+/**
+ * Renders a network error message with an optional retry button.
+ * @example
+ * NetworkError({ onRetry: retryFunction, message: "Custom error message", showNetworkStatus: true })
+ * React element displaying network error UI
+ * @param {Object} { onRetry, message, showNetworkStatus } - Destructured props for the network error component.
+ * @param {Function} onRetry - Callback function to execute on retry.
+ * @param {string} [message] - Custom error message to display. Defaults to a standard message.
+ * @param {boolean} [showNetworkStatus] - Flag to display current network status. Defaults to false.
+ * @returns {JSX.Element} React element containing the network error interface.
+ */
 export function NetworkError({ 
   onRetry, 
   message = "Please check your internet connection and try again.",

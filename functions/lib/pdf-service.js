@@ -10,6 +10,16 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const pdfApp = express();
 // Authentication middleware
+/**
+ * Middleware to verify authentication token from request headers.
+ * @example
+ * sync(req, res, next)
+ * // Called to authenticate user based on Bearer token in headers.
+ * @param {Object} req - The request object, which should contain headers with an authorization field.
+ * @param {Object} res - The response object, used to send a response with appropriate status and message.
+ * @param {Function} next - The next middleware function in the stack.
+ * @returns {void} Does not return a value; proceeds to call the next middleware if successful.
+ */
 const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -49,6 +59,17 @@ function calculateEMI(principal, rate, tenure) {
         (Math.pow(1 + monthlyRate, tenure) - 1);
     return Math.round(emi * 100) / 100;
 }
+/**
+ * Generates a repayment schedule for a loan based on the provided amount, rate, and tenure.
+ * @example
+ * generateRepaymentSchedule(100000, 5, 12, new Date('2023-01-01'))
+ * // Returns an array of objects each representing an installment with details like paymentDate, emiAmount, etc.
+ * @param {number} amount - The initial loan amount.
+ * @param {number} rate - The annual interest rate as a percentage.
+ * @param {number} tenure - The total number of monthly installments.
+ * @param {Date} startDate - The start date of the loan, used to calculate the payment schedule.
+ * @returns {Array<Object>} An array of installment objects containing details such as installment number, payment date, EMI amount, principal amount, interest amount, and remaining balance.
+ */
 function generateRepaymentSchedule(amount, rate, tenure, startDate) {
     const schedule = [];
     const monthlyEMI = calculateEMI(amount, rate, tenure);

@@ -4,6 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '../lib/firebase-config';
 
+/**
+ * Component to debug and test PDF downloads from server endpoints.
+ * @example
+ * <DebugPDF />
+ * Renders a debug tool interface for testing contract, kfs, and schedule PDF downloads.
+ * @returns {JSX.Element} The rendered PDF Debug Tool component.
+ */
 export default function DebugPDF() {
   const [offerId, setOfferId] = useState('CMvmI8IcUbXme78luUAl'); // Default test ID
   const [logs, setLogs] = useState<string[]>([]);
@@ -14,6 +21,14 @@ export default function DebugPDF() {
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
   };
 
+  /**
+   * Tests PDF generation for different types by retrieving and downloading them based on offer ID.
+   * @example
+   * sync()
+   * // Logs progress and result of PDF downloads to the console.
+   * @param {string} offerId - The ID of the offer for which PDFs are being tested. Should be a non-empty, trimmed string.
+   * @returns {void} Outputs logs regarding the PDF retrieval and download process to the console.
+   */
   const testAllPDFs = async () => {
     if (!offerId.trim()) {
       addLog('❌ Please enter an offer ID');
@@ -98,6 +113,14 @@ export default function DebugPDF() {
     }
   };
 
+  /**
+  * Initiates a PDF download test by authenticating the user and issuing a request to the PDF endpoint.
+  * @example
+  * sync()
+  * Initiates the PDF download process and logs the activity and status.
+  * @param {none}
+  * @returns {void} Performs actions to download a PDF and logs messages without returning any value.
+  **/
   const testPDFDownload = async () => {
     if (!offerId.trim()) {
       addLog('❌ Please enter an offer ID');
