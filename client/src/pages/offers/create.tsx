@@ -35,7 +35,8 @@ export default function CreateOffer() {
   console.log('Current user data:', currentUser);
 
   // Helper function to normalize phone numbers for comparison
-  const normalizePhone = (phone: string) => {
+  const normalizePhone = (phone: string | undefined | null) => {
+    if (!phone || typeof phone !== 'string') return '';
     // Remove all non-digits and strip country code if present
     const cleaned = phone.replace(/\D/g, '');
     // If starts with 91 (India country code), remove it
@@ -46,8 +47,8 @@ export default function CreateOffer() {
   };
 
   // Helper function to ensure phone number has +91 prefix for storage
-  const formatPhoneForStorage = (phone: string) => {
-    if (!phone) return '';
+  const formatPhoneForStorage = (phone: string | undefined | null) => {
+    if (!phone || typeof phone !== 'string') return '';
     const cleaned = phone.replace(/\D/g, '');
     
     // If already has +91 or 91 prefix, just ensure it starts with +91

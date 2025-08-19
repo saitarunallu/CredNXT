@@ -21,8 +21,8 @@ export default function Analytics() {
       const allOffers = await firebaseBackend.getOffers();
       
       // Normalize phone number for comparison
-      const normalizePhone = (phone: string | undefined) => {
-        if (!phone) return '';
+      const normalizePhone = (phone: string | undefined | null) => {
+        if (!phone || typeof phone !== 'string') return '';
         return phone.replace(/[\s\-\(\)]/g, '').replace(/^\+91/, '');
       };
       
