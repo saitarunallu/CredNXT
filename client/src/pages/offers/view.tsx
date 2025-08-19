@@ -408,10 +408,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   console.log('🔍 ViewOffer - Offer ID:', offerId);
   console.log('🔍 ViewOffer - Full hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
 
-  // Force use of ProductionFallbackView for crednxt.com domain to ensure proper authentication
-  if (typeof window !== 'undefined' && window.location.hostname === 'crednxt.com') {
-    return <ProductionFallbackView offerId={offerId} setLocation={setLocation} />;
-  }
+
 
   // Use unified data service for all data access (development and other production domains)
   const { data: offerData, isLoading, error } = useQuery({
