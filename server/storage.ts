@@ -121,12 +121,15 @@ export class DatabaseStorage implements IStorage {
   async getUserOffers(userId: string): Promise<any[]> {
     const offers = await this.getFirestore().getOffersByUserId(userId);
     
-    // Enrich with user data and payment summaries
+    // Enrich with user data and payment summaries - using Promise.all for concurrent processing
     const enrichedOffers = await Promise.all(
       offers.map(async (offer) => {
-        const fromUser = await this.getFirestore().getUserById(offer.fromUserId);
-        const toUser = offer.toUserId ? await this.getFirestore().getUserById(offer.toUserId) : null;
-        const payments = await this.getFirestore().getPaymentsByOfferId(offer.id);
+        // Process all data fetching concurrently for each offer
+        const [fromUser, toUser, payments] = await Promise.all([
+          this.getFirestore().getUserById(offer.fromUserId),
+          offer.toUserId ? this.getFirestore().getUserById(offer.toUserId) : Promise.resolve(null),
+          this.getFirestore().getPaymentsByOfferId(offer.id)
+        ]);
 
         return {
           ...offer,
@@ -147,12 +150,15 @@ export class DatabaseStorage implements IStorage {
     // Get offers where user is the recipient (toUserId)
     const offers = await this.getFirestore().getReceivedOffersByUserId(userId);
     
-    // Enrich with user data and payment summaries
+    // Enrich with user data and payment summaries - using Promise.all for concurrent processing
     const enrichedOffers = await Promise.all(
       offers.map(async (offer) => {
-        const fromUser = await this.getFirestore().getUserById(offer.fromUserId);
-        const toUser = offer.toUserId ? await this.getFirestore().getUserById(offer.toUserId) : null;
-        const payments = await this.getFirestore().getPaymentsByOfferId(offer.id);
+        // Process all data fetching concurrently for each offer
+        const [fromUser, toUser, payments] = await Promise.all([
+          this.getFirestore().getUserById(offer.fromUserId),
+          offer.toUserId ? this.getFirestore().getUserById(offer.toUserId) : Promise.resolve(null),
+          this.getFirestore().getPaymentsByOfferId(offer.id)
+        ]);
 
         return {
           ...offer,

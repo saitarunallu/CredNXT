@@ -1,6 +1,7 @@
 import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useNetworkStatus } from './use-network-status';
+import React from 'react';
 
 interface QueryWithErrorOptions<TData, TError = Error> extends UseQueryOptions<TData, TError> {
   showErrorToast?: boolean;
@@ -35,8 +36,12 @@ export function useQueryWithError<TData, TError = Error>(
       
       // Default retry logic
       return failureCount < 3;
-    },
-    onError: (error) => {
+    }
+  });
+
+  // Handle errors with useEffect since onError is deprecated in React Query v5
+  React.useEffect(() => {
+    if (query.error) {
       if (showErrorToast && isOnline) {
         toast({
           title: 'Error',
@@ -52,13 +57,8 @@ export function useQueryWithError<TData, TError = Error>(
           variant: 'destructive',
         });
       }
-      
-      // Call original onError if provided
-      if (queryOptions.onError) {
-        queryOptions.onError(error);
-      }
-    },
-  });
+    }
+  }, [query.error, showErrorToast, isOnline, toast, errorMessage, showNetworkError]);
 
   const isNetworkError = !isOnline || (query.isError && !isOnline);
 

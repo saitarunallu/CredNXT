@@ -2,7 +2,7 @@ import { storage } from "../storage";
 import { notificationService } from "./notification";
 
 export class ReminderService {
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
 
   start(): void {
     // Run every hour
@@ -27,42 +27,48 @@ export class ReminderService {
       // Get offers due in 7, 3, 1 days and overdue
       const dueDays = [7, 3, 1];
       
-      for (const days of dueDays) {
+      // Process all due days concurrently for better performance
+      await Promise.all(dueDays.map(async (days) => {
         const offers = await storage.getUpcomingDueOffers(days);
         
-        for (const { offer, fromUser } of offers) {
+        // Process all offers for this due day concurrently
+        await Promise.all(offers.map(async ({ offer, fromUser }) => {
           if (offer.toUserId) {
             const message = `Reminder: Your payment of ₹${offer.amount} is due in ${days} day(s).`;
             
-            // Create notification
+            // Create notification with required properties
             await storage.createNotification({
               userId: offer.toUserId,
               offerId: offer.id,
               type: 'payment_reminder',
               title: `Payment Due in ${days} Day(s)`,
-              message
+              message,
+              priority: 'medium',
+              isRead: false
             });
           }
-        }
-      }
+        }));
+      }));
 
-      // Handle overdue payments
+      // Handle overdue payments concurrently
       const overdueOffers = await storage.getOffersWithOverduePayments();
       
-      for (const offer of overdueOffers) {
+      await Promise.all(overdueOffers.map(async (offer) => {
         if (offer.toUserId) {
           const message = `URGENT: Your payment of ₹${offer.amount} is overdue. Please pay immediately to avoid additional charges.`;
           
-          // Create notification
+          // Create notification with required properties
           await storage.createNotification({
             userId: offer.toUserId,
             offerId: offer.id,
             type: 'payment_overdue',
             title: 'Payment Overdue',
-            message
+            message,
+            priority: 'high',
+            isRead: false
           });
         }
-      }
+      }));
 
       // Clean up expired OTPs
       await storage.deleteExpiredOtps();
