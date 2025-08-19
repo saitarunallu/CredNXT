@@ -26,12 +26,16 @@ export class FirebaseAuthService {
           // Ensure we have a valid Firebase token
           this.refreshToken().catch(error => {
             console.warn('Could not refresh Firebase token on startup:', error);
+            // Return null to prevent unhandled promise rejection
+            return null;
           });
         }
       } catch (error) {
         console.error('Failed to parse user data:', error);
         this.logout().catch(logoutError => {
           console.error('Error during logout after failed user data parsing:', logoutError);
+          // Return null to prevent unhandled promise rejection
+          return null;
         });
       }
     }

@@ -38,6 +38,7 @@ export default function DebugPDF() {
                           hostname.includes('crednxt-ef673') ||
                           hostname.includes('crednxt.com');
       
+      // Use dynamic Firebase Functions URL generation
       const baseUrl = isProduction 
         ? 'https://api-mzz6re522q-uc.a.run.app'
         : `${window.location.origin}/api`;
