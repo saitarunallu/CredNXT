@@ -21,6 +21,8 @@ import Profile from "@/pages/profile";
 import SMSTestPage from "@/pages/sms-test-page";
 import DebugAuth from "@/pages/debug-auth";
 import DebugPDF from "@/pages/debug-pdf";
+import DebugOffer from "@/pages/debug-offer";
+import SimpleOfferView from "@/pages/simple-offer";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -82,6 +84,12 @@ function Router() {
           console.log('🔍 Hostname includes firebaseapp.com?', window.location.hostname.includes('firebaseapp.com'));
           console.log('🔍 Hostname includes web.app?', window.location.hostname.includes('web.app'));
           
+          // TEMPORARY FIX: Use SimpleOfferView for crednxt.com domain to debug the issue
+          if (window.location.hostname === 'crednxt.com') {
+            console.log('🧪 Using SimpleOfferView for crednxt.com debugging');
+            return <SimpleOfferView />;
+          }
+          
           if (isProduction) {
             console.log('🔥 Production environment detected, bypassing AuthGuard');
             // In production, ViewOffer handles its own auth via direct Firestore
@@ -121,6 +129,8 @@ function Router() {
           <DebugPDF />
         </AuthGuard>
       </Route>
+      <Route path="/debug-offer" component={DebugOffer} />
+      <Route path="/simple-offer/*" component={SimpleOfferView} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
