@@ -64,13 +64,50 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer accepted successfully:', data);
-      // Update cache directly instead of invalidating to reduce Firestore reads
-      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+      
+      // Update all relevant cache keys used by different pages
+      const updateOfferInCache = (oldData: any) => {
         if (oldData) {
           return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o);
         }
         return oldData;
+      };
+      
+      // Update API cache
+      queryClient.setQueryData(['/api/offers'], updateOfferInCache);
+      
+      // Update offers page cache
+      queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o) || []
+          };
+        }
+        return oldData;
       });
+      
+      // Update dashboard cache
+      queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o) || []
+          };
+        }
+        return oldData;
+      });
+      
+      // Update individual offer detail cache
+      queryClient.setQueryData(['offer-details', offer.id], (oldData: any) => {
+        if (oldData) {
+          return { ...oldData, status: 'accepted' };
+        }
+        return oldData;
+      });
+      
       toast({
         title: "Offer Accepted",
         description: "You have successfully accepted this offer.",
@@ -106,13 +143,50 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer declined successfully:', data);
-      // Update cache directly instead of invalidating to reduce Firestore reads
-      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+      
+      // Update all relevant cache keys used by different pages
+      const updateOfferInCache = (oldData: any) => {
         if (oldData) {
           return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o);
         }
         return oldData;
+      };
+      
+      // Update API cache
+      queryClient.setQueryData(['/api/offers'], updateOfferInCache);
+      
+      // Update offers page cache
+      queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o) || []
+          };
+        }
+        return oldData;
       });
+      
+      // Update dashboard cache
+      queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o) || []
+          };
+        }
+        return oldData;
+      });
+      
+      // Update individual offer detail cache
+      queryClient.setQueryData(['offer-details', offer.id], (oldData: any) => {
+        if (oldData) {
+          return { ...oldData, status: 'declined' };
+        }
+        return oldData;
+      });
+      
       toast({
         title: "Offer Declined",
         description: "You have declined this offer.",
@@ -148,13 +222,50 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer canceled successfully:', data);
-      // Update cache directly instead of invalidating to reduce Firestore reads
-      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+      
+      // Update all relevant cache keys used by different pages
+      const updateOfferInCache = (oldData: any) => {
         if (oldData) {
           return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o);
         }
         return oldData;
+      };
+      
+      // Update API cache
+      queryClient.setQueryData(['/api/offers'], updateOfferInCache);
+      
+      // Update offers page cache
+      queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o) || []
+          };
+        }
+        return oldData;
       });
+      
+      // Update dashboard cache
+      queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
+        if (oldData) {
+          return {
+            ...oldData,
+            sentOffers: oldData.sentOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o) || [],
+            receivedOffers: oldData.receivedOffers?.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o) || []
+          };
+        }
+        return oldData;
+      });
+      
+      // Update individual offer detail cache
+      queryClient.setQueryData(['offer-details', offer.id], (oldData: any) => {
+        if (oldData) {
+          return { ...oldData, status: 'cancelled' };
+        }
+        return oldData;
+      });
+      
       toast({
         title: "Offer Cancelled",
         description: "You have successfully cancelled this offer.",

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { onSnapshot, collection, query, where, orderBy, limit, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase-config';
 
 /**
@@ -36,12 +36,22 @@ export function useFirestoreRealtime() {
         
         // Update React Query cache directly with new data instead of invalidating
         const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Update all relevant cache keys used by different pages
         queryClient.setQueryData(['/api/offers', 'sent'], offers);
         queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
           if (oldData) {
             return { ...oldData, sentOffers: offers };
           }
           return oldData;
+        });
+        
+        // Update the offers page cache
+        queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+          if (oldData) {
+            return { ...oldData, sentOffers: offers };
+          }
+          return { sentOffers: offers, receivedOffers: oldData?.receivedOffers || [] };
         });
       }
     }, (error) => {
@@ -63,12 +73,22 @@ export function useFirestoreRealtime() {
         
         // Update React Query cache directly with new data instead of invalidating
         const offers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Update all relevant cache keys used by different pages
         queryClient.setQueryData(['/api/offers', 'received'], offers);
         queryClient.setQueryData(['dashboard-offers'], (oldData: any) => {
           if (oldData) {
             return { ...oldData, receivedOffers: offers };
           }
           return oldData;
+        });
+        
+        // Update the offers page cache
+        queryClient.setQueryData(['offers', 'firebase'], (oldData: any) => {
+          if (oldData) {
+            return { ...oldData, receivedOffers: offers };
+          }
+          return { sentOffers: oldData?.sentOffers || [], receivedOffers: offers };
         });
       }
     }, (error) => {
@@ -96,6 +116,38 @@ export function useFirestoreRealtime() {
       console.error('Error in notifications listener:', error);
     });
     unsubscribes.push(unsubscribeNotifications);
+
+    // Set up global listener for any offer changes to update individual offer detail pages
+    const allOffersQuery = query(
+      collection(db, 'offers'),
+      orderBy('updatedAt', 'desc'),
+      limit(100) // Monitor recent offers for real-time updates
+    );
+    
+    const unsubscribeAllOffers = onSnapshot(allOffersQuery, (snapshot) => {
+      if (!snapshot.metadata.hasPendingWrites) {
+        console.log('🔄 Firestore: All offers real-time update');
+        
+        // Update individual offer detail caches
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'modified' || change.type === 'added') {
+            const offerData = { id: change.doc.id, ...change.doc.data() };
+            console.log(`🔄 Updating offer detail cache for: ${offerData.id}`);
+            
+            // Update the specific offer detail cache
+            queryClient.setQueryData(['offer-details', offerData.id], offerData);
+            
+            // Also invalidate schedule data if it's an important status change
+            if (change.type === 'modified' && (offerData as any).status) {
+              queryClient.invalidateQueries({ queryKey: ['offer-schedule', offerData.id] });
+            }
+          }
+        });
+      }
+    }, (error) => {
+      console.error('Error in all offers listener:', error);
+    });
+    unsubscribes.push(unsubscribeAllOffers);
 
     listenersSetup.current = true;
 
