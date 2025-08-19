@@ -130,7 +130,8 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path="/debug-offer" component={DebugOffer} />
-      <Route path="/simple-offer/*" component={SimpleOfferView} />
+      <Route path="/simple-offer/:id" component={SimpleOfferView} />
+      <Route path="/simple-offer" component={SimpleOfferView} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
