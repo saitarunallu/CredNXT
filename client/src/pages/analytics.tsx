@@ -1,19 +1,92 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import Navbar from "@/components/layout/navbar";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, IndianRupee, Users, Calendar } from "lucide-react";
+import { firebaseBackend } from "@/lib/firebase-backend-service";
+import { firebaseAuthService } from "@/lib/firebase-auth";
 
 export default function Analytics() {
-  const { data: statsData } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+  // Get offers data directly using the same logic as dashboard
+  const { data: offersData, isLoading: offersLoading, error: offersError } = useQuery({
+    queryKey: ['analytics-offers'],
+    queryFn: async () => {
+      const currentUser = firebaseAuthService.getUser();
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get all offers (sent and received)
+      const allOffers = await firebaseBackend.getOffers();
+      
+      // Normalize phone number for comparison
+      const normalizePhone = (phone: string | undefined) => {
+        if (!phone) return '';
+        return phone.replace(/[\s\-\(\)]/g, '').replace(/^\+91/, '');
+      };
+      
+      const currentUserPhone = normalizePhone(currentUser.phone);
+
+      // Separate sent and received offers
+      const sentOffers = allOffers.filter((offer: any) => offer.fromUserId === currentUser.id);
+      const receivedOffers = allOffers.filter((offer: any) => 
+        offer.toUserId === currentUser.id || 
+        (currentUserPhone && normalizePhone(offer.toUserPhone) === currentUserPhone)
+      );
+
+      return {
+        sentOffers: sentOffers || [],
+        receivedOffers: receivedOffers || []
+      };
+    },
+    staleTime: 30000 // 30 seconds
   });
 
-  const { data: offersData } = useQuery({
-    queryKey: ['/api/offers'],
+  // Calculate stats from offers data with corrected logic
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['analytics-stats', offersData],
+    queryFn: () => {
+      if (!offersData) return null;
+      
+      const { sentOffers, receivedOffers } = offersData;
+      let totalLent = 0;
+      let totalBorrowed = 0;
+      let activeOffers = 0;
+      let pendingOffers = 0;
+      
+      // Calculate from sent offers - only accepted lend offers count as totalLent
+      sentOffers.forEach((offer: any) => {
+        if (offer.offerType === 'lend' && offer.status === 'accepted') {
+          totalLent += parseFloat(offer.amount || 0);
+        }
+        if (offer.offerType === 'borrow' && offer.status === 'accepted') {
+          totalBorrowed += parseFloat(offer.amount || 0);
+        }
+        if (offer.status === 'accepted') activeOffers++;
+        if (offer.status === 'pending') pendingOffers++;
+      });
+      
+      // Calculate from received offers
+      receivedOffers.forEach((offer: any) => {
+        // When I receive a 'borrow' offer and accept it, I'm the lender
+        if (offer.offerType === 'borrow' && offer.status === 'accepted') {
+          totalLent += parseFloat(offer.amount || 0);
+        }
+        // When I receive a 'lend' offer and accept it, I'm the borrower
+        if (offer.offerType === 'lend' && offer.status === 'accepted') {
+          totalBorrowed += parseFloat(offer.amount || 0);
+        }
+        if (offer.status === 'accepted') activeOffers++;
+        if (offer.status === 'pending') pendingOffers++;
+      });
+      
+      return { stats: { totalLent, totalBorrowed, activeOffers, pendingOffers } };
+    },
+    enabled: !!offersData,
   });
 
-  const stats = (statsData as any)?.stats || {
+  const stats = statsData?.stats || {
     totalLent: 0,
     totalBorrowed: 0,
     activeOffers: 0,
@@ -22,6 +95,13 @@ export default function Analytics() {
 
   const sentOffers = (offersData as any)?.sentOffers || [];
   const receivedOffers = (offersData as any)?.receivedOffers || [];
+
+  // Handle query errors
+  useEffect(() => {
+    if (offersError && process.env.NODE_ENV === 'development') {
+      console.error('Analytics offers error:', offersError);
+    }
+  }, [offersError]);
 
   const successRate = sentOffers.length > 0 ? 
     Math.round((sentOffers.filter((o: any) => o.status === 'accepted').length / sentOffers.length) * 100) : 0;

@@ -98,7 +98,7 @@ export default function Dashboard() {
       
       // Calculate from sent offers
       sentOffers.forEach((offer: any) => {
-        if (offer.offerType === 'lend') {
+        if (offer.offerType === 'lend' && offer.status === 'accepted') {
           totalLent += parseFloat(offer.amount || 0);
         }
         if (offer.status === 'accepted') activeOffers++;
@@ -107,7 +107,12 @@ export default function Dashboard() {
       
       // Calculate from received offers
       receivedOffers.forEach((offer: any) => {
-        if (offer.offerType === 'borrow') {
+        // When I receive a 'borrow' offer and accept it, I'm the lender
+        if (offer.offerType === 'borrow' && offer.status === 'accepted') {
+          totalLent += parseFloat(offer.amount || 0);
+        }
+        // When I receive a 'lend' offer and accept it, I'm the borrower
+        if (offer.offerType === 'lend' && offer.status === 'accepted') {
           totalBorrowed += parseFloat(offer.amount || 0);
         }
         if (offer.status === 'accepted') activeOffers++;
