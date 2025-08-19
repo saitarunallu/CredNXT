@@ -73,11 +73,12 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - `/shared/` - Shared types and schemas
 
 ### Key Services
-- **Authentication**: Firebase Auth with phone number verification
-- **Database**: Firestore with security rules
-- **PDF Generation**: Contract, KFS, and schedule generation
-- **Notifications**: Real-time WebSocket and SMS alerts
-- **Security**: Input validation, rate limiting, and audit logging
+- **Authentication**: Firebase Auth with enhanced token management and phone verification
+- **Database**: Firestore with cost-efficient real-time listeners and query optimization
+- **PDF Generation**: Secure contract, KFS, and schedule generation with sanitization
+- **Real-Time Updates**: Pure Firestore onSnapshot listeners with zero polling costs
+- **Security**: Comprehensive input validation, rate limiting, and audit logging
+- **Race Condition Prevention**: Server-side validation and status transition protection
 
 ## User Preferences
 - **Code Quality**: Focus on security, type safety, and comprehensive error handling
@@ -122,6 +123,7 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 ## Project Documentation Files
 
 ### Technical Documentation
+- **REALTIME_ARCHITECTURE.md**: Comprehensive guide to cost-efficient real-time data synchronization
 - **SECURITY.md**: Comprehensive security guidelines and best practices
 - **REMIX_GUIDE.md**: Step-by-step guide for safely remixing and deploying the platform
 - **DEPLOYMENT.md**: Detailed deployment procedures and production information

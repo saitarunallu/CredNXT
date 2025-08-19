@@ -27,11 +27,11 @@ A comprehensive peer-to-peer lending platform engineered for enterprise deployme
 - Multi-device support
 
 ### 💰 Loan Management
-- Create and manage loan offers
+- Create and manage loan offers with cost-efficient real-time updates
 - Advanced interest calculations (simple/compound)
-- Flexible repayment schedules
-- Status tracking (pending, accepted, declined)
-- Real-time offer updates
+- Flexible repayment schedules with automated PDF generation
+- Status tracking (pending, accepted, declined) with race condition prevention
+- Instant offer updates via Firestore onSnapshot listeners
 
 ### 📄 Document Generation
 - Loan agreement contracts (PDF)
@@ -48,13 +48,15 @@ A comprehensive peer-to-peer lending platform engineered for enterprise deployme
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: React (TypeScript), Vite, Tailwind CSS
-- **Backend**: Firebase Functions (Express.js)
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Authentication
-- **Storage**: Firebase Storage
-- **PDF Generation**: PDFKit
-- **Hosting**: Firebase Hosting
+- **Frontend**: React (TypeScript), Vite, Tailwind CSS, shadcn/ui
+- **Real-Time**: Pure Firestore onSnapshot listeners (cost-efficient, zero polling)
+- **State Management**: React Query with optimized cache management
+- **Backend**: Firebase Functions (Express.js) with server-side validation
+- **Database**: Firebase Firestore with query limits and race condition prevention
+- **Authentication**: Firebase Authentication with enhanced token management
+- **Storage**: Firebase Storage with secure access controls
+- **PDF Generation**: PDFKit with security sanitization
+- **Hosting**: Firebase Hosting with global CDN
 
 ## 🚀 Quick Start
 
