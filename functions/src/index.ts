@@ -684,13 +684,30 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
     const createdOffer = await offerRef.get();
     const createdData = createdOffer.data();
     
-    res.status(201).json({
+    // Secure object creation - whitelist known safe properties to prevent mass assignment
+    const safeCreatedData = {
       id: offerRef.id,
-      ...createdData,
+      fromUserId: createdData?.fromUserId,
+      toUserId: createdData?.toUserId,
+      toUserPhone: createdData?.toUserPhone,
+      toUserName: createdData?.toUserName,
+      amount: createdData?.amount,
+      interestRate: createdData?.interestRate,
+      tenureValue: createdData?.tenureValue,
+      tenureUnit: createdData?.tenureUnit,
+      purpose: createdData?.purpose,
+      repaymentFrequency: createdData?.repaymentFrequency,
+      status: createdData?.status,
+      offerType: createdData?.offerType,
+      contractKey: createdData?.contractKey,
+      kfsKey: createdData?.kfsKey,
+      scheduleKey: createdData?.scheduleKey,
       createdAt: createdData?.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: createdData?.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       dueDate: createdData?.dueDate?.toDate?.()?.toISOString() || null
-    });
+    };
+    
+    res.status(201).json(safeCreatedData);
   } catch (error) {
     console.error('Create offer error:', error);
     res.status(500).json({ message: 'Failed to create offer' });
@@ -722,7 +739,25 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => 
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const offerWithId = { ...offerData, id };
+    // Secure object creation - whitelist known safe properties for PDF generation
+    const offerWithId = {
+      id,
+      fromUserId: offerData.fromUserId,
+      toUserId: offerData.toUserId,
+      toUserPhone: offerData.toUserPhone,
+      toUserName: offerData.toUserName,
+      amount: offerData.amount,
+      interestRate: offerData.interestRate,
+      tenureValue: offerData.tenureValue,
+      tenureUnit: offerData.tenureUnit,
+      purpose: offerData.purpose,
+      repaymentFrequency: offerData.repaymentFrequency,
+      status: offerData.status,
+      offerType: offerData.offerType,
+      createdAt: offerData.createdAt,
+      updatedAt: offerData.updatedAt,
+      dueDate: offerData.dueDate
+    };
     const pdfBuffer = await generateContractPDFBuffer(offerWithId, fromUser.data());
     
     res.setHeader('Content-Type', 'application/pdf');
@@ -758,7 +793,25 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const offerWithId = { ...offerData, id };
+    // Secure object creation - whitelist known safe properties for KFS PDF generation
+    const offerWithId = {
+      id,
+      fromUserId: offerData.fromUserId,
+      toUserId: offerData.toUserId,
+      toUserPhone: offerData.toUserPhone,
+      toUserName: offerData.toUserName,
+      amount: offerData.amount,
+      interestRate: offerData.interestRate,
+      tenureValue: offerData.tenureValue,
+      tenureUnit: offerData.tenureUnit,
+      purpose: offerData.purpose,
+      repaymentFrequency: offerData.repaymentFrequency,
+      status: offerData.status,
+      offerType: offerData.offerType,
+      createdAt: offerData.createdAt,
+      updatedAt: offerData.updatedAt,
+      dueDate: offerData.dueDate
+    };
     const pdfBuffer = await generateKFSPDFBuffer(offerWithId, fromUser.data());
     
     res.setHeader('Content-Type', 'application/pdf');
@@ -794,7 +847,25 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => 
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const offerWithId = { ...offerData, id };
+    // Secure object creation - whitelist known safe properties for schedule PDF generation
+    const offerWithId = {
+      id,
+      fromUserId: offerData.fromUserId,
+      toUserId: offerData.toUserId,
+      toUserPhone: offerData.toUserPhone,
+      toUserName: offerData.toUserName,
+      amount: offerData.amount,
+      interestRate: offerData.interestRate,
+      tenureValue: offerData.tenureValue,
+      tenureUnit: offerData.tenureUnit,
+      purpose: offerData.purpose,
+      repaymentFrequency: offerData.repaymentFrequency,
+      status: offerData.status,
+      offerType: offerData.offerType,
+      createdAt: offerData.createdAt,
+      updatedAt: offerData.updatedAt,
+      dueDate: offerData.dueDate
+    };
     // Get payments for schedule
     const paymentsSnapshot = await db.collection('payments')
       .where('offerId', '==', id)

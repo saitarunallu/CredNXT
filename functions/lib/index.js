@@ -633,7 +633,29 @@ app.post('/offers', authenticate, async (req, res) => {
         const offerRef = await db.collection('offers').add(offerData);
         const createdOffer = await offerRef.get();
         const createdData = createdOffer.data();
-        res.status(201).json(Object.assign(Object.assign({ id: offerRef.id }, createdData), { createdAt: ((_c = (_b = (_a = createdData === null || createdData === void 0 ? void 0 : createdData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(), updatedAt: ((_f = (_e = (_d = createdData === null || createdData === void 0 ? void 0 : createdData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(), dueDate: ((_j = (_h = (_g = createdData === null || createdData === void 0 ? void 0 : createdData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null }));
+        // Secure object creation - whitelist known safe properties to prevent mass assignment
+        const safeCreatedData = {
+            id: offerRef.id,
+            fromUserId: createdData === null || createdData === void 0 ? void 0 : createdData.fromUserId,
+            toUserId: createdData === null || createdData === void 0 ? void 0 : createdData.toUserId,
+            toUserPhone: createdData === null || createdData === void 0 ? void 0 : createdData.toUserPhone,
+            toUserName: createdData === null || createdData === void 0 ? void 0 : createdData.toUserName,
+            amount: createdData === null || createdData === void 0 ? void 0 : createdData.amount,
+            interestRate: createdData === null || createdData === void 0 ? void 0 : createdData.interestRate,
+            tenureValue: createdData === null || createdData === void 0 ? void 0 : createdData.tenureValue,
+            tenureUnit: createdData === null || createdData === void 0 ? void 0 : createdData.tenureUnit,
+            purpose: createdData === null || createdData === void 0 ? void 0 : createdData.purpose,
+            repaymentFrequency: createdData === null || createdData === void 0 ? void 0 : createdData.repaymentFrequency,
+            status: createdData === null || createdData === void 0 ? void 0 : createdData.status,
+            offerType: createdData === null || createdData === void 0 ? void 0 : createdData.offerType,
+            contractKey: createdData === null || createdData === void 0 ? void 0 : createdData.contractKey,
+            kfsKey: createdData === null || createdData === void 0 ? void 0 : createdData.kfsKey,
+            scheduleKey: createdData === null || createdData === void 0 ? void 0 : createdData.scheduleKey,
+            createdAt: ((_c = (_b = (_a = createdData === null || createdData === void 0 ? void 0 : createdData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(),
+            updatedAt: ((_f = (_e = (_d = createdData === null || createdData === void 0 ? void 0 : createdData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(),
+            dueDate: ((_j = (_h = (_g = createdData === null || createdData === void 0 ? void 0 : createdData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null
+        };
+        res.status(201).json(safeCreatedData);
     }
     catch (error) {
         console.error('Create offer error:', error);
@@ -659,7 +681,25 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
         if (!fromUser.exists) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const offerWithId = Object.assign(Object.assign({}, offerData), { id });
+        // Secure object creation - whitelist known safe properties for PDF generation
+        const offerWithId = {
+            id,
+            fromUserId: offerData.fromUserId,
+            toUserId: offerData.toUserId,
+            toUserPhone: offerData.toUserPhone,
+            toUserName: offerData.toUserName,
+            amount: offerData.amount,
+            interestRate: offerData.interestRate,
+            tenureValue: offerData.tenureValue,
+            tenureUnit: offerData.tenureUnit,
+            purpose: offerData.purpose,
+            repaymentFrequency: offerData.repaymentFrequency,
+            status: offerData.status,
+            offerType: offerData.offerType,
+            createdAt: offerData.createdAt,
+            updatedAt: offerData.updatedAt,
+            dueDate: offerData.dueDate
+        };
         const pdfBuffer = await generateContractPDFBuffer(offerWithId, fromUser.data());
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="loan-contract-${id}.pdf"`);
@@ -688,7 +728,25 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req, res) => {
         if (!fromUser.exists) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const offerWithId = Object.assign(Object.assign({}, offerData), { id });
+        // Secure object creation - whitelist known safe properties for KFS PDF generation
+        const offerWithId = {
+            id,
+            fromUserId: offerData.fromUserId,
+            toUserId: offerData.toUserId,
+            toUserPhone: offerData.toUserPhone,
+            toUserName: offerData.toUserName,
+            amount: offerData.amount,
+            interestRate: offerData.interestRate,
+            tenureValue: offerData.tenureValue,
+            tenureUnit: offerData.tenureUnit,
+            purpose: offerData.purpose,
+            repaymentFrequency: offerData.repaymentFrequency,
+            status: offerData.status,
+            offerType: offerData.offerType,
+            createdAt: offerData.createdAt,
+            updatedAt: offerData.updatedAt,
+            dueDate: offerData.dueDate
+        };
         const pdfBuffer = await generateKFSPDFBuffer(offerWithId, fromUser.data());
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="kfs-${id}.pdf"`);
@@ -717,7 +775,25 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
         if (!fromUser.exists) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const offerWithId = Object.assign(Object.assign({}, offerData), { id });
+        // Secure object creation - whitelist known safe properties for schedule PDF generation
+        const offerWithId = {
+            id,
+            fromUserId: offerData.fromUserId,
+            toUserId: offerData.toUserId,
+            toUserPhone: offerData.toUserPhone,
+            toUserName: offerData.toUserName,
+            amount: offerData.amount,
+            interestRate: offerData.interestRate,
+            tenureValue: offerData.tenureValue,
+            tenureUnit: offerData.tenureUnit,
+            purpose: offerData.purpose,
+            repaymentFrequency: offerData.repaymentFrequency,
+            status: offerData.status,
+            offerType: offerData.offerType,
+            createdAt: offerData.createdAt,
+            updatedAt: offerData.updatedAt,
+            dueDate: offerData.dueDate
+        };
         // Get payments for schedule
         const paymentsSnapshot = await db.collection('payments')
             .where('offerId', '==', id)
