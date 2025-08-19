@@ -434,6 +434,34 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     enabled: !!offerData?.offer
   }) as { data: any };
 
+  // Handle both nested (API response) and flat (direct Firebase) data structures
+  const offer = offerData?.offer || offerData; // Support both structures
+  const fromUser = offerData?.fromUser;
+
+  // CRITICAL: Move this hook BEFORE any early returns to fix React Error #310
+  const { data: additionalFromUser } = useQuery({
+    queryKey: ['user', offer?.fromUserId],
+    queryFn: async () => {
+      if (!offer?.fromUserId) return null;
+      console.log('📱 Fetching missing fromUser data for:', offer.fromUserId);
+      try {
+        const { getFirestore, doc, getDoc } = await import('firebase/firestore');
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, 'users', offer.fromUserId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log('✅ Found fromUser data:', userData);
+          return userData;
+        }
+        return null;
+      } catch (error) {
+        console.error('❌ Failed to fetch fromUser:', error);
+        return null;
+      }
+    },
+    enabled: !!offer?.fromUserId && !fromUser,
+  });
+
 
 
   const {
@@ -724,9 +752,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     );
   }
 
-  // Handle both nested (API response) and flat (direct Firebase) data structures
-  const offer = offerData?.offer || offerData; // Support both structures
-  const fromUser = offerData?.fromUser;
   const contact = offerData?.contact;
   const payments = offerData?.payments || [];
 
@@ -740,30 +765,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     fromUserId: offer?.fromUserId,
     hasUserName: !!fromUser?.name,
     hasUserPhone: !!fromUser?.phone
-  });
-
-  // If fromUser is missing but we have fromUserId, fetch user data separately
-  const { data: additionalFromUser } = useQuery({
-    queryKey: ['user', offer?.fromUserId],
-    queryFn: async () => {
-      if (!offer?.fromUserId) return null;
-      console.log('📱 Fetching missing fromUser data for:', offer.fromUserId);
-      try {
-        const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-        const db = getFirestore();
-        const userDoc = await getDoc(doc(db, 'users', offer.fromUserId));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          console.log('✅ Found fromUser data:', userData);
-          return userData;
-        }
-        return null;
-      } catch (error) {
-        console.error('❌ Failed to fetch fromUser:', error);
-        return null;
-      }
-    },
-    enabled: !!offer?.fromUserId && !fromUser,
   });
 
   // Use the fetched user data as fallback
