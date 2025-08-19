@@ -40,7 +40,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           try {
             firebaseAuthService.setUser(JSON.parse(userData));
             // Refresh the token to ensure it's valid for API calls
-            firebaseAuthService.refreshToken();
+            firebaseAuthService.refreshToken().catch(tokenError => {
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('Token refresh failed in auth guard:', tokenError);
+              }
+            });
           } catch (error) {
             if (process.env.NODE_ENV === 'development') {
               console.error('Error restoring user data:', error);

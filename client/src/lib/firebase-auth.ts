@@ -30,7 +30,9 @@ export class FirebaseAuthService {
         }
       } catch (error) {
         console.error('Failed to parse user data:', error);
-        this.logout();
+        this.logout().catch(logoutError => {
+          console.error('Error during logout after failed user data parsing:', logoutError);
+        });
       }
     }
   }
