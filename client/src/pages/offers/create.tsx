@@ -44,6 +44,25 @@ export default function CreateOffer() {
     }
     return cleaned;
   };
+
+  // Helper function to ensure phone number has +91 prefix for storage
+  const formatPhoneForStorage = (phone: string) => {
+    if (!phone) return '';
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // If already has +91 or 91 prefix, just ensure it starts with +91
+    if (cleaned.startsWith('91') && cleaned.length === 12) {
+      return '+' + cleaned;
+    }
+    
+    // If it's a 10-digit number, add +91
+    if (cleaned.length === 10) {
+      return '+91' + cleaned;
+    }
+    
+    // Return as is if format is unclear
+    return phone.startsWith('+') ? phone : '+91' + cleaned;
+  };
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
@@ -141,9 +160,13 @@ export default function CreateOffer() {
     setShowSummary(!!allRequiredFieldsFilled());
   }, [offerType, amount, interestRate, tenure, tenureUnit, repaymentType, repaymentFrequency, interestType, contactPhone, contactName, phoneError]);
 
+  // Store recipient user data for submission
+  const [recipientUserId, setRecipientUserId] = useState<string>("");
+
   const checkContact = async (phoneNumber: string) => {
     // Clear previous errors
     setPhoneError("");
+    setRecipientUserId("");
     
     if (!phoneNumber || phoneNumber.length < 10) {
       setContactName("");
@@ -178,8 +201,9 @@ export default function CreateOffer() {
       const data = await firebaseBackend.checkPhone(phoneNumber);
       
       if (data.exists && data.user?.name) {
-        console.log('Found user:', { name: data.user.name, phone: data.user.phone });
+        console.log('Found user:', { name: data.user.name, phone: data.user.phone, id: data.user.id });
         setContactName(data.user.name);
+        setRecipientUserId(data.user.id || "pending");
         setIsContactFound(true);
         toast({
           title: "Contact Found",
@@ -187,6 +211,7 @@ export default function CreateOffer() {
         });
       } else {
         setContactName("");
+        setRecipientUserId("pending");
         setIsContactFound(false);
         toast({
           title: "Contact Not Found",
@@ -196,6 +221,7 @@ export default function CreateOffer() {
     } catch (error) {
       console.log('Phone check failed:', error);
       setContactName("");
+      setRecipientUserId("pending");
       setIsContactFound(false);
       toast({
         title: "Contact Not Found",
@@ -248,6 +274,51 @@ export default function CreateOffer() {
       return;
     }
 
+    // Validate all required fields according to specification
+    const requiredFields = {
+      offerType,
+      amount: data.amount,
+      interestType,
+      interestRate: data.interestRate,
+      tenure: data.tenure,
+      tenureUnit,
+      repaymentType,
+      startDate,
+      purpose: data.purpose
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value || (typeof value === 'string' && value.trim() === ''))
+      .map(([key]) => key);
+
+    // Also check repayment frequency if not lump sum
+    if (repaymentType !== 'lumpsum' && !repaymentFrequency) {
+      missingFields.push('repaymentFrequency');
+    }
+
+    if (missingFields.length > 0) {
+      toast({
+        title: "Missing Required Fields",
+        description: `Please fill in: ${missingFields.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ensure current user is available
+    if (!currentUser || !currentUser.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in again to create an offer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Format phones to ensure +91 prefix
+    const formattedRecipientPhone = formatPhoneForStorage(contactPhone);
+    const formattedSenderPhone = formatPhoneForStorage(currentUser.phone || '');
+
     // Calculate due date based on tenure and tenure unit
     const dueDate = new Date(startDate);
     if (tenureUnit === 'days') {
@@ -258,24 +329,51 @@ export default function CreateOffer() {
       dueDate.setFullYear(dueDate.getFullYear() + parseInt(data.tenure));
     }
 
+    // Map the new field structure to the existing backend schema fields
     const offerData = {
-      toUserPhone: contactPhone,
+      // Map sender details to existing schema
+      fromUserId: currentUser.id,
+      
+      // Map recipient details to existing schema  
+      toUserPhone: formattedRecipientPhone,
       toUserName: contactName,
+      toUserId: recipientUserId || null,
+
+      // Map offer details to existing schema
+      offerType: offerType as 'lend' | 'borrow', // Keep lowercase for existing schema
       amount: parseFloat(data.amount),
+      interestType: interestType as 'fixed' | 'reducing', // Keep lowercase for existing schema
       interestRate: parseFloat(data.interestRate),
-      tenure: parseInt(data.tenure),
-      tenureUnit,
-      purpose: data.purpose,
-      collateral: data.collateral,
-      frequency: repaymentType === 'lumpsum' ? 'end-of-tenure' : repaymentFrequency,
-      offerType,
-      interestType,
-      repaymentType,
-      allowPartPayment,
+
+      // Map tenure to existing schema
+      tenureValue: parseInt(data.tenure),
+      tenureUnit: tenureUnit as 'months' | 'years',
+
+      // Map repayment details to existing schema
+      repaymentType: repaymentType === 'lumpsum' ? 'full_payment' : 
+                    repaymentType === 'emi' ? 'emi' : 'interest_only',
+      repaymentFrequency: repaymentType === 'lumpsum' ? undefined : repaymentFrequency,
+      allowPartPayment: allowPartPayment,
+
+      // Map dates to existing schema
       startDate,
-      dueDate: dueDate.toISOString()
+      dueDate: dueDate.toISOString(),
+
+      // Map additional details to existing schema
+      purpose: data.purpose,
+      note: data.collateral || '',
+
+      // Map status to existing schema
+      status: "pending" as const,
+
+      // Default values for required fields in existing schema
+      gracePeriodDays: 0,
+      prepaymentPenalty: 0,
+      latePaymentPenalty: 0,
+      currentInstallmentNumber: 1
     };
 
+    console.log('Submitting offer data:', offerData);
     createOfferMutation.mutate(offerData);
   };
 
