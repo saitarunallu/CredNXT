@@ -120,18 +120,29 @@ export class PdfService {
         doc.moveDown(0.5);
         
         doc.fontSize(12).font('Helvetica');
+        
+        // Sanitize user inputs to prevent PDF injection
+        const sanitizeText = (text: string): string => {
+          if (!text || typeof text !== 'string') return 'N/A';
+          return text
+            .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+            .replace(/[<>]/g, '') // Remove angle brackets
+            .trim()
+            .substring(0, 1000); // Limit length
+        };
+        
         if (offer.offerType === 'lend') {
-          doc.text(`Lender: ${fromUser.name || 'N/A'}`);
-          doc.text(`Phone: ${fromUser.phone}`);
+          doc.text(`Lender: ${sanitizeText(fromUser.name || 'N/A')}`);
+          doc.text(`Phone: ${sanitizeText(fromUser.phone)}`);
           doc.moveDown(0.5);
-          doc.text(`Borrower: ${offer.toUserName}`);
-          doc.text(`Phone: ${offer.toUserPhone}`);
+          doc.text(`Borrower: ${sanitizeText(offer.toUserName)}`);
+          doc.text(`Phone: ${sanitizeText(offer.toUserPhone)}`);
         } else {
-          doc.text(`Borrower: ${fromUser.name || 'N/A'}`);
-          doc.text(`Phone: ${fromUser.phone}`);
+          doc.text(`Borrower: ${sanitizeText(fromUser.name || 'N/A')}`);
+          doc.text(`Phone: ${sanitizeText(fromUser.phone)}`);
           doc.moveDown(0.5);
-          doc.text(`Lender: ${offer.toUserName}`);
-          doc.text(`Phone: ${offer.toUserPhone}`);
+          doc.text(`Lender: ${sanitizeText(offer.toUserName)}`);
+          doc.text(`Phone: ${sanitizeText(offer.toUserPhone)}`);
         }
         doc.moveDown(1);
 
@@ -141,13 +152,13 @@ export class PdfService {
         doc.moveDown(0.5);
         
         doc.fontSize(12).font('Helvetica');
-        doc.text(`Principal Amount: ₹${offer.amount.toLocaleString()}`);
-        doc.text(`Interest Rate: ${offer.interestRate}% per annum`);
-        doc.text(`Tenure: ${(offer as any).tenure || offer.tenureValue || 12} ${offer.tenureUnit}`);
-        doc.text(`Repayment Type: ${offer.repaymentType}`);
+        doc.text(`Principal Amount: ₹${Number(offer.amount || 0).toLocaleString()}`);
+        doc.text(`Interest Rate: ${Number(offer.interestRate || 0)}% per annum`);
+        doc.text(`Tenure: ${Number((offer as any).tenure || offer.tenureValue || 12)} ${sanitizeText(offer.tenureUnit)}`);
+        doc.text(`Repayment Type: ${sanitizeText(offer.repaymentType)}`);
         
         if (offer.repaymentFrequency) {
-          doc.text(`Repayment Frequency: ${offer.repaymentFrequency}`);
+          doc.text(`Repayment Frequency: ${sanitizeText(offer.repaymentFrequency)}`);
         }
         
         doc.moveDown(1);
@@ -190,11 +201,11 @@ export class PdfService {
         
         doc.moveDown(0.5);
         if (offer.offerType === 'lend') {
-          doc.text(fromUser.name || 'N/A', leftX);
-          doc.text(offer.toUserName, rightX);
+          doc.text(sanitizeText(fromUser.name || 'N/A'), leftX);
+          doc.text(sanitizeText(offer.toUserName), rightX);
         } else {
-          doc.text(offer.toUserName, leftX);
-          doc.text(fromUser.name || 'N/A', rightX);
+          doc.text(sanitizeText(offer.toUserName), leftX);
+          doc.text(sanitizeText(fromUser.name || 'N/A'), rightX);
         }
         
         doc.moveDown(1);

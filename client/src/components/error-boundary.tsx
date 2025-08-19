@@ -6,11 +6,13 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: React.ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -24,11 +26,42 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    this.setState({ errorInfo });
+    
+    // Log error details
+    console.error('Error Boundary caught an error:', {
+      error,
+      errorInfo,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    });
+    
+    // Call optional error handler
+    this.props.onError?.(error, errorInfo);
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
+  handleRefresh = () => {
+    // Clear any localStorage cache that might be causing issues
+    const keysToPreserve = ['firebase_auth_token', 'user_data', 'pending_phone'];
+    const storage: Record<string, string | null> = {};
+    keysToPreserve.forEach(key => {
+      storage[key] = localStorage.getItem(key);
+    });
+    
+    localStorage.clear();
+    
+    keysToPreserve.forEach(key => {
+      if (storage[key]) {
+        localStorage.setItem(key, storage[key]!);
+      }
+    });
+    
+    window.location.reload();
   };
 
   render() {
@@ -38,36 +71,72 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <Card className="max-w-md mx-auto mt-8 border-red-200">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-            </div>
-            <CardTitle className="text-red-800">Something went wrong</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
-              We encountered an unexpected error. Please try refreshing the page.
-            </p>
-            {this.state.error && (
-              <details className="text-left text-sm bg-gray-50 p-3 rounded">
-                <summary className="cursor-pointer font-medium">Error Details</summary>
-                <pre className="mt-2 text-xs overflow-auto">
-                  {this.state.error.message}
-                </pre>
-              </details>
-            )}
-            <div className="flex gap-2 justify-center">
-              <Button onClick={this.handleReset} variant="outline">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div 
+          className="min-h-screen flex items-center justify-center p-4"
+          role="alert"
+          aria-live="assertive"
+        >
+          <Card className="w-full max-w-md border-red-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" />
+              </div>
+              <CardTitle className="text-xl text-red-800">Something went wrong</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-center text-muted-foreground">
+                We encountered an unexpected error. Please try one of the options below.
+              </p>
+              
+              {this.state.error && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Error Details (for debugging)
+                  </summary>
+                  <div className="mt-2 text-xs bg-muted p-2 rounded overflow-auto space-y-2">
+                    <div>
+                      <strong>Error:</strong> {this.state.error.message}
+                    </div>
+                    {this.state.error.stack && (
+                      <div>
+                        <strong>Stack:</strong>
+                        <pre className="whitespace-pre-wrap text-xs mt-1">
+                          {this.state.error.stack}
+                        </pre>
+                      </div>
+                    )}
+                    {this.state.errorInfo?.componentStack && (
+                      <div>
+                        <strong>Component Stack:</strong>
+                        <pre className="whitespace-pre-wrap text-xs mt-1">
+                          {this.state.errorInfo.componentStack}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </details>
+              )}
+              
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={this.handleReset}
+                  className="w-full"
+                  data-testid="button-retry-error"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Try Again
+                </Button>
+                <Button 
+                  onClick={this.handleRefresh}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Refresh Page
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       );
     }
 

@@ -170,41 +170,60 @@ export const insertUserSchema = z.object({
 });
 
 export const insertOfferSchema = z.object({
-  fromUserId: z.string().min(1),
+  fromUserId: z.string().min(1, "From user ID is required"),
   toUserPhone: z.string().min(10).max(15).regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
-  toUserName: z.string().min(2).max(100).regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens"),
+  toUserName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name cannot exceed 100 characters").regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens").refine(val => val.trim().length > 0, "Name cannot be empty"),
   toUserId: z.string().nullable().optional(),
   offerType: z.enum(['lend', 'borrow']),
-  amount: z.coerce.number().min(1).max(10000000),
-  interestRate: z.coerce.number().min(0).max(50),
+  amount: z.coerce.number().min(1, "Amount must be at least ₹1").max(10000000, "Amount cannot exceed ₹1 crore").finite("Amount must be a valid number"),
+  interestRate: z.coerce.number().min(0, "Interest rate cannot be negative").max(50, "Interest rate cannot exceed 50%").finite("Interest rate must be a valid number"),
   interestType: z.enum(['fixed', 'reducing']),
-  tenureValue: z.coerce.number().min(1).max(360).int(),
+  tenureValue: z.coerce.number().min(1, "Tenure must be at least 1").max(360, "Tenure cannot exceed 360").int("Tenure must be a whole number"),
   tenureUnit: z.enum(['months', 'years']),
   repaymentType: z.enum(['emi', 'interest_only', 'full_payment']),
   repaymentFrequency: z.enum(['weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', 'yearly']).optional(),
   allowPartPayment: z.boolean().default(false),
-  gracePeriodDays: z.coerce.number().min(0).max(30).int().default(0),
-  prepaymentPenalty: z.coerce.number().min(0).max(10).default(0),
-  latePaymentPenalty: z.coerce.number().min(0).max(5).default(0),
-  purpose: z.string().optional(),
-  startDate: z.coerce.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), "Start date cannot be in the past"),
+  gracePeriodDays: z.coerce.number().min(0, "Grace period cannot be negative").max(30, "Grace period cannot exceed 30 days").int("Grace period must be a whole number").default(0),
+  prepaymentPenalty: z.coerce.number().min(0, "Prepayment penalty cannot be negative").max(10, "Prepayment penalty cannot exceed 10%").default(0),
+  latePaymentPenalty: z.coerce.number().min(0, "Late payment penalty cannot be negative").max(5, "Late payment penalty cannot exceed 5%").default(0),
+  purpose: z.string().max(500, "Purpose cannot exceed 500 characters").optional(),
+  startDate: z.coerce.date().refine((date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date >= today;
+  }, "Start date cannot be in the past"),
   dueDate: z.coerce.date(),
   nextPaymentDueDate: z.coerce.date().optional(),
   currentInstallmentNumber: z.number().default(1),
   totalInstallments: z.number().optional(),
-  note: z.string().optional(),
+  note: z.string().max(1000, "Note cannot exceed 1000 characters").optional(),
   status: z.enum(['pending', 'accepted', 'declined', 'completed', 'overdue']).default('pending'),
   contractPdfKey: z.string().optional(),
   kfsPdfKey: z.string().optional(),
   schedulePdfKey: z.string().optional(),
+}).refine((data) => {
+  // Ensure due date is after start date
+  return data.dueDate > data.startDate;
+}, {
+  message: "Due date must be after start date",
+  path: ["dueDate"]
+}).refine((data) => {
+  // Validate tenure and repayment type compatibility
+  if (data.repaymentType === 'emi' && !data.repaymentFrequency) {
+    return false;
+  }
+  return true;
+}, {
+  message: "EMI repayment type requires a repayment frequency",
+  path: ["repaymentFrequency"]
 });
 
 export const insertPaymentSchema = z.object({
-  offerId: z.string().min(1),
-  amount: z.coerce.number().min(1).max(10000000),
-  installmentNumber: z.number().optional(),
-  paymentMode: z.string().min(1).max(50).optional(),
-  refString: z.string().min(1).max(100).regex(/^[a-zA-Z0-9\-_/]+$/, "Reference string can only contain alphanumeric characters, hyphens, underscores, and forward slashes").optional(),
+  offerId: z.string().min(1, "Offer ID is required"),
+  amount: z.coerce.number().min(1, "Payment amount must be at least ₹1").max(10000000, "Payment amount cannot exceed ₹1 crore").finite("Amount must be a valid number"),
+  installmentNumber: z.number().int("Installment number must be a whole number").min(1, "Installment number must be at least 1").optional(),
+  paymentMode: z.string().min(1, "Payment mode is required").max(50, "Payment mode cannot exceed 50 characters").optional(),
+  refString: z.string().min(1, "Reference string is required").max(100, "Reference string cannot exceed 100 characters").regex(/^[a-zA-Z0-9\-_/\s]+$/, "Reference string can only contain alphanumeric characters, hyphens, underscores, forward slashes, and spaces").optional(),
   status: z.enum(['pending', 'partial_paid', 'paid', 'completed', 'rejected']).default('pending'),
 });
 
@@ -256,6 +275,46 @@ export const demoRequestSchema = z.object({
   organization: z.string().optional(),
   interest: z.enum(['Personal Use', 'Investment Opportunity', 'Partnership Inquiry', 'Enterprise Solution']),
 });
+
+// Type inference
+// Add input sanitization utilities
+export const sanitizationUtils = {
+  sanitizeString: (input: string): string => {
+    if (!input || typeof input !== 'string') return '';
+    return input
+      .replace(/[<>]/g, '') // Remove angle brackets
+      .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+      .replace(/javascript:/gi, '') // Remove javascript: protocol
+      .replace(/vbscript:/gi, '') // Remove vbscript: protocol
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .trim()
+      .substring(0, 10000); // Limit length
+  },
+  
+  sanitizePhoneNumber: (phone: string): string => {
+    if (!phone || typeof phone !== 'string') return '';
+    return phone.replace(/[^\d+\-\s()]/g, '').trim().substring(0, 20);
+  },
+  
+  sanitizeEmail: (email: string): string => {
+    if (!email || typeof email !== 'string') return '';
+    return email.toLowerCase().replace(/[<>]/g, '').trim().substring(0, 254);
+  },
+  
+  sanitizeAmount: (amount: any): number => {
+    const num = Number(amount);
+    return isNaN(num) || !isFinite(num) || num < 0 ? 0 : Math.round(num * 100) / 100;
+  },
+  
+  sanitizeUrl: (url: string): string => {
+    if (!url || typeof url !== 'string') return '';
+    // Only allow http/https protocols
+    if (!url.match(/^https?:\/\//)) {
+      return '';
+    }
+    return url.replace(/[<>]/g, '').trim().substring(0, 2048);
+  }
+};
 
 // Type inference
 export type InsertUser = z.infer<typeof insertUserSchema>;

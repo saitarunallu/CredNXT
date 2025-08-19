@@ -26,15 +26,20 @@ export class FirebaseAuthService {
           // Ensure we have a valid Firebase token
           this.refreshToken().catch(error => {
             console.warn('Could not refresh Firebase token on startup:', error);
-            // Return null to prevent unhandled promise rejection
+            // Clear invalid token to prevent auth issues
+            localStorage.removeItem('firebase_auth_token');
             return null;
           });
         }
       } catch (error) {
         console.error('Failed to parse user data:', error);
+        // Clear corrupted data immediately
+        localStorage.removeItem('user_data');
+        localStorage.removeItem('firebase_auth_token');
+        this.user = null;
+        
         this.logout().catch(logoutError => {
           console.error('Error during logout after failed user data parsing:', logoutError);
-          // Return null to prevent unhandled promise rejection
           return null;
         });
       }
@@ -220,9 +225,65 @@ export class FirebaseAuthService {
         };
       }
       
+      if (error.message?.includes('network') || error.message?.includes('Network')) {
+        return { 
+          success: false, 
+          error: 'Network error. Please check your connection and try again.' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: 'Failed to verify OTP. Please check the code and try again.' 
+        error: 'Verification failed. Please try again.' 
+      };
+    }
+  }
+
+  async updateProfile(name: string, email?: string): Promise<{ success: boolean; user?: User; error?: string }> {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        return { success: false, error: 'No authenticated user found.' };
+      }
+
+      // Validate and sanitize inputs
+      const sanitizedName = name.trim().replace(/[<>]/g, '');
+      const sanitizedEmail = email?.trim().toLowerCase().replace(/[<>]/g, '');
+      
+      if (!sanitizedName) {
+        return { success: false, error: 'Name cannot be empty.' };
+      }
+      
+      if (sanitizedEmail && !sanitizedEmail.includes('@')) {
+        return { success: false, error: 'Invalid email format.' };
+      }
+
+      const updateData: Partial<User> = {
+        name: sanitizedName,
+        updatedAt: Timestamp.now() as any,
+      };
+
+      if (sanitizedEmail) {
+        updateData.email = sanitizedEmail;
+      }
+
+      // Update in Firestore
+      if (!db) {
+        return { success: false, error: 'Database service not available.' };
+      }
+      
+      await updateDoc(doc(db, 'users', currentUser.uid), updateData);
+      
+      // Update local user data
+      const updatedUser = { ...this.user, ...updateData };
+      await this.setUser(updatedUser);
+      
+      return { success: true, user: updatedUser };
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      return { 
+        success: false, 
+        error: 'Failed to update profile. Please try again.' 
       };
     }
   }

@@ -33,7 +33,7 @@ function validateFirebaseConfig() {
   }
   
   // Validate API key format (skip for development fallback)
-  if (!firebaseConfig.apiKey?.startsWith('AIza') && !firebaseConfig.apiKey?.startsWith('dev-fallback')) {
+  if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('AIza') && !firebaseConfig.apiKey.startsWith('dev-fallback')) {
     console.error('❌ Firebase API key appears to be invalid');
     console.error('🔧 API keys should start with "AIza" - check VITE_FIREBASE_API_KEY');
     return import.meta.env.DEV ? true : false;

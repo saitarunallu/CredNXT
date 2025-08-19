@@ -116,13 +116,23 @@ class PdfService {
          .moveDown();
       
       doc.fontSize(14).text('LOAN TERMS:', { underline: true });
+      // Sanitize user inputs to prevent PDF injection
+      const sanitizeText = (text: string): string => {
+        if (!text || typeof text !== 'string') return 'N/A';
+        return text
+          .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+          .replace(/[<>]/g, '') // Remove angle brackets
+          .trim()
+          .substring(0, 1000); // Limit length
+      };
+      
       doc.fontSize(12)
-         .text(`Lender: ${fromUser.name}`)
-         .text(`Borrower: ${offer.toUserName}`)
-         .text(`Amount: ₹${offer.amount.toLocaleString('en-IN')}`)
-         .text(`Interest Rate: ${offer.interestRate}% per annum`)
-         .text(`Tenure: ${offer.tenureValue} ${offer.tenureUnit}`)
-         .text(`Purpose: ${offer.purpose}`)
+         .text(`Lender: ${sanitizeText(fromUser.name || 'N/A')}`)
+         .text(`Borrower: ${sanitizeText(offer.toUserName || 'N/A')}`)
+         .text(`Amount: ₹${Number(offer.amount || 0).toLocaleString('en-IN')}`)
+         .text(`Interest Rate: ${Number(offer.interestRate || 0)}% per annum`)
+         .text(`Tenure: ${Number(offer.tenureValue || 0)} ${sanitizeText(offer.tenureUnit || 'months')}`)
+         .text(`Purpose: ${sanitizeText(offer.purpose || 'General')}`)
          .moveDown();
 
       doc.fontSize(14).text('TERMS AND CONDITIONS:', { underline: true });

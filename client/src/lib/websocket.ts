@@ -23,8 +23,24 @@ class WebSocketService {
 
     this.ws.onmessage = (event) => {
       try {
+        // Validate that event.data is a string before parsing
+        if (typeof event.data !== 'string') {
+          console.warn('WebSocket received non-string data:', typeof event.data);
+          return;
+        }
+        
         const data = JSON.parse(event.data);
-        this.notifyListeners(data.type, data);
+        
+        // Validate message structure
+        if (!data || typeof data !== 'object' || !data.type) {
+          console.warn('WebSocket received invalid message structure:', data);
+          return;
+        }
+        
+        // Sanitize message type to prevent XSS
+        const messageType = String(data.type).replace(/[<>]/g, '');
+        
+        this.notifyListeners(messageType, data);
       } catch (error) {
         console.error('WebSocket message parsing error:', error);
       }
@@ -54,11 +70,40 @@ class WebSocketService {
   send(data: any) {
     try {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify(data));
+        // Validate and sanitize data before sending
+        if (!data || typeof data !== 'object') {
+          console.warn('Invalid WebSocket data:', data);
+          return;
+        }
+        
+        // Create a clean copy of the data with sanitized string values
+        const sanitizedData = this.sanitizeWebSocketData(data);
+        this.ws.send(JSON.stringify(sanitizedData));
       }
     } catch (error) {
       console.error('WebSocket send error:', error);
     }
+  }
+
+  private sanitizeWebSocketData(data: any): any {
+    if (typeof data === 'string') {
+      return data.replace(/[<>]/g, '').substring(0, 10000);
+    }
+    
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeWebSocketData(item));
+    }
+    
+    if (data && typeof data === 'object') {
+      const sanitized: any = {};
+      for (const [key, value] of Object.entries(data)) {
+        const sanitizedKey = String(key).replace(/[<>]/g, '');
+        sanitized[sanitizedKey] = this.sanitizeWebSocketData(value);
+      }
+      return sanitized;
+    }
+    
+    return data;
   }
 
   on(event: string, callback: (data: any) => void) {

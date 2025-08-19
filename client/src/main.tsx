@@ -4,13 +4,16 @@ import "./index.css";
 
 // Global error handling for unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('🚨 Unhandled promise rejection in', import.meta.env.MODE || 'production', ':', {
+  const errorDetails = {
     reason: event.reason,
-    message: event.reason?.message,
+    message: event.reason?.message || 'Unknown error',
     stack: event.reason?.stack,
     timestamp: new Date().toISOString(),
-    url: window.location.href
-  });
+    url: window.location.href,
+    userAgent: navigator.userAgent
+  };
+
+  console.error('🚨 Unhandled promise rejection in', import.meta.env.MODE || 'production', ':', errorDetails);
   
   // Log additional context for debugging
   if (event.reason instanceof Error) {
@@ -20,6 +23,15 @@ window.addEventListener('unhandledrejection', (event) => {
         message: event.reason.message,
         stack: event.reason.stack
       });
+    }
+    
+    // Handle specific error types
+    if (event.reason.message?.includes('Firebase') || event.reason.message?.includes('auth')) {
+      console.warn('Firebase authentication error detected - may need to refresh tokens');
+    }
+    
+    if (event.reason.message?.includes('Network') || event.reason.message?.includes('fetch')) {
+      console.warn('Network error detected - check internet connection');
     }
   }
   

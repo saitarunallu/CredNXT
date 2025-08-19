@@ -182,9 +182,13 @@ export const queryClient = new QueryClient({
         // Ensure all mutation errors are properly handled
         if (error instanceof Error) {
           if (error.message.includes('401')) {
-            console.warn('Authentication error in mutation');
-          } else if (error.message.includes('Network')) {
-            console.warn('Network error in mutation');
+            console.warn('Authentication error in mutation - clearing auth data');
+            localStorage.removeItem('firebase_auth_token');
+            localStorage.removeItem('user_data');
+          } else if (error.message.includes('Network') || error.message.includes('Failed to fetch')) {
+            console.warn('Network error in mutation - connection issue');
+          } else if (error.message.includes('429')) {
+            console.warn('Rate limit exceeded in mutation');
           }
         }
       },
