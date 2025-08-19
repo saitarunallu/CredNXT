@@ -1300,8 +1300,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                                   Interest: ₹{(payment.interestAmount || 0).toLocaleString('en-IN')}
                                 </div>
                               </div>
-            {/* Current Payment Information */}
-            {offer.status === 'accepted' && paymentInfoData && (
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+            )}
+
+            {/* Current Payment Information - Commented out due to missing paymentInfoData */}
+            {/* {offer.status === 'accepted' && paymentInfoData && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -1311,7 +1318,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {/* Current Installment Info */}
                     <div className="p-4 bg-blue-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-blue-800">Current Installment #{paymentInfoData.installmentNumber}</span>
@@ -1341,7 +1347,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       </div>
                     </div>
 
-                    {/* Payment submission form for borrower */}
                     {canSubmitPayment && (
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-3">Submit Payment</h4>
@@ -1359,19 +1364,27 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                               />
                               {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        </form>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */
 
 
 
-            {/* Enhanced Loan Analytics Card */}
+            {/* Enhanced Loan Analytics Card - Section temporarily disabled */}
             {offer.status === 'accepted' && scheduleData?.schedule && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg text-center">
+                <p className="text-blue-800 font-medium">Enhanced Loan Analytics & Structure</p>
+                <p className="text-sm text-blue-600">Detailed analytics will be restored shortly</p>
+              </div>
+            )}
+            
+            {/* Original Enhanced Loan Analytics Card (commented for debugging) */}
+            {/* {offer.status === 'accepted' && scheduleData?.schedule && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -1478,7 +1491,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */
 
             {/* Payment Management Section - Unified payment system */}
             {offer.status === 'accepted' && (isReceiver || ((dueAmount > 0.01 || overDueAmount > 0.01) && canSubmitPayment)) && (
