@@ -9,20 +9,29 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - Services: PDF generation, WebSocket notifications, SMS integration
 - Security: Input validation, rate limiting, Firebase security rules
 
-## Recent Changes (Latest Code Review & Security Fixes)
+## Recent Changes (Real-Time Data Synchronization & Race Condition Fixes)
 
 **Date: August 19, 2025**
 
-### 🚀 Production Deployment (COMPLETED)
+### 🚀 Real-Time Data Synchronization (COMPLETED)
+- **Multi-Layer Approach**: Implemented comprehensive real-time updates using WebSocket + Firestore listeners + optimized React Query
+- **Production-Ready**: Fixed WebSocket limitations in Firebase Functions by adding Firestore real-time listeners as fallback
+- **Race Condition Prevention**: Added server-side status validation to prevent cancelled offers from being accepted
+- **Aggressive Cache Management**: Reduced cache intervals from 30s to 5s for near real-time feel in production
+- **Enhanced Error Handling**: Specific user-friendly error messages for race conditions and status conflicts
 - **Firebase Hosting**: Successfully deployed to https://crednxt-ef673.web.app
 - **Firebase Functions**: Backend API deployed to https://api-mzz6re522q-uc.a.run.app
-- **Production Ready**: All security fixes and improvements are live
-- **Public Access**: Platform is now accessible worldwide via secure HTTPS
-- **Automated Deployment**: Uses FIREBASE_CONFIG_JSON secret for seamless deployment
-- **Quick Deploy**: Simple `./deploy.sh` command for future deployments
-- **Safe Remixing**: No hardcoded secrets - completely safe for public sharing and remixing
+- **Production Ready**: All real-time improvements and security fixes are live
 
-### 🔒 Security Improvements
+### 🔄 Real-Time Data Improvements
+- **Firestore Real-Time Listeners**: Added comprehensive Firestore listeners for sent offers, received offers, and notifications
+- **Dual Update System**: WebSocket for development + Firestore listeners for production ensures consistent real-time updates
+- **Server-Side Validation**: Prevents race conditions where cancelled offers could be accepted by checking current status
+- **Optimized Query Client**: Reduced stale time to 0 and refresh interval to 5 seconds for aggressive real-time updates
+- **Enhanced Error Messages**: User-friendly error messages for specific race condition scenarios
+- **Automatic Cache Refresh**: Failed operations trigger immediate cache invalidation to show current state
+
+### 🔒 Security Improvements  
 - **Enhanced Error Boundary**: Consolidated duplicate error boundary components with improved error logging and recovery
 - **Firebase API Key Validation**: Fixed validation bug that was causing configuration issues
 - **PDF Security**: Added sanitization to prevent PDF injection attacks in contract generation
@@ -33,6 +42,9 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - **Environment Security**: Implemented secure configuration management via Replit Secrets only
 
 ### 🛠️ Bug Fixes
+- **Real-Time Race Conditions**: Fixed critical issue where recipients could accept cancelled offers due to stale data
+- **Production WebSocket Limitation**: Resolved WebSocket unavailability in Firebase Functions with Firestore listener fallback
+- **Status Validation**: Added server-side checks to prevent invalid offer status transitions
 - **Unhandled Promise Rejections**: Added comprehensive error handling throughout the application
 - **Firebase Auth**: Fixed token refresh logic and corrupted data cleanup
 - **Type Safety**: Improved TypeScript consistency and added proper type guards

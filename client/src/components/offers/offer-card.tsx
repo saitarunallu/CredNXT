@@ -73,11 +73,25 @@ export default function OfferCard({
     },
     onError: (error) => {
       console.error('❌ Accept offer error in card:', error);
+      
+      // Provide specific error messages based on the error
+      let errorMessage = error.message;
+      if (error.message?.includes('already been cancelled')) {
+        errorMessage = 'This offer has been cancelled and cannot be accepted';
+      } else if (error.message?.includes('already been accepted')) {
+        errorMessage = 'This offer has already been accepted';
+      } else if (error.message?.includes('cannot be modified')) {
+        errorMessage = 'This offer cannot be modified at this time';
+      }
+      
       toast({
-        title: "Error",
-        description: `Failed to accept offer: ${error.message}`,
+        title: "Cannot Accept Offer",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Refresh data to show current state
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
     }
   });
 
@@ -97,11 +111,25 @@ export default function OfferCard({
     },
     onError: (error) => {
       console.error('❌ Decline offer error in card:', error);
+      
+      // Provide specific error messages based on the error
+      let errorMessage = error.message;
+      if (error.message?.includes('already been cancelled')) {
+        errorMessage = 'This offer has been cancelled and cannot be declined';
+      } else if (error.message?.includes('already been accepted')) {
+        errorMessage = 'This offer has already been accepted';
+      } else if (error.message?.includes('cannot be modified')) {
+        errorMessage = 'This offer cannot be modified at this time';
+      }
+      
       toast({
-        title: "Error",
-        description: `Failed to decline offer: ${error.message}`,
+        title: "Cannot Decline Offer",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Refresh data to show current state
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
     }
   });
 
@@ -121,11 +149,25 @@ export default function OfferCard({
     },
     onError: (error) => {
       console.error('❌ Cancel offer error in card:', error);
+      
+      // Provide specific error messages based on the error
+      let errorMessage = error.message;
+      if (error.message?.includes('already been accepted')) {
+        errorMessage = 'Cannot cancel - this offer has already been accepted';
+      } else if (error.message?.includes('already been declined')) {
+        errorMessage = 'Cannot cancel - this offer has already been declined';
+      } else if (error.message?.includes('Can only cancel pending offers')) {
+        errorMessage = 'Only pending offers can be cancelled';
+      }
+      
       toast({
-        title: "Error",
-        description: `Failed to cancel offer: ${error.message}`,
+        title: "Cannot Cancel Offer",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Refresh data to show current state
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
     },
   });
 

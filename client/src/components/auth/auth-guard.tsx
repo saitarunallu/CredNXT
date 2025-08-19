@@ -7,6 +7,7 @@ import { firebaseAuthService } from "@/lib/firebase-auth";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { wsService } from "@/lib/websocket";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
+import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -85,6 +86,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // Enable real-time updates for authenticated users
   useRealtimeUpdates();
+  
+  // Enable Firestore real-time listeners as fallback for production
+  useFirestoreRealtime();
 
   useEffect(() => {
     // Don't redirect until we know the auth state

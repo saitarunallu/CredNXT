@@ -179,16 +179,37 @@ app.patch('/offers/:id', authenticate, async (req, res) => {
     
     const offerData = offerDoc.data();
     
+    // Check current offer status to prevent race conditions
+    if (offerData.status === 'cancelled') {
+      return res.status(400).json({ message: 'Offer has already been cancelled and cannot be modified' });
+    }
+    
+    if (offerData.status === 'accepted' && status !== 'cancelled') {
+      return res.status(400).json({ message: 'Offer has already been accepted and cannot be modified' });
+    }
+    
+    if (offerData.status === 'declined') {
+      return res.status(400).json({ message: 'Offer has already been declined and cannot be modified' });
+    }
+    
     // Authorization check based on action
     if (status === 'accepted' || status === 'declined') {
       // Only the recipient can accept/decline
       if (offerData.toUserId !== currentUserId) {
         return res.status(403).json({ message: 'Only offer recipient can accept/decline' });
       }
+      // Prevent accepting/declining if offer is already cancelled
+      if (offerData.status === 'cancelled') {
+        return res.status(400).json({ message: 'Cannot accept/decline a cancelled offer' });
+      }
     } else if (status === 'cancelled') {
       // Only the sender can cancel
       if (offerData.fromUserId !== currentUserId) {
         return res.status(403).json({ message: 'Only offer sender can cancel' });
+      }
+      // Only allow cancelling pending offers
+      if (offerData.status !== 'pending') {
+        return res.status(400).json({ message: 'Can only cancel pending offers' });
       }
     } else {
       return res.status(400).json({ message: 'Invalid status' });
