@@ -119,7 +119,7 @@ export class FirebaseBackendService {
   async healthCheck(): Promise<{ status: string; responseTime: number }> {
     try {
       const startTime = Date.now();
-      const response = await fetch(`${API_BASE_URL}/health`);
+      const response = await fetch(`${getApiBaseUrl()}/health`);
       const responseTime = Date.now() - startTime;
       
       if (response.ok) {
@@ -138,7 +138,7 @@ export class FirebaseBackendService {
   async checkPhone(phone: string): Promise<{ exists: boolean; user?: any }> {
     try {
       // Try API first
-      const response = await fetch(`${API_BASE_URL}/users/check-phone?phone=${encodeURIComponent(phone)}`);
+      const response = await fetch(`${getApiBaseUrl()}/users/check-phone?phone=${encodeURIComponent(phone)}`);
       if (response.ok) {
         return await response.json();
       }
@@ -187,7 +187,7 @@ export class FirebaseBackendService {
 
   async getCurrentUser(): Promise<any> {
     try {
-      const response = await makeAuthenticatedRequest(`${API_BASE_URL}/users/me`);
+      const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/users/me`);
       if (response.ok) {
         return await response.json();
       }
@@ -218,7 +218,7 @@ export class FirebaseBackendService {
   // Offer management
   async getOffers(): Promise<any[]> {
     try {
-      const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers`);
+      const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers`);
       if (response.ok) {
         return await response.json();
       }
@@ -284,7 +284,7 @@ export class FirebaseBackendService {
 
   async getOffer(id: string): Promise<any> {
     try {
-      const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${id}`);
+      const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers/${id}`);
       if (response.ok) {
         return await response.json();
       }
@@ -321,7 +321,7 @@ export class FirebaseBackendService {
 
   async updateOfferStatus(id: string, status: string): Promise<any> {
     try {
-      const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers/${id}`, {
+      const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ status })
       });
@@ -379,7 +379,7 @@ export class FirebaseBackendService {
 
   async createOffer(offerData: any): Promise<any> {
     try {
-      const response = await makeAuthenticatedRequest(`${API_BASE_URL}/offers`, {
+      const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers`, {
         method: 'POST',
         body: JSON.stringify(offerData)
       });
@@ -435,7 +435,7 @@ export class FirebaseBackendService {
   async downloadContractPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/contract`;
+      const url = `${getPdfServiceUrl()}/offers/${offerId}/pdf/contract`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -462,7 +462,7 @@ export class FirebaseBackendService {
   async downloadKFSPDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/kfs`;
+      const url = `${getPdfServiceUrl()}/offers/${offerId}/pdf/kfs`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -489,7 +489,7 @@ export class FirebaseBackendService {
   async downloadSchedulePDF(offerId: string): Promise<void> {
     try {
       const token = await getAuthToken();
-      const url = `${PDF_SERVICE_URL}/offers/${offerId}/pdf/schedule`;
+      const url = `${getPdfServiceUrl()}/offers/${offerId}/pdf/schedule`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
@@ -605,133 +605,6 @@ export class FirebaseBackendService {
     }
   }
 
-  // PDF download methods with proper environment detection
-  async downloadContractPDF(offerId: string): Promise<void> {
-    try {
-      console.log('📄 Starting contract download for offer:', offerId);
-      
-      const token = await getAuthToken();
-      if (!token) {
-        console.error('❌ No authentication token available');
-        console.log('🔐 Auth current user:', !!auth?.currentUser);
-        console.log('🔐 Auth state:', auth?.currentUser ? 'logged in' : 'not logged in');
-        throw new Error('Authentication required. Please log in again.');
-      }
-      
-      const pdfServiceUrl = getPdfServiceUrl();
-      const url = `${pdfServiceUrl}/offers/${offerId}/pdf/contract`;
-      
-      console.log('🔗 PDF service URL:', url);
-      console.log('🔍 Is production:', isProduction());
-      console.log('🔑 Token available:', !!token);
-      console.log('🔑 Token preview:', token.substring(0, 20) + '...');
-      console.log('🌐 Current hostname:', window.location.hostname);
-      console.log('🔐 User ID:', auth?.currentUser?.uid);
-      console.log('🔐 User email:', auth?.currentUser?.email);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/pdf',
-          'Origin': window.location.origin
-        }
-      });
-
-      console.log('📡 PDF API Response status:', response.status);
-      console.log('📡 PDF API Response headers:', response.headers.get('content-type'));
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-          console.error('📡 PDF API Error JSON:', errorData);
-        } catch {
-          errorMessage = await response.text() || errorMessage;
-          console.error('📡 PDF API Error text:', errorMessage);
-        }
-        console.error('PDF download error response:', errorMessage);
-        throw new Error(`Failed to download contract: ${errorMessage}`);
-      }
-
-      const blob = await response.blob();
-      console.log('✅ Contract PDF blob received, initiating download...');
-      
-      // Create and trigger download
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `loan-contract-${offerId}.pdf`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      
-      console.log('✅ Contract PDF downloaded successfully');
-    } catch (error) {
-      console.error('Contract download failed:', error);
-      throw error;
-    }
-  }
-
-  async downloadKFSPDF(offerId: string): Promise<void> {
-    try {
-      console.log('📄 Starting KFS download...');
-      
-      const token = await getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
-      
-      const pdfServiceUrl = getPdfServiceUrl();
-      const url = `${pdfServiceUrl}/offers/${offerId}/pdf/kfs`;
-      
-      console.log('🔗 PDF service URL:', url);
-      console.log('🔍 Is production:', isProduction());
-      console.log('🔑 Token available:', !!token);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/pdf'
-        }
-      });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          errorMessage = await response.text() || errorMessage;
-        }
-        console.error('PDF download error response:', errorMessage);
-        throw new Error(`Failed to download KFS: ${errorMessage}`);
-      }
-
-      const blob = await response.blob();
-      console.log('✅ KFS PDF blob received, initiating download...');
-      
-      // Create and trigger download
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `kfs-${offerId}.pdf`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-      
-      console.log('✅ KFS PDF downloaded successfully');
-    } catch (error) {
-      console.error('KFS download failed:', error);
-      throw error;
-    }
-  }
 
   async downloadRepaymentSchedule(offerId: string): Promise<Blob> {
     try {
