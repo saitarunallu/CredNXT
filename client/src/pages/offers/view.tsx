@@ -46,6 +46,7 @@ function ProductionFallbackView({ offerId, setLocation }: { offerId: string, set
   useEffect(() => {
     const loadOfferDirectly = async () => {
       try {
+        console.log('🔄 ProductionFallbackView: Starting offer load process...');
         console.log('🔍 Production environment detected, loading offer directly...');
         console.log('🔗 Offer ID:', offerId);
         console.log('🌐 Current URL:', window.location.href);

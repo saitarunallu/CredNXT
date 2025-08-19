@@ -55,10 +55,10 @@ export class ErrorBoundary extends Component<Props, State> {
                 We apologize for the inconvenience. Please try refreshing the page.
               </p>
               
-              {import.meta.env.MODE === 'development' && this.state.error && (
+              {this.state.error && (
                 <details className="mt-4">
                   <summary className="cursor-pointer text-sm font-medium">
-                    Error Details
+                    Error Details (Debug)
                   </summary>
                   <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto">
                     {this.state.error.message}
