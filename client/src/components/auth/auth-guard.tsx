@@ -79,12 +79,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     retry: false,
   });
 
-  // Enable real-time updates for authenticated users (skip if not configured)
-  try {
-    useRealtimeUpdates();
-  } catch (e) {
-    console.log('Real-time updates not available:', e);
-  }
+  // Enable real-time updates for authenticated users
+  useRealtimeUpdates();
 
   useEffect(() => {
     // Don't redirect until we know the auth state

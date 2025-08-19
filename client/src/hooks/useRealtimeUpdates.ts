@@ -6,6 +6,11 @@ export function useRealtimeUpdates() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Skip if WebSocket service is not available
+    if (!wsService) {
+      console.log('WebSocket service not available - skipping real-time updates');
+      return;
+    }
     const timeouts: NodeJS.Timeout[] = [];
 
     // Handle offer-related updates
@@ -113,25 +118,35 @@ export function useRealtimeUpdates() {
       timeouts.push(timeout);
     };
 
-    // Register event listeners for all relevant events
-    wsService.on('offer_accepted', handleOfferUpdate);
-    wsService.on('offer_declined', handleOfferUpdate);
-    wsService.on('offer_created', handleOfferUpdate);
-    wsService.on('offer_received', handleOfferUpdate);
-    wsService.on('payment_received', handlePaymentUpdate);
-    wsService.on('notification_created', handleNotificationUpdate);
+    // Register event listeners for all relevant events with error handling
+    try {
+      wsService.on('offer_accepted', handleOfferUpdate);
+      wsService.on('offer_declined', handleOfferUpdate);
+      wsService.on('offer_created', handleOfferUpdate);
+      wsService.on('offer_received', handleOfferUpdate);
+      wsService.on('payment_received', handlePaymentUpdate);
+      wsService.on('notification_created', handleNotificationUpdate);
+    } catch (error) {
+      console.log('WebSocket registration failed:', error);
+      return; // Exit early if registration fails
+    }
 
     // Cleanup listeners and timeouts on unmount
     return () => {
       // Clear all pending timeouts to prevent memory leaks and unhandled promises
       timeouts.forEach(timeout => clearTimeout(timeout));
       
-      wsService.off('offer_accepted', handleOfferUpdate);
-      wsService.off('offer_declined', handleOfferUpdate);
-      wsService.off('offer_created', handleOfferUpdate);
-      wsService.off('offer_received', handleOfferUpdate);
-      wsService.off('payment_received', handlePaymentUpdate);
-      wsService.off('notification_created', handleNotificationUpdate);
+      // Safely remove event listeners
+      try {
+        wsService.off('offer_accepted', handleOfferUpdate);
+        wsService.off('offer_declined', handleOfferUpdate);
+        wsService.off('offer_created', handleOfferUpdate);
+        wsService.off('offer_received', handleOfferUpdate);
+        wsService.off('payment_received', handlePaymentUpdate);
+        wsService.off('notification_created', handleNotificationUpdate);
+      } catch (error) {
+        console.log('Error cleaning up WebSocket listeners:', error);
+      }
     };
   }, [queryClient]);
 }
