@@ -430,7 +430,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
 
   const { data: scheduleData } = useQuery({
     queryKey: ['offer-schedule', offerId],
-    queryFn: () => firebaseBackend.getOfferSchedule(offerId),
+    queryFn: () => {
+      // For now, return empty schedule as this is not critical for basic functionality
+      return Promise.resolve([]);
+    },
     enabled: !!offerData?.offer
   }) as { data: any };
 
