@@ -730,6 +730,45 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const contact = offerData?.contact;
   const payments = offerData?.payments || [];
 
+  // Debug logging to understand the data structure
+  console.log('🔍 Offer Data Debug:', {
+    offerDataKeys: offerData ? Object.keys(offerData) : 'null',
+    offerExists: !!offer,
+    fromUserExists: !!fromUser,
+    fromUserData: fromUser,
+    offerId: offer?.id,
+    fromUserId: offer?.fromUserId,
+    hasUserName: !!fromUser?.name,
+    hasUserPhone: !!fromUser?.phone
+  });
+
+  // If fromUser is missing but we have fromUserId, fetch user data separately
+  const { data: additionalFromUser } = useQuery({
+    queryKey: ['user', offer?.fromUserId],
+    queryFn: async () => {
+      if (!offer?.fromUserId) return null;
+      console.log('📱 Fetching missing fromUser data for:', offer.fromUserId);
+      try {
+        const { getFirestore, doc, getDoc } = await import('firebase/firestore');
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, 'users', offer.fromUserId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log('✅ Found fromUser data:', userData);
+          return userData;
+        }
+        return null;
+      } catch (error) {
+        console.error('❌ Failed to fetch fromUser:', error);
+        return null;
+      }
+    },
+    enabled: !!offer?.fromUserId && !fromUser,
+  });
+
+  // Use the fetched user data as fallback
+  const effectiveFromUser = fromUser || additionalFromUser;
+
   if (!offer || !offer.id) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -930,10 +969,10 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       <span>{isReceiver ? 'From' : 'To'}</span>
                     </div>
                     <div className="font-semibold text-lg">
-                      {isReceiver ? fromUser?.name : (contact?.name || offer.toUserName || 'Unknown User')}
+                      {isReceiver ? (effectiveFromUser?.name || 'Unknown User') : (contact?.name || offer.toUserName || 'Unknown User')}
                     </div>
                     <div className="text-gray-600">
-                      {isReceiver ? fromUser?.phone : (contact?.phone || offer.toUserPhone || 'Unknown Phone')}
+                      {isReceiver ? (effectiveFromUser?.phone || 'Unknown Phone') : (contact?.phone || offer.toUserPhone || 'Unknown Phone')}
                     </div>
                   </div>
                   
