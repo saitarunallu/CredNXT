@@ -875,8 +875,8 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const isSender = offer.fromUserId === currentUser?.id;
   
   // Enhanced role-based authorization checks - with phone number normalization
-  const normalizePhone = (phone: string | undefined) => {
-    if (!phone) return '';
+  const normalizePhone = (phone: string | undefined | null) => {
+    if (!phone || typeof phone !== 'string') return '';
     return phone.replace(/^\+91/, '').replace(/\D/g, '');
   };
   

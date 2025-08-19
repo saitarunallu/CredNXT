@@ -334,6 +334,7 @@ export default function CreateOffer() {
     const offerData = {
       // Map sender details to existing schema
       fromUserId: currentUser.id,
+      fromUserPhone: formattedSenderPhone, // Add this missing field
       
       // Map recipient details to existing schema  
       toUserPhone: formattedRecipientPhone,
@@ -347,13 +348,13 @@ export default function CreateOffer() {
       interestRate: parseFloat(data.interestRate),
 
       // Map tenure to existing schema
-      tenureValue: parseInt(data.tenure),
+      tenure: parseInt(data.tenure), // Use 'tenure' instead of 'tenureValue'
       tenureUnit: tenureUnit as 'months' | 'years',
 
       // Map repayment details to existing schema
-      repaymentType: repaymentType === 'lumpsum' ? 'full_payment' : 
+      repaymentType: repaymentType === 'lumpsum' ? 'lumpsum' : 
                     repaymentType === 'emi' ? 'emi' : 'interest_only',
-      repaymentFrequency: repaymentType === 'lumpsum' ? undefined : repaymentFrequency,
+      frequency: repaymentType === 'lumpsum' ? 'end-of-tenure' : repaymentFrequency, // Use 'frequency' field
       allowPartPayment: allowPartPayment,
 
       // Map dates to existing schema
@@ -361,17 +362,11 @@ export default function CreateOffer() {
       dueDate: dueDate.toISOString(),
 
       // Map additional details to existing schema
-      purpose: data.purpose,
-      note: data.collateral || '',
+      purpose: data.purpose || '',
+      collateral: data.collateral || '',
 
       // Map status to existing schema
-      status: "pending" as const,
-
-      // Default values for required fields in existing schema
-      gracePeriodDays: 0,
-      prepaymentPenalty: 0,
-      latePaymentPenalty: 0,
-      currentInstallmentNumber: 1
+      status: "pending" as const
     };
 
     console.log('Submitting offer data:', offerData);
