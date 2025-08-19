@@ -13,6 +13,16 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 
 **Date: August 19, 2025**
 
+### 📊 Total Lending Calculation Fix (DEPLOYED)
+- **Issue Fixed**: Updated "Total Lending" calculations to only include accepted offers
+- **Dashboard**: Modified calculation logic to filter by `status === 'accepted'`  
+- **Analytics**: Implemented same filtering logic with corrected imports
+- **Logic Updated**: 
+  - Sent 'lend' offers: Only count when accepted
+  - Received 'borrow' offers: Only count when accepted (user is the lender)
+- **Production**: Successfully deployed to https://crednxt-ef673.web.app
+- **Impact**: Total Lending now accurately reflects only active lending amounts
+
 ### 🚀 Production Deployment (COMPLETED)
 - **Firebase Hosting**: Successfully deployed to https://crednxt-ef673.web.app
 - **Firebase Functions**: Backend API deployed to https://api-mzz6re522q-uc.a.run.app
