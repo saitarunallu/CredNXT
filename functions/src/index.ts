@@ -1,3 +1,12 @@
+/**
+ * Firebase Functions entry point for CredNXT P2P Lending Platform
+ * Provides secure API endpoints for offer management and PDF generation
+ * 
+ * @fileoverview Main Firebase Functions module with Express server and security measures
+ * @author CredNXT Development Team
+ * @since 1.0.0
+ */
+
 import { onRequest } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
@@ -13,15 +22,35 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// PDF Service implementation for Firebase Functions
+/**
+ * PDF Service implementation for Firebase Functions
+ * Handles secure document generation and cloud storage operations
+ * 
+ * @class PdfService
+ * @since 1.0.0
+ */
 class PdfService {
   private bucket: any;
 
+  /**
+   * Initialize PDF Service with Firebase Storage
+   * @constructor
+   * @memberof PdfService
+   */
   constructor() {
     this.bucket = admin.storage().bucket();
     console.log('📁 PDF Service: Using Firebase Storage');
   }
 
+  /**
+   * Generate secure loan contract PDF document
+   * @async
+   * @param {any} offer - Loan offer details
+   * @param {any} fromUser - User creating the offer
+   * @returns {Promise<string>} Storage key for the generated contract
+   * @throws {Error} If PDF generation fails
+   * @memberof PdfService
+   */
   async generateContract(offer: any, fromUser: any): Promise<string> {
     const fileName = `${offer.id}-${Date.now()}.pdf`;
     const contractKey = `contracts/${fileName}`;
@@ -437,8 +466,24 @@ app.get('/offers', authenticate, async (req: any, res: any) => {
       ...receivedOffers.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }))
     ];
     
+    // Secure object creation - whitelist known safe properties to prevent mass assignment
     const normalizedOffers = allOffers.map((offer: any) => ({
-      ...offer,
+      id: offer.id,
+      fromUserId: offer.fromUserId,
+      toUserId: offer.toUserId,
+      toUserPhone: offer.toUserPhone,
+      toUserName: offer.toUserName,
+      amount: offer.amount,
+      interestRate: offer.interestRate,
+      tenureValue: offer.tenureValue,
+      tenureUnit: offer.tenureUnit,
+      purpose: offer.purpose,
+      repaymentFrequency: offer.repaymentFrequency,
+      status: offer.status,
+      offerType: offer.offerType,
+      contractKey: offer.contractKey,
+      kfsKey: offer.kfsKey,
+      scheduleKey: offer.scheduleKey,
       createdAt: offer.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: offer.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       dueDate: offer.dueDate?.toDate?.()?.toISOString() || null
@@ -466,13 +511,30 @@ app.get('/offers/:id', authenticate, async (req: any, res: any) => {
       return res.status(403).json({ message: 'Access denied' });
     }
     
-    res.json({
+    // Secure object creation - whitelist known safe properties to prevent mass assignment
+    const safeOfferData = {
       id: offerDoc.id,
-      ...offerData,
+      fromUserId: offerData?.fromUserId,
+      toUserId: offerData?.toUserId,
+      toUserPhone: offerData?.toUserPhone,
+      toUserName: offerData?.toUserName,
+      amount: offerData?.amount,
+      interestRate: offerData?.interestRate,
+      tenureValue: offerData?.tenureValue,
+      tenureUnit: offerData?.tenureUnit,
+      purpose: offerData?.purpose,
+      repaymentFrequency: offerData?.repaymentFrequency,
+      status: offerData?.status,
+      offerType: offerData?.offerType,
+      contractKey: offerData?.contractKey,
+      kfsKey: offerData?.kfsKey,
+      scheduleKey: offerData?.scheduleKey,
       createdAt: offerData?.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: offerData?.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       dueDate: offerData?.dueDate?.toDate?.()?.toISOString() || null
-    });
+    };
+    
+    res.json(safeOfferData);
   } catch (error) {
     console.error('Get offer error:', error);
     res.status(500).json({ message: 'Failed to fetch offer' });
@@ -516,13 +578,30 @@ app.patch('/offers/:id', authenticate, async (req: any, res: any) => {
     const updatedDoc = await offerRef.get();
     const updatedData = updatedDoc.data();
     
-    res.json({
+    // Secure object creation - whitelist known safe properties to prevent mass assignment
+    const safeUpdatedData = {
       id: updatedDoc.id,
-      ...updatedData,
+      fromUserId: updatedData?.fromUserId,
+      toUserId: updatedData?.toUserId,
+      toUserPhone: updatedData?.toUserPhone,
+      toUserName: updatedData?.toUserName,
+      amount: updatedData?.amount,
+      interestRate: updatedData?.interestRate,
+      tenureValue: updatedData?.tenureValue,
+      tenureUnit: updatedData?.tenureUnit,
+      purpose: updatedData?.purpose,
+      repaymentFrequency: updatedData?.repaymentFrequency,
+      status: updatedData?.status,
+      offerType: updatedData?.offerType,
+      contractKey: updatedData?.contractKey,
+      kfsKey: updatedData?.kfsKey,
+      scheduleKey: updatedData?.scheduleKey,
       createdAt: updatedData?.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: updatedData?.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       dueDate: updatedData?.dueDate?.toDate?.()?.toISOString() || null
-    });
+    };
+    
+    res.json(safeUpdatedData);
   } catch (error) {
     console.error('Update offer error:', error);
     res.status(500).json({ message: 'Failed to update offer' });

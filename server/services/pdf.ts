@@ -5,6 +5,64 @@ import path from 'path';
 import { admin } from '../firebase-config';
 import { calculateRepaymentSchedule, PaymentScheduleItem } from "@shared/calculations";
 
+/**
+ * Secure path utilities to prevent path traversal attacks
+ */
+class SecurePathUtils {
+  /**
+   * Validates and sanitizes file paths to prevent directory traversal
+   * @param userInput - The user-provided input that could be a path
+   * @param allowedBasePaths - Array of allowed base directories
+   * @returns Sanitized and validated path or throws error
+   */
+  static validatePath(userInput: string, allowedBasePaths: string[]): string {
+    if (!userInput || typeof userInput !== 'string') {
+      throw new Error('Invalid path input');
+    }
+    
+    // Remove any null bytes, normalize and resolve
+    const cleanInput = userInput.replace(/\0/g, '');
+    const resolvedPath = path.resolve(cleanInput);
+    
+    // Check if the resolved path starts with any allowed base path
+    const isAllowed = allowedBasePaths.some(basePath => {
+      const resolvedBase = path.resolve(basePath);
+      return resolvedPath.startsWith(resolvedBase + path.sep) || resolvedPath === resolvedBase;
+    });
+    
+    if (!isAllowed) {
+      throw new Error('Path traversal attempt detected');
+    }
+    
+    return resolvedPath;
+  }
+  
+  /**
+   * Sanitizes filename to prevent dangerous characters
+   * @param filename - User-provided filename
+   * @returns Safe filename
+   */
+  static sanitizeFilename(filename: string): string {
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('Invalid filename');
+    }
+    
+    return filename
+      .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace dangerous chars with underscore
+      .replace(/\.\./g, '_') // Replace .. sequences
+      .substring(0, 255); // Limit length
+  }
+}
+
+/**
+ * PDF Service for generating and managing loan documents
+ * Handles contract, KFS (Key Fact Sheet), and repayment schedule generation
+ * Supports both Firebase Storage (cloud) and local file system storage
+ * 
+ * @class PdfService
+ * @since 1.0.0
+ * @author CredNXT Development Team
+ */
 export class PdfService {
   private contractsDir = path.join(process.cwd(), 'contracts');
   private kfsDir = path.join(process.cwd(), 'kfs');
@@ -13,6 +71,14 @@ export class PdfService {
   private useCloudStorage: boolean;
   private bucketInitialized: boolean = false;
 
+  /**
+   * Initialize PDF Service with appropriate storage configuration
+   * Determines whether to use cloud storage (Firebase) or local storage
+   * Creates necessary local directories for fallback storage
+   * 
+   * @constructor
+   * @memberof PdfService
+   */
   constructor() {
     // Determine if we're in a cloud environment
     this.useCloudStorage = process.env.NODE_ENV === 'production' || 
@@ -35,6 +101,16 @@ export class PdfService {
     }
   }
 
+  /**
+   * Initialize Firebase Storage bucket for cloud storage operations
+   * Handles graceful fallback to local storage if initialization fails
+   * 
+   * @private
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} Logs error but continues with local storage fallback
+   * @memberof PdfService
+   */
   private async initializeBucket(): Promise<void> {
     if (!this.useCloudStorage || this.bucketInitialized) {
       return;
@@ -60,6 +136,19 @@ export class PdfService {
     }
   }
 
+  /**
+   * Generate a secure loan contract PDF document
+   * Creates a legally formatted contract with sanitized user data
+   * Stores the document in cloud storage or local filesystem
+   * 
+   * @async
+   * @param {Offer} offer - The loan offer details
+   * @param {User} fromUser - The user making the offer
+   * @returns {Promise<string>} Storage key/path for the generated contract
+   * @throws {Error} If PDF generation or storage fails
+   * @memberof PdfService
+   * @since 1.0.0
+   */
   async generateContract(offer: Offer, fromUser: User): Promise<string> {
     const fileName = `${offer.id}-${Date.now()}.pdf`;
     const contractKey = `contracts/${fileName}`;
@@ -83,8 +172,12 @@ export class PdfService {
         });
         console.log(`✅ Contract uploaded to Firebase Storage: ${contractKey}`);
       } else {
-        // Save to local file system
-        const filePath = path.join(this.contractsDir, fileName);
+        // Save to local file system with secure path validation
+        const sanitizedFileName = SecurePathUtils.sanitizeFilename(fileName);
+        const filePath = SecurePathUtils.validatePath(
+          path.join(this.contractsDir, sanitizedFileName),
+          [this.contractsDir]
+        );
         fs.writeFileSync(filePath, pdfBuffer);
         console.log(`✅ Contract saved locally: ${filePath}`);
       }
@@ -97,6 +190,19 @@ export class PdfService {
     }
   }
 
+  /**
+   * Create the PDF contract document with secure content rendering
+   * Implements comprehensive input sanitization to prevent PDF injection attacks
+   * Generates a professionally formatted legal document
+   * 
+   * @private
+   * @async
+   * @param {Offer} offer - Loan offer data to include in contract
+   * @param {User} fromUser - User information for contract parties
+   * @returns {Promise<Buffer>} PDF document as binary buffer
+   * @throws {Error} If PDF creation fails
+   * @memberof PdfService
+   */
   private async createPdfContract(offer: Offer, fromUser: User): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       try {
@@ -121,14 +227,16 @@ export class PdfService {
         
         doc.fontSize(12).font('Helvetica');
         
-        // Sanitize user inputs to prevent PDF injection
+        // Import and use centralized security utilities
+        const { SecurityUtils } = require('../utils/security');
+        
+        /**
+         * Sanitize text inputs for PDF generation to prevent injection attacks
+         * @param {string} text - Input text to sanitize
+         * @returns {string} Sanitized text safe for PDF inclusion
+         */
         const sanitizeText = (text: string): string => {
-          if (!text || typeof text !== 'string') return 'N/A';
-          return text
-            .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-            .replace(/[<>]/g, '') // Remove angle brackets
-            .trim()
-            .substring(0, 1000); // Limit length
+          return SecurityUtils.sanitizeText(text, 500); // Limit to 500 chars for PDF
         };
         
         if (offer.offerType === 'lend') {
@@ -233,7 +341,12 @@ export class PdfService {
         const [exists] = await file.exists();
         return exists;
       } else {
-        const filePath = path.join(process.cwd(), contractKey);
+        // Secure path validation for contract existence check
+        const allowedPaths = [this.contractsDir, path.join(process.cwd(), 'contracts')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), contractKey),
+          allowedPaths
+        );
         return fs.existsSync(filePath);
       }
     } catch (error) {
@@ -250,7 +363,12 @@ export class PdfService {
         const [buffer] = await file.download();
         return buffer;
       } else {
-        const filePath = path.join(process.cwd(), contractKey);
+        // Secure path validation for contract download
+        const allowedPaths = [this.contractsDir, path.join(process.cwd(), 'contracts')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), contractKey),
+          allowedPaths
+        );
         
         if (!fs.existsSync(filePath)) {
           throw new Error('Contract file not found');
@@ -287,8 +405,12 @@ export class PdfService {
         });
         console.log(`✅ KFS uploaded to Firebase Storage: ${kfsKey}`);
       } else {
-        // Save to local file system
-        const filePath = path.join(this.kfsDir, fileName);
+        // Save to local file system with secure path validation
+        const sanitizedFileName = SecurePathUtils.sanitizeFilename(fileName);
+        const filePath = SecurePathUtils.validatePath(
+          path.join(this.kfsDir, sanitizedFileName),
+          [this.kfsDir]
+        );
         fs.writeFileSync(filePath, pdfBuffer);
         console.log(`✅ KFS saved locally: ${filePath}`);
       }
@@ -309,7 +431,12 @@ export class PdfService {
         const [exists] = await file.exists();
         return exists;
       } else {
-        const filePath = path.join(process.cwd(), kfsKey);
+        // Secure path validation for KFS existence check
+        const allowedPaths = [this.kfsDir, path.join(process.cwd(), 'kfs')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), kfsKey),
+          allowedPaths
+        );
         return fs.existsSync(filePath);
       }
     } catch (error) {
@@ -326,7 +453,12 @@ export class PdfService {
         const [buffer] = await file.download();
         return buffer;
       } else {
-        const filePath = path.join(process.cwd(), kfsKey);
+        // Secure path validation for KFS download
+        const allowedPaths = [this.kfsDir, path.join(process.cwd(), 'kfs')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), kfsKey),
+          allowedPaths
+        );
         
         if (!fs.existsSync(filePath)) {
           throw new Error('KFS file not found');
@@ -363,8 +495,12 @@ export class PdfService {
         });
         console.log(`✅ Repayment schedule uploaded to Firebase Storage: ${scheduleKey}`);
       } else {
-        // Save to local file system
-        const filePath = path.join(this.schedulesDir, fileName);
+        // Save to local file system with secure path validation
+        const sanitizedFileName = SecurePathUtils.sanitizeFilename(fileName);
+        const filePath = SecurePathUtils.validatePath(
+          path.join(this.schedulesDir, sanitizedFileName),
+          [this.schedulesDir]
+        );
         fs.writeFileSync(filePath, pdfBuffer);
         console.log(`✅ Repayment schedule saved locally: ${filePath}`);
       }
@@ -385,7 +521,12 @@ export class PdfService {
         const [exists] = await file.exists();
         return exists;
       } else {
-        const filePath = path.join(process.cwd(), scheduleKey);
+        // Secure path validation for schedule existence check
+        const allowedPaths = [this.schedulesDir, path.join(process.cwd(), 'schedules')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), scheduleKey),
+          allowedPaths
+        );
         return fs.existsSync(filePath);
       }
     } catch (error) {
@@ -402,7 +543,12 @@ export class PdfService {
         const [buffer] = await file.download();
         return buffer;
       } else {
-        const filePath = path.join(process.cwd(), scheduleKey);
+        // Secure path validation for schedule download
+        const allowedPaths = [this.schedulesDir, path.join(process.cwd(), 'schedules')];
+        const filePath = SecurePathUtils.validatePath(
+          path.join(process.cwd(), scheduleKey),
+          allowedPaths
+        );
         
         if (!fs.existsSync(filePath)) {
           throw new Error('Repayment schedule file not found');

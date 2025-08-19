@@ -21,6 +21,7 @@ import {
 import { Timestamp } from 'firebase-admin/firestore';
 import admin from 'firebase-admin';
 import { z } from "zod";
+import { SecurityUtils, ValidationSchemas, SecurityConfig } from "./utils/security";
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -28,8 +29,29 @@ interface AuthenticatedRequest extends Request {
 
 const clients = new Map<string, WebSocket>();
 
+/**
+ * Register all API routes with comprehensive security and authentication
+ * Implements secure endpoints for offer management, authentication, and document generation
+ * 
+ * @async
+ * @param {Express} app - Express application instance
+ * @returns {Promise<Server>} HTTP server with registered routes and WebSocket support
+ * @throws {Error} If route registration or server initialization fails
+ * @since 1.0.0
+ * @author CredNXT Development Team
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Enhanced authentication middleware with banking compliance and security
+  /**
+   * Enhanced authentication middleware with banking compliance and security
+   * Validates Firebase ID tokens and implements comprehensive security checks
+   * 
+   * @async
+   * @param {AuthenticatedRequest} req - Express request with potential user ID
+   * @param {Response} res - Express response object
+   * @param {NextFunction} next - Express next middleware function
+   * @returns {void}
+   * @since 1.0.0
+   */
   const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const requestId = (req as any).requestId;
     const clientIp = req.ip || req.connection.remoteAddress || 'Unknown';
