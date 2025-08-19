@@ -49,9 +49,32 @@ export default function Dashboard() {
       // Get all offers (sent and received)
       const allOffers = await firebaseBackend.getOffers();
       
+      // Normalize phone number for comparison
+      const normalizePhone = (phone: string | undefined) => {
+        if (!phone) return '';
+        return phone.replace(/^\+91/, '').replace(/\D/g, '');
+      };
+      
+      const currentUserPhone = normalizePhone(currentUser.phone);
+      
       // Separate sent and received offers
       const sentOffers = allOffers.filter(offer => offer.fromUserId === currentUser.id);
-      const receivedOffers = allOffers.filter(offer => offer.toUserId === currentUser.id);
+      const receivedOffers = allOffers.filter(offer => 
+        offer.toUserId === currentUser.id || 
+        (currentUserPhone && normalizePhone(offer.toUserPhone) === currentUserPhone)
+      );
+
+      // Debug logging
+      console.log('📊 Dashboard Offers Debug:', {
+        totalOffers: allOffers.length,
+        currentUserId: currentUser.id,
+        currentUserPhone: currentUser.phone,
+        normalizedPhone: currentUserPhone,
+        sentCount: sentOffers.length,
+        receivedCount: receivedOffers.length,
+        sentOffers: sentOffers.map(o => ({ id: o.id, fromUserId: o.fromUserId, toUserPhone: o.toUserPhone })),
+        receivedOffers: receivedOffers.map(o => ({ id: o.id, fromUserId: o.fromUserId, toUserId: o.toUserId, toUserPhone: o.toUserPhone }))
+      });
 
       return {
         sentOffers: sentOffers || [],

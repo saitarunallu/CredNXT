@@ -105,7 +105,7 @@ async function createTestData() {
   }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   createTestData().then(() => {
     console.log('✅ Test data creation complete');
     process.exit(0);
@@ -114,5 +114,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
-module.exports = { createTestData };
