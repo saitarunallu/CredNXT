@@ -1,0 +1,45 @@
+~/workspace$ git add .
+git commit -m "Your commit message"
+git push origin main  # or your branch name
+On branch main
+Your branch is ahead of 'origin/main' by 98 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+Enumerating objects: 861, done.
+Counting objects: 100% (817/817), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (742/742), done.
+Writing objects: 100% (749/749), 2.78 MiB | 3.71 MiB/s, done.
+Total 749 (delta 474), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (474/474), completed with 41 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/saitarunallu/CredNXT/settings/security_analysis
+remote:     
+remote:     
+remote:       —— Google Cloud Service Account Credentials ——————————
+remote:        locations:
+remote:          - commit: 60f99cfab77131544cde1e497d01c55f6e05ceb2
+remote:            path: attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt:11
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/saitarunallu/CredNXT/security/secret-scanning/unblock-secret/31UxdBvLXWzCLJpSo90ii6ikWy0
+remote:     
+remote: 
+remote: 
+To https://github.com/saitarunallu/CredNXT
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/saitarunallu/CredNXT'
+~/workspace$ 
