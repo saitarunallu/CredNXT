@@ -297,6 +297,30 @@ function calculateEMI(principal: number, rate: number, tenure: number): number {
 
 // Main API Express app
 const app = express.default();
+
+// Enhanced security middleware for Firebase Functions
+app.use((req: any, res: any, next: any) => {
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // CSRF protection for state-changing operations
+  // Firebase Functions uses stateless authentication, but we add extra protection
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token && !req.path.includes('/health') && !req.path.includes('/ready')) {
+      return res.status(403).json({ 
+        message: 'Authentication required for state-changing operations',
+        code: 'CSRF_PROTECTION_REQUIRED'
+      });
+    }
+  }
+  
+  next();
+});
+
 app.use(cors.default({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 

@@ -1,4 +1,12 @@
 "use strict";
+/**
+ * Firebase Functions entry point for CredNXT P2P Lending Platform
+ * Provides secure API endpoints for offer management and PDF generation
+ *
+ * @fileoverview Main Firebase Functions module with Express server and security measures
+ * @author CredNXT Development Team
+ * @since 1.0.0
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -39,12 +47,32 @@ if (!admin.apps.length) {
     admin.initializeApp();
 }
 const db = admin.firestore();
-// PDF Service implementation for Firebase Functions
+/**
+ * PDF Service implementation for Firebase Functions
+ * Handles secure document generation and cloud storage operations
+ *
+ * @class PdfService
+ * @since 1.0.0
+ */
 class PdfService {
+    /**
+     * Initialize PDF Service with Firebase Storage
+     * @constructor
+     * @memberof PdfService
+     */
     constructor() {
         this.bucket = admin.storage().bucket();
         console.log('📁 PDF Service: Using Firebase Storage');
     }
+    /**
+     * Generate secure loan contract PDF document
+     * @async
+     * @param {any} offer - Loan offer details
+     * @param {any} fromUser - User creating the offer
+     * @returns {Promise<string>} Storage key for the generated contract
+     * @throws {Error} If PDF generation fails
+     * @memberof PdfService
+     */
     async generateContract(offer, fromUser) {
         const fileName = `${offer.id}-${Date.now()}.pdf`;
         const contractKey = `contracts/${fileName}`;
@@ -255,6 +283,27 @@ function calculateEMI(principal, rate, tenure) {
 }
 // Main API Express app
 const app = express.default();
+// Enhanced security middleware for Firebase Functions
+app.use((req, res, next) => {
+    var _a;
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // CSRF protection for state-changing operations
+    // Firebase Functions uses stateless authentication, but we add extra protection
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+        const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
+        if (!token && !req.path.includes('/health') && !req.path.includes('/ready')) {
+            return res.status(403).json({
+                message: 'Authentication required for state-changing operations',
+                code: 'CSRF_PROTECTION_REQUIRED'
+            });
+        }
+    }
+    next();
+});
 app.use(cors.default({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 // Rate limiting middleware (simplified)
@@ -404,9 +453,30 @@ app.get('/offers', authenticate, async (req, res) => {
             ...sentOffers.docs.map((doc) => (Object.assign({ id: doc.id }, doc.data()))),
             ...receivedOffers.docs.map((doc) => (Object.assign({ id: doc.id }, doc.data())))
         ];
+        // Secure object creation - whitelist known safe properties to prevent mass assignment
         const normalizedOffers = allOffers.map((offer) => {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j;
-            return (Object.assign(Object.assign({}, offer), { createdAt: ((_c = (_b = (_a = offer.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(), updatedAt: ((_f = (_e = (_d = offer.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(), dueDate: ((_j = (_h = (_g = offer.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null }));
+            return ({
+                id: offer.id,
+                fromUserId: offer.fromUserId,
+                toUserId: offer.toUserId,
+                toUserPhone: offer.toUserPhone,
+                toUserName: offer.toUserName,
+                amount: offer.amount,
+                interestRate: offer.interestRate,
+                tenureValue: offer.tenureValue,
+                tenureUnit: offer.tenureUnit,
+                purpose: offer.purpose,
+                repaymentFrequency: offer.repaymentFrequency,
+                status: offer.status,
+                offerType: offer.offerType,
+                contractKey: offer.contractKey,
+                kfsKey: offer.kfsKey,
+                scheduleKey: offer.scheduleKey,
+                createdAt: ((_c = (_b = (_a = offer.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(),
+                updatedAt: ((_f = (_e = (_d = offer.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(),
+                dueDate: ((_j = (_h = (_g = offer.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null
+            });
         });
         res.json(normalizedOffers);
     }
@@ -427,7 +497,29 @@ app.get('/offers/:id', authenticate, async (req, res) => {
         if ((offerData === null || offerData === void 0 ? void 0 : offerData.fromUserId) !== req.userId && (offerData === null || offerData === void 0 ? void 0 : offerData.toUserId) !== req.userId) {
             return res.status(403).json({ message: 'Access denied' });
         }
-        res.json(Object.assign(Object.assign({ id: offerDoc.id }, offerData), { createdAt: ((_c = (_b = (_a = offerData === null || offerData === void 0 ? void 0 : offerData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(), updatedAt: ((_f = (_e = (_d = offerData === null || offerData === void 0 ? void 0 : offerData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(), dueDate: ((_j = (_h = (_g = offerData === null || offerData === void 0 ? void 0 : offerData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null }));
+        // Secure object creation - whitelist known safe properties to prevent mass assignment
+        const safeOfferData = {
+            id: offerDoc.id,
+            fromUserId: offerData === null || offerData === void 0 ? void 0 : offerData.fromUserId,
+            toUserId: offerData === null || offerData === void 0 ? void 0 : offerData.toUserId,
+            toUserPhone: offerData === null || offerData === void 0 ? void 0 : offerData.toUserPhone,
+            toUserName: offerData === null || offerData === void 0 ? void 0 : offerData.toUserName,
+            amount: offerData === null || offerData === void 0 ? void 0 : offerData.amount,
+            interestRate: offerData === null || offerData === void 0 ? void 0 : offerData.interestRate,
+            tenureValue: offerData === null || offerData === void 0 ? void 0 : offerData.tenureValue,
+            tenureUnit: offerData === null || offerData === void 0 ? void 0 : offerData.tenureUnit,
+            purpose: offerData === null || offerData === void 0 ? void 0 : offerData.purpose,
+            repaymentFrequency: offerData === null || offerData === void 0 ? void 0 : offerData.repaymentFrequency,
+            status: offerData === null || offerData === void 0 ? void 0 : offerData.status,
+            offerType: offerData === null || offerData === void 0 ? void 0 : offerData.offerType,
+            contractKey: offerData === null || offerData === void 0 ? void 0 : offerData.contractKey,
+            kfsKey: offerData === null || offerData === void 0 ? void 0 : offerData.kfsKey,
+            scheduleKey: offerData === null || offerData === void 0 ? void 0 : offerData.scheduleKey,
+            createdAt: ((_c = (_b = (_a = offerData === null || offerData === void 0 ? void 0 : offerData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(),
+            updatedAt: ((_f = (_e = (_d = offerData === null || offerData === void 0 ? void 0 : offerData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(),
+            dueDate: ((_j = (_h = (_g = offerData === null || offerData === void 0 ? void 0 : offerData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null
+        };
+        res.json(safeOfferData);
     }
     catch (error) {
         console.error('Get offer error:', error);
@@ -465,7 +557,29 @@ app.patch('/offers/:id', authenticate, async (req, res) => {
         });
         const updatedDoc = await offerRef.get();
         const updatedData = updatedDoc.data();
-        res.json(Object.assign(Object.assign({ id: updatedDoc.id }, updatedData), { createdAt: ((_c = (_b = (_a = updatedData === null || updatedData === void 0 ? void 0 : updatedData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(), updatedAt: ((_f = (_e = (_d = updatedData === null || updatedData === void 0 ? void 0 : updatedData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(), dueDate: ((_j = (_h = (_g = updatedData === null || updatedData === void 0 ? void 0 : updatedData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null }));
+        // Secure object creation - whitelist known safe properties to prevent mass assignment
+        const safeUpdatedData = {
+            id: updatedDoc.id,
+            fromUserId: updatedData === null || updatedData === void 0 ? void 0 : updatedData.fromUserId,
+            toUserId: updatedData === null || updatedData === void 0 ? void 0 : updatedData.toUserId,
+            toUserPhone: updatedData === null || updatedData === void 0 ? void 0 : updatedData.toUserPhone,
+            toUserName: updatedData === null || updatedData === void 0 ? void 0 : updatedData.toUserName,
+            amount: updatedData === null || updatedData === void 0 ? void 0 : updatedData.amount,
+            interestRate: updatedData === null || updatedData === void 0 ? void 0 : updatedData.interestRate,
+            tenureValue: updatedData === null || updatedData === void 0 ? void 0 : updatedData.tenureValue,
+            tenureUnit: updatedData === null || updatedData === void 0 ? void 0 : updatedData.tenureUnit,
+            purpose: updatedData === null || updatedData === void 0 ? void 0 : updatedData.purpose,
+            repaymentFrequency: updatedData === null || updatedData === void 0 ? void 0 : updatedData.repaymentFrequency,
+            status: updatedData === null || updatedData === void 0 ? void 0 : updatedData.status,
+            offerType: updatedData === null || updatedData === void 0 ? void 0 : updatedData.offerType,
+            contractKey: updatedData === null || updatedData === void 0 ? void 0 : updatedData.contractKey,
+            kfsKey: updatedData === null || updatedData === void 0 ? void 0 : updatedData.kfsKey,
+            scheduleKey: updatedData === null || updatedData === void 0 ? void 0 : updatedData.scheduleKey,
+            createdAt: ((_c = (_b = (_a = updatedData === null || updatedData === void 0 ? void 0 : updatedData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString(),
+            updatedAt: ((_f = (_e = (_d = updatedData === null || updatedData === void 0 ? void 0 : updatedData.updatedAt) === null || _d === void 0 ? void 0 : _d.toDate) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f.toISOString()) || new Date().toISOString(),
+            dueDate: ((_j = (_h = (_g = updatedData === null || updatedData === void 0 ? void 0 : updatedData.dueDate) === null || _g === void 0 ? void 0 : _g.toDate) === null || _h === void 0 ? void 0 : _h.call(_g)) === null || _j === void 0 ? void 0 : _j.toISOString()) || null
+        };
+        res.json(safeUpdatedData);
     }
     catch (error) {
         console.error('Update offer error:', error);
