@@ -18,3 +18,10 @@ attached_assets/*FIREBASE*
 attached_assets/*firebase*
 attached_assets/*credential*
 attached_assets/*service*account*
+
+# Ignore service account keys and Firebase credentials
+attached_assets/*.json
+attached_assets/*.txt
+*service-account*.json
+*firebase-adminsdk*.json
+*FIREBASE-CLIENT-EMAIL*.txt
