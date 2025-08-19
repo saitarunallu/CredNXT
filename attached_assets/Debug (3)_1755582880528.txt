@@ -1,0 +1,18 @@
+Debug Logs:
+
+11:22:52 AM: 🔍 Starting PDF download test...
+11:22:52 AM: 👤 Current user: xt8OK1z2PifGrAkeDA2OUVjSlLW2
+11:22:52 AM: 📧 User email: None
+11:22:52 AM: 🔑 Getting authentication token...
+11:22:52 AM: ✅ Token obtained: eyJhbGciOiJSUzI1NiIs...
+11:22:52 AM: 🌐 Hostname: crednxt.com
+11:22:52 AM: 🏭 Is production: true
+11:22:52 AM: 🔗 Request URL: https://api-mzz6re522q-uc.a.run.app/offers/CMvmI8IcUbXme78luUAl/pdf/contract
+11:22:52 AM: 📡 Making request...
+11:22:54 AM: 📊 Response status: 200
+11:22:54 AM: 📋 Response content-type: application/pdf
+11:22:54 AM: 📏 Response content-length: 1841
+11:22:54 AM: ✅ PDF blob received: 1841 bytes
+11:22:54 AM: 📄 Blob type: application/pdf
+11:22:54 AM: ✅ Valid PDF received - triggering download
+11:22:54 AM: 🎉 PDF download completed successfully!
