@@ -6,15 +6,16 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 ## Live Application
 - **Production URL**: https://crednxt-ef673.web.app
 - **Firebase Project**: crednxt-ef673
-- **Deployed**: August 18, 2025
+- **Last Deployed**: August 19, 2025
 
 ## Technology Stack
-- **Frontend**: React (TypeScript), Vite build system, Tailwind CSS
+- **Frontend**: React (TypeScript), Vite build system, Tailwind CSS, shadcn/ui
 - **Backend**: Firebase Functions (Express.js)
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Authentication
+- **Database**: Firebase Firestore with real-time updates
+- **Authentication**: Firebase Authentication (Phone OTP)
+- **Storage**: Firebase Storage (PDF documents)
 - **PDF Generation**: PDFKit for loan agreements
-- **Hosting**: Firebase Hosting
+- **Hosting**: Firebase Hosting with CDN
 
 ## Recent Deployment
 ✅ **Deployed to Firebase** - August 18, 2025

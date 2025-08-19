@@ -25,3 +25,10 @@ attached_assets/*.txt
 *service-account*.json
 *firebase-adminsdk*.json
 *FIREBASE-CLIENT-EMAIL*.txt
+
+# Generated files
+contracts/
+kfs/
+schedules/
+attached_assets/
+pyproject.toml
