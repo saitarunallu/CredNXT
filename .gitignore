@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Sensitive files and credentials
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*firebase*credentials*
+*service*account*
+*FIREBASE*
+attached_assets/*FIREBASE*
+attached_assets/*firebase*
+attached_assets/*credential*
+attached_assets/*service*account*
