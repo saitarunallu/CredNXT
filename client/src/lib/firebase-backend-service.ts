@@ -274,11 +274,18 @@ export class FirebaseBackendService {
       ];
 
       const snapshots = await Promise.all(queryPromises);
-      const [sentSnapshot, receivedSnapshot, phoneSnapshot] = snapshots;
+      const [sentSnapshot, receivedSnapshot, ...phoneSnapshots] = snapshots;
 
       const sentOffers = sentSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
       const receivedOffers = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
-      const phoneOffers = phoneSnapshot ? phoneSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })) : [];
+      
+      // Combine all phone offer snapshots
+      const phoneOffers = [];
+      phoneSnapshots.forEach(snapshot => {
+        if (snapshot) {
+          phoneOffers.push(...snapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })));
+        }
+      });
       
       // Filter out duplicates (offers found both by userId and phone)
       const receivedOfferIds = new Set(receivedOffers.map(offer => offer.id));
