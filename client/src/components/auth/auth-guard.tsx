@@ -44,6 +44,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
               if (process.env.NODE_ENV === 'development') {
                 console.warn('Token refresh failed in auth guard:', tokenError);
               }
+              // Return null to prevent unhandled promise rejection
+              return null;
             });
           } catch (error) {
             if (process.env.NODE_ENV === 'development') {
@@ -71,6 +73,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           if (process.env.NODE_ENV === 'development') {
             console.error('Error during logout in AuthGuard:', logoutError);
           }
+          // Return null to prevent unhandled promise rejection
+          return null;
         });
         setLocation('/login');
         return null;
@@ -112,7 +116,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       try {
         wsService.disconnect();
       } catch (e) {
-        console.log('WebSocket disconnect failed:', e);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('WebSocket disconnect failed:', e);
+        }
       }
     };
   }, [setLocation, user, authStateLoading, isAuthenticated]);

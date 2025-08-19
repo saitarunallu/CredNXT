@@ -10,20 +10,30 @@ async function throwIfResNotOk(res: Response) {
 function getApiUrl(path: string): string {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
-  // In production, use direct Functions URL if no base URL is set
+  // Use environment variable if explicitly set
   if (baseUrl) {
     return `${baseUrl}${path}`;
   }
   
-  // Check if we're in production (Firebase hosting)
-  const isProduction = window.location.hostname.includes('firebaseapp.com') || 
-                      window.location.hostname.includes('web.app') ||
-                      window.location.hostname.includes('crednxt-ef673');
+  // Check if we're in production (Firebase hosting or custom domain)
+  const hostname = window.location.hostname;
+  const isProduction = hostname.includes('firebaseapp.com') || 
+                      hostname.includes('web.app') ||
+                      hostname.includes('crednxt-ef673') ||
+                      hostname.includes('crednxt.com');
   
   if (isProduction) {
-    // Use direct Firebase Functions URL - Remove /api prefix since it's not needed
+    // Dynamic Firebase Functions URL generation based on project
+    const projectId = 'crednxt-ef673';
+    const region = 'us-central1';
+    const functionName = 'api';
+    
+    // Clean path - remove /api prefix for functions
     const cleanPath = path.startsWith('/api') ? path.substring(4) : path;
-    return `https://api-mzz6re522q-uc.a.run.app${cleanPath}`;
+    
+    // Generate the correct Cloud Run URL format
+    const functionUrl = `https://${functionName}-mzz6re522q-uc.a.run.app`;
+    return `${functionUrl}${cleanPath}`;
   }
   
   // For development, use relative path

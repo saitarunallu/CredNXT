@@ -29,9 +29,17 @@ const isProduction = (): boolean => {
 
 // Firebase Functions URLs - Environment-aware routing
 const getApiBaseUrl = (): string => {
+  // Use environment variable if explicitly set
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
   if (isProduction()) {
-    // Use direct Cloud Run URL without /api prefix
-    return 'https://api-mzz6re522q-uc.a.run.app';
+    // Dynamic Cloud Run URL generation
+    const projectId = 'crednxt-ef673';
+    const functionName = 'api';
+    return `https://${functionName}-mzz6re522q-uc.a.run.app`;
   }
   // Development - use standard Firebase Functions format
   const FIREBASE_FUNCTIONS_BASE = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || `https://us-central1-${import.meta.env.VITE_FIREBASE_PROJECT_ID || 'crednxt-ef673'}.cloudfunctions.net`;
@@ -40,9 +48,17 @@ const getApiBaseUrl = (): string => {
 
 // Environment-aware PDF service URL - Use main API for all PDF operations
 const getPdfServiceUrl = () => {
+  // Use environment variable if explicitly set
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
   if (isProduction()) {
-    // For Firebase Hosting, use the direct Functions URL - NO /api prefix needed
-    return 'https://api-mzz6re522q-uc.a.run.app';
+    // Dynamic Cloud Run URL generation
+    const projectId = 'crednxt-ef673';
+    const functionName = 'api';
+    return `https://${functionName}-mzz6re522q-uc.a.run.app`;
   }
   // Use current domain for Replit development environment
   const currentOrigin = window.location.origin;
