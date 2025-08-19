@@ -401,9 +401,30 @@ export class FirebaseBackendService {
 
   async createOffer(offerData: any): Promise<any> {
     try {
+      // Transform the new schema to backend format
+      const backendData = {
+        fromUserId: offerData.senderUserId,
+        toUserPhone: offerData.recipientPhoneNumber,
+        toUserName: offerData.recipientName,
+        toUserId: offerData.recipientUserId === "pending" ? null : offerData.recipientUserId,
+        offerType: offerData.offerType,
+        amount: offerData.amount,
+        interestRate: offerData.interestRate,
+        interestType: offerData.interestType,
+        tenureValue: offerData.tenure,
+        tenureUnit: offerData.tenureUnit,
+        repaymentType: offerData.repaymentType,
+        repaymentFrequency: offerData.repaymentFrequency,
+        allowPartPayment: offerData.allowPartialPayments || false,
+        purpose: offerData.purpose,
+        note: offerData.collateral,
+        startDate: offerData.startDate,
+        status: offerData.status || 'pending'
+      };
+
       const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers`, {
         method: 'POST',
-        body: JSON.stringify(offerData)
+        body: JSON.stringify(backendData)
       });
       
       if (response.ok) {
@@ -421,22 +442,43 @@ export class FirebaseBackendService {
         if (!user) throw new Error('Not authenticated');
 
         // Calculate due date
-        const dueDate = new Date();
-        if (offerData.tenureUnit === 'days') {
-          dueDate.setDate(dueDate.getDate() + offerData.tenure);
-        } else if (offerData.tenureUnit === 'months') {
-          dueDate.setMonth(dueDate.getMonth() + offerData.tenure);
-        } else if (offerData.tenureUnit === 'years') {
-          dueDate.setFullYear(dueDate.getFullYear() + offerData.tenure);
+        const startDate = new Date(offerData.startDate || new Date());
+        const dueDate = new Date(startDate);
+        
+        const tenureNum = Number(offerData.tenure);
+        switch (offerData.tenureUnit) {
+          case 'days':
+            dueDate.setDate(startDate.getDate() + tenureNum);
+            break;
+          case 'months':
+            dueDate.setMonth(startDate.getMonth() + tenureNum);
+            break;
+          case 'years':
+            dueDate.setFullYear(startDate.getFullYear() + tenureNum);
+            break;
         }
 
         const firestoreData = {
-          ...offerData,
           fromUserId: user.uid,
+          toUserPhone: offerData.recipientPhoneNumber,
+          toUserName: offerData.recipientName,
+          toUserId: offerData.recipientUserId === "pending" ? null : offerData.recipientUserId,
+          offerType: offerData.offerType,
+          amount: Number(offerData.amount),
+          interestRate: Number(offerData.interestRate),
+          interestType: offerData.interestType,
+          tenureValue: Number(offerData.tenure),
+          tenureUnit: offerData.tenureUnit,
+          repaymentType: offerData.repaymentType,
+          repaymentFrequency: offerData.repaymentFrequency,
+          allowPartPayment: offerData.allowPartialPayments || false,
+          purpose: offerData.purpose,
+          note: offerData.collateral,
+          startDate: Timestamp.fromDate(startDate),
+          dueDate: Timestamp.fromDate(dueDate),
           status: 'pending',
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          dueDate: Timestamp.fromDate(dueDate)
+          updatedAt: serverTimestamp()
         };
 
         const offerRef = await addDoc(collection(db, 'offers'), firestoreData);

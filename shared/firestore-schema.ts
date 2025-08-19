@@ -30,36 +30,64 @@ export interface User {
   updatedAt: Timestamp;
 }
 
-// Firestore Offer document
+// Firestore Offer document - Enhanced schema
 export interface Offer {
   id: string;
-  fromUserId: string;
-  toUserPhone: string;
-  toUserName: string;
-  toUserId?: string | null;
-  offerType: OfferType;
+  
+  // Sender details
+  senderUserId: string;
+  senderName: string;
+  senderPhone: string;
+  
+  // Recipient details
+  recipientPhoneNumber: string;
+  recipientName: string;
+  recipientUserId: string; // actual id or 'pending'
+  
+  // Offer details
+  offerType: 'Lend' | 'Borrow';
   amount: number;
+  interestType: 'Fixed' | 'Reducing';
   interestRate: number;
-  interestType: InterestType;
-  tenureValue: number;
-  tenureUnit: TenureUnit;
-  repaymentType: RepaymentType;
-  repaymentFrequency?: RepaymentFrequency;
-  allowPartPayment: boolean;
-  gracePeriodDays: number;
-  prepaymentPenalty: number;
-  latePaymentPenalty: number;
-  purpose?: string;
-  startDate: Timestamp;
-  dueDate: Timestamp;
+  
+  // Tenure
+  tenure: number;
+  tenureUnit: 'days' | 'months' | 'years';
+  
+  // Repayment
+  repaymentType: 'Interest Only' | 'Instalments' | 'Lump Sum';
+  repaymentFrequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  startDate: string; // ISO date string
+  
+  // Additional details
+  purpose: string;
+  collateral?: string;
+  allowPartialPayments: boolean;
+  
+  // Status and metadata
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+  
+  // Legacy fields for backward compatibility
+  fromUserId?: string;
+  toUserPhone?: string;
+  toUserName?: string;
+  toUserId?: string | null;
+  tenureValue?: number;
+  repaymentType_legacy?: RepaymentType;
+  repaymentFrequency_legacy?: RepaymentFrequency;
+  allowPartPayment?: boolean;
+  gracePeriodDays?: number;
+  prepaymentPenalty?: number;
+  latePaymentPenalty?: number;
+  dueDate?: Timestamp;
   nextPaymentDueDate?: Timestamp;
-  currentInstallmentNumber: number;
+  currentInstallmentNumber?: number;
   totalInstallments?: number;
   note?: string;
-  status: OfferStatus;
   contractPdfKey?: string;
   kfsPdfKey?: string;
   schedulePdfKey?: string;
+  
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -169,52 +197,75 @@ export const insertUserSchema = z.object({
   isVerified: z.boolean().default(false),
 });
 
+// Enhanced insert offer schema matching the new structure
 export const insertOfferSchema = z.object({
-  fromUserId: z.string().min(1, "From user ID is required"),
-  toUserPhone: z.string().min(10).max(15).regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format"),
-  toUserName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name cannot exceed 100 characters").regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens").refine(val => val.trim().length > 0, "Name cannot be empty"),
-  toUserId: z.string().nullable().optional(),
-  offerType: z.enum(['lend', 'borrow']),
+  // Sender details (required)
+  senderUserId: z.string().min(1, "Sender user ID is required"),
+  senderName: z.string().min(2, "Sender name must be at least 2 characters").max(100, "Sender name cannot exceed 100 characters"),
+  senderPhone: z.string().min(10).max(15).regex(/^\+91[6-9]\d{9}$/, "Sender phone must be valid Indian number with +91"),
+  
+  // Recipient details (required)
+  recipientPhoneNumber: z.string().min(10).max(15).regex(/^\+91[6-9]\d{9}$/, "Recipient phone must be valid Indian number with +91"),
+  recipientName: z.string().min(2, "Recipient name must be at least 2 characters").max(100, "Recipient name cannot exceed 100 characters").regex(/^[a-zA-Z\s.'-]+$/, "Name can only contain letters, spaces, dots, apostrophes, and hyphens").refine(val => val.trim().length > 0, "Name cannot be empty"),
+  recipientUserId: z.string().min(1, "Recipient user ID is required"), // actual id or 'pending'
+  
+  // Offer details (required)
+  offerType: z.enum(['Lend', 'Borrow'], { required_error: "Offer type is required" }),
   amount: z.coerce.number().min(1, "Amount must be at least ₹1").max(10000000, "Amount cannot exceed ₹1 crore").finite("Amount must be a valid number"),
+  interestType: z.enum(['Fixed', 'Reducing'], { required_error: "Interest type is required" }),
   interestRate: z.coerce.number().min(0, "Interest rate cannot be negative").max(50, "Interest rate cannot exceed 50%").finite("Interest rate must be a valid number"),
-  interestType: z.enum(['fixed', 'reducing']),
-  tenureValue: z.coerce.number().min(1, "Tenure must be at least 1").max(360, "Tenure cannot exceed 360").int("Tenure must be a whole number"),
-  tenureUnit: z.enum(['months', 'years']),
-  repaymentType: z.enum(['emi', 'interest_only', 'full_payment']),
-  repaymentFrequency: z.enum(['weekly', 'bi_weekly', 'monthly', 'quarterly', 'semi_annual', 'yearly']).optional(),
-  allowPartPayment: z.boolean().default(false),
-  gracePeriodDays: z.coerce.number().min(0, "Grace period cannot be negative").max(30, "Grace period cannot exceed 30 days").int("Grace period must be a whole number").default(0),
-  prepaymentPenalty: z.coerce.number().min(0, "Prepayment penalty cannot be negative").max(10, "Prepayment penalty cannot exceed 10%").default(0),
-  latePaymentPenalty: z.coerce.number().min(0, "Late payment penalty cannot be negative").max(5, "Late payment penalty cannot exceed 5%").default(0),
-  purpose: z.string().max(500, "Purpose cannot exceed 500 characters").optional(),
-  startDate: z.coerce.date().refine((date) => {
+  
+  // Tenure (required)
+  tenure: z.coerce.number().min(1, "Tenure must be at least 1").max(360, "Tenure cannot exceed 360").int("Tenure must be a whole number"),
+  tenureUnit: z.enum(['days', 'months', 'years'], { required_error: "Tenure unit is required" }),
+  
+  // Repayment (required)
+  repaymentType: z.enum(['Interest Only', 'Instalments', 'Lump Sum'], { required_error: "Repayment type is required" }),
+  repaymentFrequency: z.enum(['weekly', 'monthly', 'quarterly', 'yearly'], { required_error: "Repayment frequency is required" }),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format").refine((dateStr) => {
+    const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
     return date >= today;
   }, "Start date cannot be in the past"),
-  dueDate: z.coerce.date(),
+  
+  // Additional details
+  purpose: z.string().min(1, "Purpose is required").max(500, "Purpose cannot exceed 500 characters"),
+  collateral: z.string().max(500, "Collateral description cannot exceed 500 characters").optional(),
+  allowPartialPayments: z.boolean().default(false),
+  
+  // Status
+  status: z.enum(['pending', 'accepted', 'rejected', 'cancelled']).default('pending'),
+  
+  // Legacy compatibility fields (optional)
+  fromUserId: z.string().optional(),
+  toUserPhone: z.string().optional(),
+  toUserName: z.string().optional(),
+  toUserId: z.string().nullable().optional(),
+  tenureValue: z.coerce.number().optional(),
+  repaymentType_legacy: z.string().optional(),
+  repaymentFrequency_legacy: z.string().optional(),
+  allowPartPayment: z.boolean().optional(),
+  gracePeriodDays: z.coerce.number().optional(),
+  prepaymentPenalty: z.coerce.number().optional(),
+  latePaymentPenalty: z.coerce.number().optional(),
+  dueDate: z.coerce.date().optional(),
   nextPaymentDueDate: z.coerce.date().optional(),
-  currentInstallmentNumber: z.number().default(1),
+  currentInstallmentNumber: z.number().optional(),
   totalInstallments: z.number().optional(),
-  note: z.string().max(1000, "Note cannot exceed 1000 characters").optional(),
-  status: z.enum(['pending', 'accepted', 'declined', 'completed', 'overdue']).default('pending'),
+  note: z.string().optional(),
   contractPdfKey: z.string().optional(),
   kfsPdfKey: z.string().optional(),
   schedulePdfKey: z.string().optional(),
 }).refine((data) => {
-  // Ensure due date is after start date
-  return data.dueDate > data.startDate;
-}, {
-  message: "Due date must be after start date",
-  path: ["dueDate"]
-}).refine((data) => {
-  // Validate tenure and repayment type compatibility
-  if (data.repaymentType === 'emi' && !data.repaymentFrequency) {
+  // Validate repayment type and frequency compatibility
+  if (data.repaymentType === 'Instalments' && !data.repaymentFrequency) {
     return false;
   }
   return true;
 }, {
-  message: "EMI repayment type requires a repayment frequency",
+  message: "Instalments repayment type requires a repayment frequency",
   path: ["repaymentFrequency"]
 });
 
