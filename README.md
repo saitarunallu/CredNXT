@@ -60,11 +60,11 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - Valid Firebase service account credentials
 
 ### Environment Setup
-1. Configure Firebase environment variables in Replit Secrets:
-   - `VITE_FIREBASE_API_KEY`
-   - `VITE_FIREBASE_APP_ID` 
-   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
-   - `FIREBASE_CONFIG_JSON` (service account)
+1. Configure required secrets in Replit Secrets:
+   - `FIREBASE_WEB_API_KEY` - Firebase Web API key for client authentication
+   - `FIREBASE_CONFIG_JSON` - Complete Firebase service account JSON for server operations
+
+**Security Note**: This project contains no hardcoded secrets and is safe to remix. All sensitive configuration must be added to Replit Secrets.
 
 ### Development
 ```bash
@@ -141,9 +141,24 @@ firebase deploy --only hosting,functions --project crednxt-ef673
 - Data protection and privacy standards implemented
 - Secure coding practices followed
 
+## 🔄 Remixing This Project
+
+This project is designed for safe remixing with no exposed secrets:
+
+- **No hardcoded API keys or credentials**
+- **Complete setup guide**: See `REMIX_GUIDE.md` for step-by-step instructions
+- **Security documentation**: Review `SECURITY.md` for best practices
+- **Environment templates**: Use `.env.example` for configuration
+
+### Quick Remix Setup
+1. Fork/remix this project
+2. Create your own Firebase project
+3. Configure `FIREBASE_WEB_API_KEY` and `FIREBASE_CONFIG_JSON` in Replit Secrets
+4. Run `./deploy.sh`
+
 ## 📞 Support
 
-For technical support or licensing inquiries, please contact CredNXT.
+For technical support, setup questions, or licensing inquiries, please refer to the documentation or contact the project maintainers.
 
 ---
 
