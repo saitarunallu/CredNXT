@@ -105,6 +105,30 @@ export default function OfferCard({
     }
   });
 
+  const cancelOfferMutation = useMutation({
+    mutationFn: () => {
+      console.log('🔄 Canceling offer:', offer.id);
+      return firebaseBackend.updateOfferStatus(offer.id, 'cancelled');
+    },
+    onSuccess: (data) => {
+      console.log('✅ Offer canceled successfully:', data);
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
+      toast({
+        title: "Offer Cancelled",
+        description: "You have successfully cancelled this offer.",
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Cancel offer error in card:', error);
+      toast({
+        title: "Error",
+        description: `Failed to cancel offer: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const downloadRepaymentSchedule = async () => {
     try {
       console.log('📄 Starting repayment schedule download from card...');
@@ -387,18 +411,15 @@ export default function OfferCard({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                // Add cancel offer mutation here if needed
-                toast({
-                  title: "Cancel Offer",
-                  description: "This feature will be available soon.",
-                });
+                cancelOfferMutation.mutate();
               }}
+              disabled={cancelOfferMutation.isPending}
               className="w-full text-xs px-3 py-1.5 h-8"
               size="sm"
               data-testid="button-cancel-offer"
             >
               <Ban className="w-3 h-3 mr-1" />
-              Cancel Offer
+              {cancelOfferMutation.isPending ? 'Cancelling...' : 'Cancel Offer'}
             </Button>
           </div>
         )}

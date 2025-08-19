@@ -630,6 +630,32 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
     }
   });
 
+  // Cancel offer mutation for pending offers
+  const cancelOfferMutation = useMutation({
+    mutationFn: () => {
+      console.log('🔄 Canceling offer from view page:', offerId);
+      return firebaseBackend.updateOfferStatus(offerId, 'cancelled');
+    },
+    onSuccess: (data) => {
+      console.log('✅ Offer canceled successfully from view page:', data);
+      queryClient.invalidateQueries({ queryKey: ['offer-details', offerId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
+      toast({
+        title: "Offer Cancelled",
+        description: "You have successfully cancelled this offer.",
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Cancel offer error in view page:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to cancel offer",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Form submission handlers
   const onSubmitPayment = (data: Omit<InsertPayment, 'offerId'>) => {
     submitPaymentMutation.mutate(data);
@@ -887,6 +913,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const canViewOffer = isReceiver || isSender || phoneMatch;
   const canAcceptOffer = isReceiver && offer.status === 'pending';
   const canRejectOffer = isReceiver && offer.status === 'pending';
+  const canCancelOffer = isSender && offer.status === 'pending';
   const canSubmitPayment = isReceiver && offer.status === 'accepted';
   const canApprovePayment = isSender && offer.status === 'accepted';
   const canCloseLoan = isSender && offer.status === 'accepted';
@@ -1142,12 +1169,15 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
             </Card>
 
             {/* Role-based Actions */}
-            {(canAcceptOffer || canRejectOffer) && (
+            {(canAcceptOffer || canRejectOffer || canCancelOffer) && (
               <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold">Respond to Offer</CardTitle>
+                  <CardTitle className="text-lg font-semibold">
+                    {canCancelOffer ? 'Manage Offer' : 'Respond to Offer'}
+                  </CardTitle>
                   <p className="text-sm text-gray-600">
-                    {isReceiver ? 'Choose your action for this offer' : 'You can view the offer details'}
+                    {canCancelOffer ? 'You can cancel this pending offer' : 
+                     isReceiver ? 'Choose your action for this offer' : 'You can view the offer details'}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -1177,10 +1207,23 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                         Decline Offer
                       </Button>
                     )}
+                    {canCancelOffer && (
+                      <Button 
+                        variant="outline"
+                        onClick={() => cancelOfferMutation.mutate()}
+                        disabled={cancelOfferMutation.isPending}
+                        className="h-12 text-base font-medium border-red-200 text-red-700 hover:bg-red-50"
+                        size="lg"
+                        data-testid="button-cancel-offer-details"
+                      >
+                        <Ban className="w-5 h-5 mr-2" />
+                        {cancelOfferMutation.isPending ? 'Cancelling...' : 'Cancel Offer'}
+                      </Button>
+                    )}
                   </div>
-                  {(acceptOfferMutation.isPending || rejectOfferMutation.isPending) && (
+                  {(acceptOfferMutation.isPending || rejectOfferMutation.isPending || cancelOfferMutation.isPending) && (
                     <div className="mt-4 text-center">
-                      <p className="text-sm text-gray-600">Processing your response...</p>
+                      <p className="text-sm text-gray-600">Processing your action...</p>
                     </div>
                   )}
                 </CardContent>
