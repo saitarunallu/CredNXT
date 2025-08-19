@@ -84,10 +84,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     retry: false,
   });
 
-  // Enable real-time updates for authenticated users
-  useRealtimeUpdates();
-  
-  // Enable Firestore real-time listeners as fallback for production
+  // Enable cost-efficient Firestore real-time listeners (disabled WebSocket polling)
   useFirestoreRealtime();
 
   useEffect(() => {

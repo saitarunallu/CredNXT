@@ -157,10 +157,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 5 * 1000, // Aggressive refresh every 5 seconds for real-time feel
+      refetchInterval: false, // Disable automatic polling - use Firestore listeners instead
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      staleTime: 0, // Always consider data stale to ensure fresh data
+      staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
       retry: 1, // Allow one retry on failure
     },
     mutations: {

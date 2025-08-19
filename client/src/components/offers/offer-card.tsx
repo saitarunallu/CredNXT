@@ -64,8 +64,13 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer accepted successfully:', data);
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
+      // Update cache directly instead of invalidating to reduce Firestore reads
+      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+        if (oldData) {
+          return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'accepted' } : o);
+        }
+        return oldData;
+      });
       toast({
         title: "Offer Accepted",
         description: "You have successfully accepted this offer.",
@@ -90,8 +95,7 @@ export default function OfferCard({
         variant: "destructive",
       });
       
-      // Refresh data to show current state
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      // No need to refresh - Firestore listeners will update the cache automatically
     }
   });
 
@@ -102,8 +106,13 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer declined successfully:', data);
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
+      // Update cache directly instead of invalidating to reduce Firestore reads
+      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+        if (oldData) {
+          return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'declined' } : o);
+        }
+        return oldData;
+      });
       toast({
         title: "Offer Declined",
         description: "You have declined this offer.",
@@ -128,8 +137,7 @@ export default function OfferCard({
         variant: "destructive",
       });
       
-      // Refresh data to show current state
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      // No need to refresh - Firestore listeners will update the cache automatically
     }
   });
 
@@ -140,8 +148,13 @@ export default function OfferCard({
     },
     onSuccess: (data) => {
       console.log('✅ Offer canceled successfully:', data);
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-offers'] });
+      // Update cache directly instead of invalidating to reduce Firestore reads
+      queryClient.setQueryData(['/api/offers'], (oldData: any) => {
+        if (oldData) {
+          return oldData.map((o: any) => o.id === offer.id ? { ...o, status: 'cancelled' } : o);
+        }
+        return oldData;
+      });
       toast({
         title: "Offer Cancelled",
         description: "You have successfully cancelled this offer.",
@@ -166,8 +179,7 @@ export default function OfferCard({
         variant: "destructive",
       });
       
-      // Refresh data to show current state
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      // No need to refresh - Firestore listeners will update the cache automatically
     },
   });
 
