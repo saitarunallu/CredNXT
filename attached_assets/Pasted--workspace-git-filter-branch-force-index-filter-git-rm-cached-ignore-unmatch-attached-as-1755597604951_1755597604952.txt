@@ -1,0 +1,149 @@
+~/workspace$ git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch "attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt"' --prune-empty --tag-name-filter cat -- --all
+WARNING: git-filter-branch has a glut of gotchas generating mangled history
+     rewrites.  Hit Ctrl-C before proceeding to abort, then use an
+     alternative filtering tool such as 'git filter-repo'
+     (https://github.com/newren/git-filter-repo/) instead.  See the
+     filter-branch manual page for more details; to squelch this warning,
+     set FILTER_BRANCH_SQUELCH_WARNING=1.
+Proceeding with filter-branch...
+
+Rewrite 60f99cfab77131544cde1e497d01c55f6e05ceb2 (226/290) (23 seconds passed, remaining 6 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 85d0c375233d7567259a31f76fadbaa13f27b3a9 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite e09353f1a056a6042491f813d73781791f217801 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite ccc9f44813116538f6a901aa42a2de3eb312bc20 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 1da1aea450cafcbc5534c15ba37d3c35e262d6ac (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite f7071acbf487f082ae553bfbae6ad4daec885062 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 4ef5da497d977f7c828a40078d98705c37154574 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite b86f7e09af264e52b53b8c01ea780340f28308ac (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 0e2be8527e1ba55c0bb9b3843e19a9e8ccc1c170 (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite b06287eafe6bef79982519ea2ee2145a5083ebbc (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 0efa962de0057d479355208cfd28b8abbe51753c (236/290) (24 seconds passed, remaining 5 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite c252bbf3b2d3b7fd908c886c2b04790e1371f868 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 3f3d6c349be933d4d370f36ba6467b6eee5db5ea (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 6487277106992f2d8fc0e11d52fbb8f1c12439f0 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite c0c1ccaad128430f8488707f45a52ff7ce0dbdbf (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 05dacb7c9bc29b4c551b4526b4727f834720e2dd (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite d46e67ddadf7ecd7a9febf01ad606404e63bce01 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 402dc9687c72d6ba607453c1e0b76f02859edcd6 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 64631d6c0797072dd881289d8702cfc866ad9990 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 29813a6cc00af21b70f119f156c435e92653d49f (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 5101bbb3c8856e8adaa3dee8a20ed54cfa44a208 (246/290) (25 seconds passed, remaining 4 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite eb41e4b81a44ed335e347cc4712273f2abeb5380 (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 377f33cb8bc26bd67dbdfc88f4cf6d350fbbb73d (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 4f596e0d96f3ec796928e972a727855bbf9108ae (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 397e9faf4520a29b3e34af601d40770d8c874b41 (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite cd66c93c2db33353dc40cc37476a2109eb6a4dbf (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 76f71f913553be156976d677f154eaf26aaf4389 (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 5005f4b6e445078641a9503ce09a7ba21687f6e3 (256/290) (26 seconds passed, remaining 3 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite a4af8cb9a52b56d44046a26bb9abd2f1be0e7550 (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite fbfda642e5c8b82bcab6341a27e3848baf290b5e (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 6d6ee8510d8e476d406c464eefb08e4bc85c635b (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 6baa15849f4a2a3e9d169b128c0f74696bb4b278 (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite f46163366ee720ea474bba1cedeb3795fba70877 (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 9d4153c30bea1ceb6c227030be426f1f8a6661ab (266/290) (27 seconds passed, remaining 2 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite e9e2fd8e3637bb03eb8536a60f98cfe15f961023 (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite eafa2fc54f76e0b8faf92a86e1042e6c4d17eb11 (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 3e58dbb858375abcfb80e6d2e7918c9bb8ae8de1 (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 81b882c61dff1ec678791a3e22e79afa3997d7da (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite ab70bd43b64c0ed1085413668b795457c5d7e49b (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite a0379ad490420a61d1fa0d28da4e6495f35cabeb (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite cd123c5eefe032a63ae0c66ec74a152c9462ab93 (276/290) (27 seconds passed, remaining 1 predicted)    rm 'attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755587333224_1755587333242.txt'
+Rewrite 5dbae8e975d6347bceb1cf1f446f7fa6dbca4771 (287/290) (28 seconds passed, remaining 0 predicted)    
+Ref 'refs/heads/backup-before-merge-20250819-082926' was rewritten
+Ref 'refs/heads/main' was rewritten
+Ref 'refs/heads/replit-agent' was rewritten
+Ref 'refs/remotes/origin/main' was rewritten
+WARNING: Ref 'refs/remotes/origin/main' is unchanged
+Ref 'refs/replit/agent-ledger' was rewritten
+~/workspace$ git push origin --force --all
+Enumerating objects: 1357, done.
+Counting objects: 100% (1357/1357), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (1222/1222), done.
+Writing objects: 100% (1287/1287), 2.91 MiB | 4.21 MiB/s, done.
+Total 1287 (delta 780), reused 75 (delta 50), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (780/780), completed with 54 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/saitarunallu/CredNXT/settings/security_analysis
+remote:     
+remote:     
+remote:       —— Google Cloud Service Account Credentials ——————————
+remote:        locations:
+remote:          - commit: d6c9c3b43d714dec05efb26d45140bf5f09ebe00
+remote:            path: attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755592901519_1755592901520.txt:11
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/saitarunallu/CredNXT/security/secret-scanning/unblock-secret/31UxdBvLXWzCLJpSo90ii6ikWy0
+remote:     
+remote: 
+remote: 
+remote: error: GH013: Repository rule violations found for refs/heads/backup-before-merge-20250819-082926.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/saitarunallu/CredNXT/settings/security_analysis
+remote:     
+remote:     
+remote:       —— Google Cloud Service Account Credentials ——————————
+remote:        locations:
+remote:          - commit: d6c9c3b43d714dec05efb26d45140bf5f09ebe00
+remote:            path: attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755592901519_1755592901520.txt:11
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/saitarunallu/CredNXT/security/secret-scanning/unblock-secret/31UxdBvLXWzCLJpSo90ii6ikWy0
+remote:     
+remote: 
+remote: 
+remote: error: GH013: Repository rule violations found for refs/heads/replit-agent.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/saitarunallu/CredNXT/settings/security_analysis
+remote:     
+remote:     
+remote:       —— Google Cloud Service Account Credentials ——————————
+remote:        locations:
+remote:          - commit: d6c9c3b43d714dec05efb26d45140bf5f09ebe00
+remote:            path: attached_assets/Pasted--FIREBASE-CLIENT-EMAIL-firebase-adminsdk-fbsvc-crednxt-ef673-iam-gserviceaccount-com-F-1755592901519_1755592901520.txt:11
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/saitarunallu/CredNXT/security/secret-scanning/unblock-secret/31UxdBvLXWzCLJpSo90ii6ikWy0
+remote:     
+remote: 
+remote: 
+To https://github.com/saitarunallu/CredNXT
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+ ! [remote rejected] backup-before-merge-20250819-082926 -> backup-before-merge-20250819-082926 (push declined due to repository rule violations)
+ ! [remote rejected] replit-agent -> replit-agent (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/saitarunallu/CredNXT'
+~/workspace$ 
