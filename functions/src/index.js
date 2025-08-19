@@ -163,7 +163,7 @@ app.get('/offers', authenticate, async (req, res) => {
   }
 });
 
-// Update offer status (accept/decline)
+// Update offer status (accept/decline/cancel)
 app.patch('/offers/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
@@ -179,9 +179,19 @@ app.patch('/offers/:id', authenticate, async (req, res) => {
     
     const offerData = offerDoc.data();
     
-    // Only the recipient can accept/decline
-    if (offerData.toUserId !== currentUserId) {
-      return res.status(403).json({ message: 'Unauthorized to update this offer' });
+    // Authorization check based on action
+    if (status === 'accepted' || status === 'declined') {
+      // Only the recipient can accept/decline
+      if (offerData.toUserId !== currentUserId) {
+        return res.status(403).json({ message: 'Only offer recipient can accept/decline' });
+      }
+    } else if (status === 'cancelled') {
+      // Only the sender can cancel
+      if (offerData.fromUserId !== currentUserId) {
+        return res.status(403).json({ message: 'Only offer sender can cancel' });
+      }
+    } else {
+      return res.status(400).json({ message: 'Invalid status' });
     }
     
     await offerDoc.ref.update({
