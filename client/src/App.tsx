@@ -84,12 +84,6 @@ function Router() {
           console.log('🔍 Hostname includes firebaseapp.com?', window.location.hostname.includes('firebaseapp.com'));
           console.log('🔍 Hostname includes web.app?', window.location.hostname.includes('web.app'));
           
-          // TEMPORARY FIX: Use SimpleOfferView for crednxt.com domain to debug the issue
-          if (window.location.hostname === 'crednxt.com') {
-            console.log('🧪 Using SimpleOfferView for crednxt.com debugging');
-            return <SimpleOfferView />;
-          }
-          
           if (isProduction) {
             console.log('🔥 Production environment detected, bypassing AuthGuard');
             // In production, ViewOffer handles its own auth via direct Firestore
