@@ -37,6 +37,53 @@ interface ViewOfferProps {
   offerId: string;
 }
 
+// Helper function to format Firebase timestamps (moved outside components for reusability)
+const formatFirebaseDate = (timestamp: any): string => {
+  if (!timestamp || timestamp === null || timestamp === undefined) return 'N/A';
+  
+  try {
+    let date: Date;
+    
+    // Handle Firebase Timestamp objects with _seconds
+    if (timestamp && typeof timestamp === 'object' && timestamp._seconds !== undefined && timestamp._seconds !== null) {
+      date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+    }
+    // Handle Firestore toDate() method
+    else if (timestamp && timestamp.toDate && typeof timestamp.toDate === 'function') {
+      date = timestamp.toDate();
+    }
+    // Handle Date objects
+    else if (timestamp instanceof Date) {
+      date = timestamp;
+    }
+    // Handle ISO strings and epoch timestamps
+    else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      date = new Date(timestamp);
+    }
+    // Fallback for any other format
+    else {
+      console.warn('Unexpected timestamp format:', typeof timestamp, timestamp);
+      return 'N/A';
+    }
+    
+    // Validate the date
+    if (!date || isNaN(date.getTime())) {
+      console.warn('Invalid date detected:', timestamp);
+      return 'N/A';
+    }
+    
+    return date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    
+  } catch (error) {
+    console.error('Date formatting error:', error, 'for timestamp:', timestamp);
+    return 'N/A';
+  }
+};
+
 // Production fallback component with direct Firestore access
 function ProductionFallbackView({ offerId, setLocation }: { offerId: string, setLocation: Function }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -101,8 +148,8 @@ function ProductionFallbackView({ offerId, setLocation }: { offerId: string, set
               setOfferData({
                 offer: {
                   ...offer,
-                  startDate: offer.startDate?.toDate?.() || new Date(offer.startDate?._seconds * 1000) || new Date(),
-                  dueDate: offer.dueDate?.toDate?.() || new Date(offer.dueDate?._seconds * 1000) || new Date(),
+                  startDate: offer.startDate?.toDate?.() || (offer.startDate?._seconds ? new Date(offer.startDate._seconds * 1000) : new Date()),
+                  dueDate: offer.dueDate?.toDate?.() || (offer.dueDate?._seconds ? new Date(offer.dueDate._seconds * 1000) : new Date()),
                   nextPaymentDueDate: offer.nextPaymentDueDate?.toDate?.() || new Date()
                 },
                 fromUser,
@@ -304,7 +351,7 @@ function ProductionFallbackView({ offerId, setLocation }: { offerId: string, set
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Due Date</p>
                     <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      {offer.dueDate ? new Date(offer.dueDate?.toDate?.() || offer.dueDate?._seconds * 1000 || offer.dueDate).toLocaleDateString('en-IN') : 'N/A'}
+                      {formatFirebaseDate(offer.dueDate)}
                     </p>
                   </div>
                 </div>
@@ -356,53 +403,6 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
   const [closeLoanReason, setCloseLoanReason] = useState("");
 
   const currentUser = authService.getUser();
-
-  // Helper function to format Firebase timestamps
-  const formatFirebaseDate = (timestamp: any): string => {
-    if (!timestamp) return 'N/A';
-    
-    try {
-      let date: Date;
-      
-      // Handle Firebase Timestamp objects with _seconds
-      if (timestamp._seconds !== undefined) {
-        date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
-      }
-      // Handle Firestore toDate() method
-      else if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        date = timestamp.toDate();
-      }
-      // Handle Date objects
-      else if (timestamp instanceof Date) {
-        date = timestamp;
-      }
-      // Handle ISO strings and epoch timestamps
-      else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-        date = new Date(timestamp);
-      }
-      // Fallback - try to convert whatever it is
-      else {
-        console.warn('Unexpected timestamp format:', typeof timestamp, timestamp);
-        date = new Date(timestamp);
-      }
-      
-      // Validate the date
-      if (isNaN(date.getTime())) {
-        console.warn('Invalid date detected:', timestamp);
-        return 'Invalid Date';
-      }
-      
-      return date.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-      
-    } catch (error) {
-      console.error('Date formatting error:', error, 'for timestamp:', timestamp);
-      return 'Invalid Date';
-    }
-  };
 
   console.log('🔍 ViewOffer - Environment:', window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'crednxt.com' ? 'production' : 'development');
   console.log('🔍 ViewOffer - Offer ID:', offerId);
@@ -1735,7 +1735,17 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Due Date</span>
-                    <span className={new Date(offer.dueDate._seconds ? offer.dueDate._seconds * 1000 : offer.dueDate) < new Date() ? 'text-red-600 font-semibold' : ''}>
+                    <span className={(() => {
+                      try {
+                        const dueDate = offer.dueDate?._seconds ? 
+                          new Date(offer.dueDate._seconds * 1000) : 
+                          offer.dueDate?.toDate ? offer.dueDate.toDate() : 
+                          offer.dueDate ? new Date(offer.dueDate) : null;
+                        return dueDate && dueDate < new Date() ? 'text-red-600 font-semibold' : '';
+                      } catch {
+                        return '';
+                      }
+                    })()}>
                       {formatFirebaseDate(offer.dueDate)}
                     </span>
                   </div>
