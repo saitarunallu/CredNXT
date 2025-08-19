@@ -13,25 +13,6 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 
 **Date: August 19, 2025**
 
-### 📊 Total Lending Calculation Fix (DEPLOYED)
-- **Issue Fixed**: Updated "Total Lending" calculations to only include accepted offers
-- **Dashboard**: Modified calculation logic to filter by `status === 'accepted'`  
-- **Analytics**: Implemented same filtering logic with corrected imports
-- **Logic Updated**: 
-  - Sent 'lend' offers: Only count when accepted
-  - Received 'borrow' offers: Only count when accepted (user is the lender)
-- **Production**: Successfully deployed to https://crednxt-ef673.web.app
-- **Impact**: Total Lending now accurately reflects only active lending amounts
-
-### 🔧 Offers Display Fix (DEPLOYED)
-- **Issue Fixed**: Resolved offers not being fetched/displayed in Dashboard and Offers pages
-- **Standardized Fetching**: Both pages now use consistent firebaseBackend.getOffers() method
-- **Simplified Logic**: Removed complex fallback queries causing inconsistencies
-- **TypeScript Fixes**: Resolved import errors and type issues in offers components
-- **Consistent Data**: Dashboard and Offers page now display same accurate offer data
-- **Production**: Successfully deployed to https://crednxt-ef673.web.app
-- **Impact**: Users can now properly view all their offers across both pages
-
 ### 🚀 Production Deployment (COMPLETED)
 - **Firebase Hosting**: Successfully deployed to https://crednxt-ef673.web.app
 - **Firebase Functions**: Backend API deployed to https://api-mzz6re522q-uc.a.run.app

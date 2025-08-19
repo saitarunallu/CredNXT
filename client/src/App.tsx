@@ -13,7 +13,7 @@ import CompleteProfile from "@/pages/auth/complete-profile";
 import Dashboard from "@/pages/dashboard";
 
 import OffersPage from "@/pages/offers";
-import CreateNewOffer from "@/pages/offers/create-new";
+import CreateOffer from "@/pages/offers/create";
 import ViewOffer from "@/pages/offers/view";
 import TestOffersPage from "@/pages/test-offers";
 import Analytics from "@/pages/analytics";
@@ -59,7 +59,7 @@ function Router() {
       
       <Route path="/offers/create">
         <AuthGuard>
-          <CreateNewOffer />
+          <CreateOffer />
         </AuthGuard>
       </Route>
       

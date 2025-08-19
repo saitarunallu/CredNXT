@@ -244,48 +244,26 @@ export class FirebaseBackendService {
       );
       
       // Also search by phone number for offers sent to this user's phone
-      // Handle both formats: with + and without +
-      const phoneQueries = [];
-      if (currentUserData?.phone) {
-        const phoneWithPlus = currentUserData.phone;
-        const phoneWithoutPlus = currentUserData.phone.startsWith('+') 
-          ? currentUserData.phone.substring(1) 
-          : currentUserData.phone;
-        
-        // Query for phone with + prefix
-        phoneQueries.push(query(
-          collection(db, 'offers'),
-          where('toUserPhone', '==', phoneWithPlus)
-        ));
-        
-        // Query for phone without + prefix (if different)
-        if (phoneWithPlus !== phoneWithoutPlus) {
-          phoneQueries.push(query(
-            collection(db, 'offers'),
-            where('toUserPhone', '==', phoneWithoutPlus)
-          ));
-        }
-      }
+      const phoneQuery = currentUserData?.phone ? query(
+        collection(db, 'offers'),
+        where('toUserPhone', '==', currentUserData.phone)
+      ) : null;
 
       const queryPromises = [
         getDocs(sentQuery),
-        getDocs(receivedQuery),
-        ...phoneQueries.map(phoneQuery => getDocs(phoneQuery))
+        getDocs(receivedQuery)
       ];
+      
+      if (phoneQuery) {
+        queryPromises.push(getDocs(phoneQuery));
+      }
 
       const snapshots = await Promise.all(queryPromises);
-      const [sentSnapshot, receivedSnapshot, ...phoneSnapshots] = snapshots;
+      const [sentSnapshot, receivedSnapshot, phoneSnapshot] = snapshots;
 
       const sentOffers = sentSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
       const receivedOffers = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) }));
-      
-      // Combine all phone offer snapshots
-      const phoneOffers = [];
-      phoneSnapshots.forEach(snapshot => {
-        if (snapshot) {
-          phoneOffers.push(...snapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })));
-        }
-      });
+      const phoneOffers = phoneSnapshot ? phoneSnapshot.docs.map(doc => ({ id: doc.id, ...normalizeFirestoreData(doc.data()) })) : [];
       
       // Filter out duplicates (offers found both by userId and phone)
       const receivedOfferIds = new Set(receivedOffers.map(offer => offer.id));
@@ -401,30 +379,9 @@ export class FirebaseBackendService {
 
   async createOffer(offerData: any): Promise<any> {
     try {
-      // Transform the new schema to backend format
-      const backendData = {
-        fromUserId: offerData.senderUserId,
-        toUserPhone: offerData.recipientPhoneNumber,
-        toUserName: offerData.recipientName,
-        toUserId: offerData.recipientUserId === "pending" ? null : offerData.recipientUserId,
-        offerType: offerData.offerType,
-        amount: offerData.amount,
-        interestRate: offerData.interestRate,
-        interestType: offerData.interestType,
-        tenureValue: offerData.tenure,
-        tenureUnit: offerData.tenureUnit,
-        repaymentType: offerData.repaymentType,
-        repaymentFrequency: offerData.repaymentFrequency,
-        allowPartPayment: offerData.allowPartialPayments || false,
-        purpose: offerData.purpose,
-        note: offerData.collateral,
-        startDate: offerData.startDate,
-        status: offerData.status || 'pending'
-      };
-
       const response = await makeAuthenticatedRequest(`${getApiBaseUrl()}/offers`, {
         method: 'POST',
-        body: JSON.stringify(backendData)
+        body: JSON.stringify(offerData)
       });
       
       if (response.ok) {
@@ -442,43 +399,22 @@ export class FirebaseBackendService {
         if (!user) throw new Error('Not authenticated');
 
         // Calculate due date
-        const startDate = new Date(offerData.startDate || new Date());
-        const dueDate = new Date(startDate);
-        
-        const tenureNum = Number(offerData.tenure);
-        switch (offerData.tenureUnit) {
-          case 'days':
-            dueDate.setDate(startDate.getDate() + tenureNum);
-            break;
-          case 'months':
-            dueDate.setMonth(startDate.getMonth() + tenureNum);
-            break;
-          case 'years':
-            dueDate.setFullYear(startDate.getFullYear() + tenureNum);
-            break;
+        const dueDate = new Date();
+        if (offerData.tenureUnit === 'days') {
+          dueDate.setDate(dueDate.getDate() + offerData.tenure);
+        } else if (offerData.tenureUnit === 'months') {
+          dueDate.setMonth(dueDate.getMonth() + offerData.tenure);
+        } else if (offerData.tenureUnit === 'years') {
+          dueDate.setFullYear(dueDate.getFullYear() + offerData.tenure);
         }
 
         const firestoreData = {
+          ...offerData,
           fromUserId: user.uid,
-          toUserPhone: offerData.recipientPhoneNumber,
-          toUserName: offerData.recipientName,
-          toUserId: offerData.recipientUserId === "pending" ? null : offerData.recipientUserId,
-          offerType: offerData.offerType,
-          amount: Number(offerData.amount),
-          interestRate: Number(offerData.interestRate),
-          interestType: offerData.interestType,
-          tenureValue: Number(offerData.tenure),
-          tenureUnit: offerData.tenureUnit,
-          repaymentType: offerData.repaymentType,
-          repaymentFrequency: offerData.repaymentFrequency,
-          allowPartPayment: offerData.allowPartialPayments || false,
-          purpose: offerData.purpose,
-          note: offerData.collateral,
-          startDate: Timestamp.fromDate(startDate),
-          dueDate: Timestamp.fromDate(dueDate),
           status: 'pending',
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
+          dueDate: Timestamp.fromDate(dueDate)
         };
 
         const offerRef = await addDoc(collection(db, 'offers'), firestoreData);

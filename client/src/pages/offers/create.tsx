@@ -34,68 +34,15 @@ export default function CreateOffer() {
   // Debug current user data
   console.log('Current user data:', currentUser);
 
-  // Helper function to normalize phone numbers to +91 format
-  const normalizePhoneToE164 = (phone: string): string => {
-    // Remove all non-digits
+  // Helper function to normalize phone numbers for comparison
+  const normalizePhone = (phone: string) => {
+    // Remove all non-digits and strip country code if present
     const cleaned = phone.replace(/\D/g, '');
-    
-    // If already has 91 prefix and correct length
+    // If starts with 91 (India country code), remove it
     if (cleaned.startsWith('91') && cleaned.length === 12) {
-      return `+${cleaned}`;
+      return cleaned.substring(2);
     }
-    
-    // If it's 10 digits (Indian mobile number)
-    if (cleaned.length === 10 && /^[6-9]/.test(cleaned)) {
-      return `+91${cleaned}`;
-    }
-    
-    // Return as-is with + if it looks valid
-    return cleaned.length >= 10 ? `+${cleaned}` : phone;
-  };
-
-  // Check if recipient exists in database and get their details
-  const checkRecipientDetails = async (phone: string) => {
-    try {
-      setIsCheckingContact(true);
-      setPhoneError("");
-      
-      const normalizedPhone = normalizePhoneToE164(phone);
-      
-      // Validate phone format
-      if (!normalizedPhone.match(/^\+91[6-9]\d{9}$/)) {
-        setPhoneError("Please enter a valid Indian mobile number");
-        setIsContactFound(false);
-        return;
-      }
-      
-      // Check if this is the current user's phone
-      if (normalizedPhone === currentUser?.phone) {
-        setPhoneError("You cannot create an offer for yourself");
-        setIsContactFound(false);
-        return;
-      }
-      
-      // Use existing firebaseBackend method to check phone
-      const userData = await firebaseBackend.checkPhone(normalizedPhone);
-      
-      if (userData.exists && userData.user) {
-        setContactName(userData.user.name || "Unknown User");
-        setIsContactFound(true);
-        setValue("recipientName", userData.user.name || "Unknown User");
-        setValue("recipientUserId", userData.user.id || "pending");
-      } else {
-        setIsContactFound(false);
-        setValue("recipientUserId", "pending");
-      }
-      
-      setValue("recipientPhoneNumber", normalizedPhone);
-    } catch (error) {
-      console.error('Error checking recipient:', error);
-      setPhoneError("Error checking recipient. Please try again.");
-      setIsContactFound(false);
-    } finally {
-      setIsCheckingContact(false);
-    }
+    return cleaned;
   };
   const [offerType, setOfferType] = useState("");
   const [interestType, setInterestType] = useState("");
@@ -114,30 +61,14 @@ export default function CreateOffer() {
     handleSubmit,
     formState: { errors },
     watch,
-    setValue,
-    reset
-  } = useForm<InsertOffer>({
-    resolver: zodResolver(insertOfferSchema),
+    setValue
+  } = useForm({
     defaultValues: {
-      senderUserId: currentUser?.id || "",
-      senderName: currentUser?.name || "",
-      senderPhone: currentUser?.phone || "",
-      recipientPhoneNumber: "",
-      recipientName: "",
-      recipientUserId: "pending",
-      offerType: undefined,
-      amount: 0,
-      interestType: undefined,
-      interestRate: 0,
-      tenure: 0,
-      tenureUnit: undefined,
-      repaymentType: undefined,
-      repaymentFrequency: undefined,
-      startDate: startDate,
+      amount: "",
+      interestRate: "",
+      tenure: "",
       purpose: "",
-      collateral: "",
-      allowPartialPayments: false,
-      status: "pending"
+      collateral: ""
     }
   });
 
@@ -222,8 +153,8 @@ export default function CreateOffer() {
 
     // Check if user is trying to enter their own phone number
     if (currentUser?.phone) {
-      const currentUserPhone = normalizePhoneToE164(currentUser.phone).replace(/\D/g, '');
-      const enteredPhone = normalizePhoneToE164(phoneNumber).replace(/\D/g, '');
+      const currentUserPhone = normalizePhone(currentUser.phone);
+      const enteredPhone = normalizePhone(phoneNumber);
       
       console.log('Phone validation:', {
         currentUserPhone,
@@ -297,24 +228,7 @@ export default function CreateOffer() {
     }
   });
 
-  const onSubmit = (data: InsertOffer) => {
-    console.log('Form submission data:', data);
-    
-    // Ensure sender details are populated
-    const offerData: InsertOffer = {
-      ...data,
-      senderUserId: currentUser?.id || "",
-      senderName: currentUser?.name || "",
-      senderPhone: currentUser?.phone || "",
-      status: "pending"
-    };
-    
-    console.log('Final offer data:', offerData);
-    createOfferMutation.mutate(offerData);
-  };
-
-  // Legacy contact checking for backward compatibility
-  const onSubmitLegacy = (data: any) => {
+  const onSubmit = (data: any) => {
     // Validate contact information
     if (phoneError) {
       toast({
