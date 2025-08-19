@@ -236,7 +236,12 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
     
     // Generate PDF content - add ID to offer data
     const offerWithId = { ...offerData, id };
+    console.log('🔄 Generating contract PDF for offer:', id);
+    console.log('📊 Offer data keys:', Object.keys(offerWithId));
+    console.log('👤 FromUser data:', fromUser ? Object.keys(fromUser) : 'null');
+    
     const pdfContent = await generateContractPDF(offerWithId, fromUser);
+    console.log('✅ Contract PDF generated successfully, size:', pdfContent.length, 'bytes');
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="contract-${id}.pdf"`);
@@ -364,8 +369,9 @@ function generateContractPDF(offerData, fromUser) {
       doc.fontSize(12)
         .text(`Loan Amount: ₹${offerData.amount}`)
         .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-        .text(`Duration: ${offerData.duration} ${offerData.durationUnit}`)
-        .text(`Repayment Frequency: ${offerData.frequency}`);
+        .text(`Duration: ${offerData.duration || offerData.tenureValue || 'N/A'} ${offerData.durationUnit || offerData.tenureUnit || ''}`)
+        .text(`Repayment Type: ${offerData.repaymentType || 'N/A'}`)
+        .text(`Purpose: ${offerData.purpose || 'N/A'}`);
       
       doc.moveDown(2);
       
@@ -426,8 +432,9 @@ function generateKFSPDF(offerData) {
       doc.fontSize(12)
         .text(`Loan Amount: ₹${offerData.amount}`)
         .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-        .text(`Loan Duration: ${offerData.duration} ${offerData.durationUnit}`)
-        .text(`Repayment Frequency: ${offerData.frequency}`);
+        .text(`Loan Duration: ${offerData.duration || offerData.tenureValue || 'N/A'} ${offerData.durationUnit || offerData.tenureUnit || ''}`)
+        .text(`Repayment Type: ${offerData.repaymentType || 'N/A'}`)
+        .text(`Purpose: ${offerData.purpose || 'N/A'}`);
       
       doc.moveDown(2);
       
@@ -486,7 +493,8 @@ function generateSchedulePDF(offerData, payments) {
       doc.fontSize(12)
         .text(`Loan Amount: ₹${offerData.amount}`)
         .text(`Interest Rate: ${offerData.interestRate}% per annum`)
-        .text(`Duration: ${offerData.duration} ${offerData.durationUnit}`);
+        .text(`Duration: ${offerData.duration || offerData.tenureValue || 'N/A'} ${offerData.durationUnit || offerData.tenureUnit || ''}`)
+        .text(`Repayment Type: ${offerData.repaymentType || 'N/A'}`);
       
       doc.moveDown(2);
       
@@ -538,9 +546,10 @@ function generateSchedulePDF(offerData, payments) {
 function calculateTotalInterest(offerData) {
   const principal = parseFloat(offerData.amount);
   const rate = parseFloat(offerData.interestRate) / 100;
-  const duration = parseFloat(offerData.duration);
+  const duration = parseFloat(offerData.duration || offerData.tenureValue || 12);
+  const durationUnit = offerData.durationUnit || offerData.tenureUnit || 'months';
   
-  if (offerData.durationUnit === 'months') {
+  if (durationUnit === 'months') {
     return Math.round(principal * rate * (duration / 12));
   } else {
     return Math.round(principal * rate * duration);
@@ -555,13 +564,15 @@ function calculateTotalRepayment(offerData) {
 
 function calculateEMI(offerData) {
   const totalRepayment = calculateTotalRepayment(offerData);
-  const duration = parseFloat(offerData.duration);
+  const duration = parseFloat(offerData.duration || offerData.tenureValue || 12);
+  const durationUnit = offerData.durationUnit || offerData.tenureUnit || 'months';
+  const frequency = offerData.frequency || offerData.repaymentFrequency || 'monthly';
   
-  if (offerData.frequency === 'monthly') {
-    const months = offerData.durationUnit === 'months' ? duration : duration * 12;
+  if (frequency === 'monthly') {
+    const months = durationUnit === 'months' ? duration : duration * 12;
     return Math.round(totalRepayment / months);
-  } else if (offerData.frequency === 'weekly') {
-    const weeks = offerData.durationUnit === 'months' ? duration * 4 : duration * 52;
+  } else if (frequency === 'weekly') {
+    const weeks = durationUnit === 'months' ? duration * 4 : duration * 52;
     return Math.round(totalRepayment / weeks);
   } else {
     return totalRepayment;

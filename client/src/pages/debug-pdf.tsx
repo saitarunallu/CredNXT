@@ -5,13 +5,96 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '../lib/firebase-config';
 
 export default function DebugPDF() {
-  const [offerId, setOfferId] = useState('');
+  const [offerId, setOfferId] = useState('CMvmI8IcUbXme78luUAl'); // Default test ID
   const [logs, setLogs] = useState<string[]>([]);
   const [testing, setTesting] = useState(false);
 
   const addLog = (message: string) => {
     console.log(message);
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
+
+  const testAllPDFs = async () => {
+    if (!offerId.trim()) {
+      addLog('❌ Please enter an offer ID');
+      return;
+    }
+
+    setTesting(true);
+    setLogs([]);
+
+    try {
+      const user = auth?.currentUser;
+      if (!user) {
+        addLog('❌ No authenticated user found');
+        setTesting(false);
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const hostname = window.location.hostname;
+      const isProduction = hostname.includes('firebaseapp.com') || 
+                          hostname.includes('web.app') || 
+                          hostname.includes('crednxt-ef673') ||
+                          hostname.includes('crednxt.com');
+      
+      const baseUrl = isProduction 
+        ? 'https://api-mzz6re522q-uc.a.run.app'
+        : `${window.location.origin}/api`;
+
+      // Test all PDF types
+      const pdfTypes = ['contract', 'kfs', 'schedule'];
+      
+      for (const pdfType of pdfTypes) {
+        addLog(`\n🔍 Testing ${pdfType.toUpperCase()} PDF...`);
+        
+        try {
+          const url = `${baseUrl}/offers/${offerId}/pdf/${pdfType}`;
+          addLog(`🔗 URL: ${url}`);
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/pdf'
+            }
+          });
+
+          addLog(`📊 ${pdfType} Response: ${response.status}`);
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            addLog(`✅ ${pdfType} PDF: ${blob.size} bytes`);
+            
+            // Download the PDF
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `${pdfType}-${offerId}.pdf`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+            
+          } else {
+            const errorText = await response.text();
+            addLog(`❌ ${pdfType} Error: ${errorText}`);
+          }
+        } catch (error: any) {
+          addLog(`💥 ${pdfType} Exception: ${error.message}`);
+        }
+        
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      addLog('\n🎉 All PDF tests completed!');
+    } catch (error: any) {
+      addLog(`💥 General Error: ${error.message}`);
+    } finally {
+      setTesting(false);
+    }
   };
 
   const testPDFDownload = async () => {
@@ -116,20 +199,30 @@ export default function DebugPDF() {
           <CardTitle>PDF Download Debug Tool</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <Input
               placeholder="Enter Offer ID to test"
               value={offerId}
               onChange={(e) => setOfferId(e.target.value)}
-              className="flex-1"
+              className="w-full"
             />
-            <Button 
-              onClick={testPDFDownload} 
-              disabled={testing}
-              className="whitespace-nowrap"
-            >
-              {testing ? 'Testing...' : 'Test PDF Download'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={testPDFDownload} 
+                disabled={testing}
+                className="flex-1"
+              >
+                {testing ? 'Testing...' : 'Test Contract PDF'}
+              </Button>
+              <Button 
+                onClick={testAllPDFs} 
+                disabled={testing}
+                variant="outline"
+                className="flex-1"
+              >
+                {testing ? 'Testing...' : 'Test All PDFs'}
+              </Button>
+            </div>
           </div>
           
           {logs.length > 0 && (
