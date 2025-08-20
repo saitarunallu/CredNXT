@@ -23,8 +23,9 @@ function getApiUrl(path: string): string {
                       hostname.includes('crednxt.com');
   
   if (isProduction) {
-    // Use Firebase Functions for production API (same origin as hosting)
-    return path;
+    // Use direct Firebase Functions URL for production
+    const functionUrl = 'https://api-mzz6re522q-uc.a.run.app';
+    return `${functionUrl}${path}`;
   }
   
   // For development, use relative path
