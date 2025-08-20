@@ -2282,25 +2282,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type = 'test', priority = 'medium', title, message } = req.body;
       
-      const notificationData = {
+      console.log('📬 Demo notification request:', { userId: req.userId, title, message, type, priority });
+      
+      // Create notification directly via storage for testing
+      const notification = await storage.createNotification({
         userId: req.userId!,
-        type,
-        priority,
+        type: type as any,
+        priority: priority as any,
         title: title || 'Test Notification',
         message: message || 'This is a demo notification to test real-time updates via onSnapshot',
+        isRead: false,
         metadata: { demo: true, timestamp: new Date().toISOString() }
-      };
+      });
       
-      const notificationId = await advancedNotificationService.createSmartNotification(notificationData);
+      console.log('📬 Demo notification created:', notification.id);
       
       res.json({ 
         success: true, 
-        notificationId,
+        notificationId: notification.id,
         message: 'Demo notification created successfully'
       });
     } catch (error) {
       console.error('Demo notification error:', error);
-      res.status(500).json({ message: 'Failed to create demo notification' });
+      res.status(500).json({ message: 'Failed to create demo notification', error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

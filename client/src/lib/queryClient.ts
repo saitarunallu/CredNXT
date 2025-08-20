@@ -23,17 +23,8 @@ function getApiUrl(path: string): string {
                       hostname.includes('crednxt.com');
   
   if (isProduction) {
-    // Dynamic Firebase Functions URL generation based on project
-    const projectId = 'crednxt-ef673';
-    const region = 'us-central1';
-    const functionName = 'api';
-    
-    // Clean path - remove /api prefix for functions
-    const cleanPath = path.startsWith('/api') ? path.substring(4) : path;
-    
-    // Generate the correct Cloud Run URL format
-    const functionUrl = `https://${functionName}-mzz6re522q-uc.a.run.app`;
-    return `${functionUrl}${cleanPath}`;
+    // Use Firebase Functions for production API (same origin as hosting)
+    return path;
   }
   
   // For development, use relative path
