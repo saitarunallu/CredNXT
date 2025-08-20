@@ -1151,7 +1151,7 @@ export default function ViewOffer({ offerId }: ViewOfferProps) {
                       {offer.repaymentType === 'emi' ? 'Equal Monthly Installments (EMI)' :
                        offer.repaymentType === 'full_payment' ? 'Lump Sum Payment' :
                        offer.repaymentType === 'interest_only' ? 'Interest Only Payments' :
-                       offer.repaymentType.replace('_', ' ').toUpperCase()}
+                       (offer.repaymentType || 'N/A').replace('_', ' ').toUpperCase()}
                     </div>
                   </div>
                 </div>

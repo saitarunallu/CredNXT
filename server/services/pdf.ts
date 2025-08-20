@@ -643,7 +643,7 @@ export class PdfService {
         // Row 3
         doc.text(`Tenure: ${(offer as any).tenure || offer.tenureValue || 12} ${offer.tenureUnit}`, col1X, currentY);
         doc.text(`Total Interest: ₹${schedule.totalInterest.toLocaleString()}`, col2X, currentY);
-        doc.text(`Repayment Type: ${offer.repaymentType.replace('_', ' ')}`, col3X, currentY);
+        doc.text(`Repayment Type: ${(offer.repaymentType || 'N/A').replace('_', ' ')}`, col3X, currentY);
         currentY += rowHeight;
 
         // Row 4
