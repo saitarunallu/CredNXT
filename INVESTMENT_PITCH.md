@@ -5,7 +5,7 @@
 **CredNXT** is a production-ready peer-to-peer lending platform that enables secure financial agreements between trusted contacts. Our MVP demonstrates enterprise-grade technology with proven market validation and scalable architecture.
 
 ### Key Investment Highlights
-- **Production MVP**: Live platform with full feature set at https://crednxt-ef673.web.app
+- **Production MVP**: Live platform with full feature set at https://crednxt.com
 - **Enterprise Security**: Bank-grade security with comprehensive audit compliance
 - **Scalable Technology**: Firebase-powered infrastructure supporting unlimited growth
 - **Market Ready**: Complete document generation, payment processing, and user management
@@ -168,7 +168,7 @@
 ## Contact & Demo
 
 ### Platform Access
-- **Live Demo**: https://crednxt-ef673.web.app
+- **Live Demo**: https://crednxt.com
 - **Technical Documentation**: Comprehensive codebase and security audit
 - **Financial Projections**: Detailed modeling and market analysis available
 

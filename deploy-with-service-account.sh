@@ -66,7 +66,7 @@ echo "🧹 Cleaning up temporary files..."
 rm -f /tmp/firebase-service-account.json
 
 echo "🎉 Firebase deployment completed successfully!"
-echo "🌐 Your application is live at: https://$PROJECT_ID.web.app"
+echo "🌐 Your application is live at: https://crednxt.com"
 echo "📊 Firebase Console: https://console.firebase.google.com/project/$PROJECT_ID"
 echo ""
 echo "💡 Future deployments will use the same FIREBASE_CONFIG_JSON secret automatically"

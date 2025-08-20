@@ -7,7 +7,7 @@
 
 ### 🌐 Live URLs
 
-- **Frontend Application**: [https://crednxt-ef673.web.app](https://crednxt-ef673.web.app)
+- **Frontend Application**: [https://crednxt.com](https://crednxt.com)
 - **Backend API**: [https://api-mzz6re522q-uc.a.run.app](https://api-mzz6re522q-uc.a.run.app)
 - **Firebase Console**: [https://console.firebase.google.com/project/crednxt-ef673/overview](https://console.firebase.google.com/project/crednxt-ef673/overview)
 

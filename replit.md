@@ -30,7 +30,7 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 - **Real-Time Performance**: Instant updates through Firestore listeners without any cache invalidation overhead
 - **Race Condition Prevention**: Added server-side status validation to prevent cancelled offers from being accepted
 - **Direct Cache Management**: Mutations update cache directly instead of triggering expensive re-fetches
-- **Firebase Hosting**: Successfully deployed to https://crednxt-ef673.web.app
+- **Firebase Hosting**: Successfully deployed to https://crednxt.com
 - **Firebase Functions**: Backend API deployed to https://api-mzz6re522q-uc.a.run.app
 - **Production Ready**: All cost-efficient real-time improvements and security fixes are live
 
@@ -144,7 +144,7 @@ A robust peer-to-peer lending platform that enables secure financial agreements 
 ## Deployment Information
 
 ### Production Environment
-- **Frontend URL**: https://crednxt-ef673.web.app
+- **Frontend URL**: https://crednxt.com
 - **Backend API**: https://api-mzz6re522q-uc.a.run.app
 - **Firebase Project**: crednxt-ef673
 - **Deployment Status**: ✅ LIVE

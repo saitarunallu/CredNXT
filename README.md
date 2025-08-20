@@ -8,7 +8,7 @@ A comprehensive peer-to-peer lending platform engineered for enterprise deployme
 
 ## 🌐 Live Application
 
-**Production URL**: [https://crednxt-ef673.web.app](https://crednxt-ef673.web.app)
+**Production URL**: [https://crednxt.com](https://crednxt.com)
 
 **Deployment Status**: ✅ PRODUCTION LIVE (August 19, 2025)
 
@@ -94,7 +94,7 @@ npm run build
 firebase deploy --only hosting,functions --project crednxt-ef673
 ```
 
-**Current Deployment**: ✅ Live at https://crednxt-ef673.web.app
+**Current Deployment**: ✅ Live at https://crednxt.com
 
 **Note**: All deployment methods automatically use the `FIREBASE_CONFIG_JSON` secret for authentication. No manual login required.
 

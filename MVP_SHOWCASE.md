@@ -2,7 +2,7 @@
 
 ## Live Production Platform
 
-**Platform URL**: https://crednxt-ef673.web.app  
+**Platform URL**: https://crednxt.com  
 **API Endpoint**: https://api-mzz6re522q-uc.a.run.app  
 **Status**: Production Ready & Operational  
 **Deployment Date**: August 19, 2025

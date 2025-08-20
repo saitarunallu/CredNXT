@@ -28,4 +28,4 @@ firebase deploy --only hosting,functions --project "$PROJECT_ID"
 # Cleanup
 rm -f /tmp/service-account.json
 
-echo "✅ Deployed to https://$PROJECT_ID.web.app"
+echo "✅ Deployed to https://crednxt.com"
