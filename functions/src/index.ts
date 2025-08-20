@@ -368,8 +368,8 @@ const authenticate = async (req: any, res: any, next: any) => {
 
 // MAIN API ENDPOINTS
 
-// Health checks
-app.get('/health', async (req: any, res: any) => {
+// Health checks with /api prefix
+app.get('/api/health', async (req: any, res: any) => {
   try {
     const startTime = Date.now();
     await db.collection('health').doc('test').get();
@@ -391,7 +391,7 @@ app.get('/health', async (req: any, res: any) => {
   }
 });
 
-app.get('/ready', (req: any, res: any) => {
+app.get('/api/ready', (req: any, res: any) => {
   res.json({
     status: 'ready',
     timestamp: new Date().toISOString(),
@@ -400,7 +400,7 @@ app.get('/ready', (req: any, res: any) => {
 });
 
 // User endpoints
-app.get('/users/check-phone', async (req: any, res: any) => {
+app.get('/api/users/check-phone', async (req: any, res: any) => {
   try {
     const { phone } = req.query;
     
@@ -451,7 +451,7 @@ app.get('/users/check-phone', async (req: any, res: any) => {
   }
 });
 
-app.get('/users/me', authenticate, async (req: any, res: any) => {
+app.get('/api/users/me', authenticate, async (req: any, res: any) => {
   try {
     const userDoc = await db.collection('users').doc(req.userId).get();
     if (!userDoc.exists) {
@@ -475,7 +475,7 @@ app.get('/users/me', authenticate, async (req: any, res: any) => {
 });
 
 // Offer endpoints
-app.get('/offers', authenticate, async (req: any, res: any) => {
+app.get('/api/offers', authenticate, async (req: any, res: any) => {
   try {
     const sentQuery = db.collection('offers').where('fromUserId', '==', req.userId);
     const receivedQuery = db.collection('offers').where('toUserId', '==', req.userId);
@@ -520,7 +520,7 @@ app.get('/offers', authenticate, async (req: any, res: any) => {
   }
 });
 
-app.get('/offers/:id', authenticate, async (req: any, res: any) => {
+app.get('/api/offers/:id', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -565,7 +565,7 @@ app.get('/offers/:id', authenticate, async (req: any, res: any) => {
   }
 });
 
-app.patch('/offers/:id', authenticate, async (req: any, res: any) => {
+app.patch('/api/offers/:id', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -632,7 +632,7 @@ app.patch('/offers/:id', authenticate, async (req: any, res: any) => {
   }
 });
 
-app.post('/offers', authenticate, async (req: any, res: any) => {
+app.post('/api/offers', authenticate, async (req: any, res: any) => {
   try {
     const { toUserPhone, toUserName, amount, interestRate, tenureValue, tenureUnit, purpose, repaymentFrequency } = req.body;
     
@@ -715,7 +715,7 @@ app.post('/offers', authenticate, async (req: any, res: any) => {
 });
 
 // PDF endpoints
-app.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => {
+app.get('/api/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -769,7 +769,7 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req: any, res: any) => 
   }
 });
 
-app.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
+app.get('/api/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -823,7 +823,7 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req: any, res: any) => {
   }
 });
 
-app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => {
+app.get('/api/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => {
   try {
     const { id } = req.params;
     const offerDoc = await db.collection('offers').doc(id).get();
@@ -880,6 +880,125 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req: any, res: any) => 
   } catch (error) {
     console.error('Schedule PDF generation error:', error);
     res.status(500).json({ message: 'Failed to generate schedule PDF' });
+  }
+});
+
+// NOTIFICATION ENDPOINTS (CRITICAL - THESE WERE MISSING!)
+
+// Get user notifications
+app.get('/api/notifications', authenticate, async (req: any, res: any) => {
+  try {
+    const snapshot = await db.collection('notifications')
+      .where('userId', '==', req.userId)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get();
+    
+    const notifications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || null
+    }));
+    
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
+  }
+});
+
+// Demo endpoint for test notifications
+app.post('/api/notifications/demo', authenticate, async (req: any, res: any) => {
+  try {
+    const { type = 'test', priority = 'medium', title, message } = req.body;
+    
+    console.log('📬 Demo notification request:', { userId: req.userId, title, message, type, priority });
+    
+    const notificationData = {
+      userId: req.userId,
+      type: type,
+      priority: priority,
+      title: title || 'Test Notification',
+      message: message || 'This is a demo notification to test real-time updates via onSnapshot',
+      isRead: false,
+      metadata: { demo: true, timestamp: new Date().toISOString() },
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    const notificationRef = await db.collection('notifications').add(notificationData);
+    const createdNotification = await notificationRef.get();
+    const createdData = createdNotification.data();
+    
+    console.log('📬 Demo notification created:', notificationRef.id);
+    
+    res.json({ 
+      success: true, 
+      notificationId: notificationRef.id,
+      message: 'Demo notification created successfully',
+      notification: {
+        id: notificationRef.id,
+        ...createdData,
+        createdAt: createdData?.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Demo notification error:', error);
+    res.status(500).json({ 
+      message: 'Failed to create demo notification', 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
+// Mark notification as read
+app.patch('/api/notifications/:id/mark-read', authenticate, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const notificationRef = db.collection('notifications').doc(id);
+    
+    const notification = await notificationRef.get();
+    if (!notification.exists) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    const notificationData = notification.data();
+    if (notificationData?.userId !== req.userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    await notificationRef.update({
+      isRead: true,
+      readAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ message: 'Failed to mark notification as read' });
+  }
+});
+
+// Mark all notifications as read
+app.patch('/api/notifications/mark-all-read', authenticate, async (req: any, res: any) => {
+  try {
+    const batch = db.batch();
+    const snapshot = await db.collection('notifications')
+      .where('userId', '==', req.userId)
+      .where('isRead', '==', false)
+      .get();
+    
+    snapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        isRead: true,
+        readAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    
+    await batch.commit();
+    res.json({ success: true, updatedCount: snapshot.docs.length });
+  } catch (error) {
+    console.error('Mark all notifications read error:', error);
+    res.status(500).json({ message: 'Failed to mark all notifications as read' });
   }
 });
 

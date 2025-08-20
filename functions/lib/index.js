@@ -345,8 +345,8 @@ const authenticate = async (req, res, next) => {
     }
 };
 // MAIN API ENDPOINTS
-// Health checks
-app.get('/health', async (req, res) => {
+// Health checks with /api prefix
+app.get('/api/health', async (req, res) => {
     try {
         const startTime = Date.now();
         await db.collection('health').doc('test').get();
@@ -367,7 +367,7 @@ app.get('/health', async (req, res) => {
         });
     }
 });
-app.get('/ready', (req, res) => {
+app.get('/api/ready', (req, res) => {
     res.json({
         status: 'ready',
         timestamp: new Date().toISOString(),
@@ -375,7 +375,7 @@ app.get('/ready', (req, res) => {
     });
 });
 // User endpoints
-app.get('/users/check-phone', async (req, res) => {
+app.get('/api/users/check-phone', async (req, res) => {
     try {
         const { phone } = req.query;
         if (!phone || typeof phone !== 'string') {
@@ -417,7 +417,7 @@ app.get('/users/check-phone', async (req, res) => {
         return res.status(500).json({ exists: false, message: 'Service temporarily unavailable' });
     }
 });
-app.get('/users/me', authenticate, async (req, res) => {
+app.get('/api/users/me', authenticate, async (req, res) => {
     var _a, _b, _c, _d;
     try {
         const userDoc = await db.collection('users').doc(req.userId).get();
@@ -441,7 +441,7 @@ app.get('/users/me', authenticate, async (req, res) => {
     }
 });
 // Offer endpoints
-app.get('/offers', authenticate, async (req, res) => {
+app.get('/api/offers', authenticate, async (req, res) => {
     try {
         const sentQuery = db.collection('offers').where('fromUserId', '==', req.userId);
         const receivedQuery = db.collection('offers').where('toUserId', '==', req.userId);
@@ -485,7 +485,7 @@ app.get('/offers', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch offers' });
     }
 });
-app.get('/offers/:id', authenticate, async (req, res) => {
+app.get('/api/offers/:id', authenticate, async (req, res) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     try {
         const { id } = req.params;
@@ -526,7 +526,7 @@ app.get('/offers/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch offer' });
     }
 });
-app.patch('/offers/:id', authenticate, async (req, res) => {
+app.patch('/api/offers/:id', authenticate, async (req, res) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     try {
         const { id } = req.params;
@@ -586,7 +586,7 @@ app.patch('/offers/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Failed to update offer' });
     }
 });
-app.post('/offers', authenticate, async (req, res) => {
+app.post('/api/offers', authenticate, async (req, res) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     try {
         const { toUserPhone, toUserName, amount, interestRate, tenureValue, tenureUnit, purpose, repaymentFrequency } = req.body;
@@ -663,7 +663,7 @@ app.post('/offers', authenticate, async (req, res) => {
     }
 });
 // PDF endpoints
-app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
+app.get('/api/offers/:id/pdf/contract', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
         const offerDoc = await db.collection('offers').doc(id).get();
@@ -710,7 +710,7 @@ app.get('/offers/:id/pdf/contract', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Failed to generate contract PDF' });
     }
 });
-app.get('/offers/:id/pdf/kfs', authenticate, async (req, res) => {
+app.get('/api/offers/:id/pdf/kfs', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
         const offerDoc = await db.collection('offers').doc(id).get();
@@ -757,7 +757,7 @@ app.get('/offers/:id/pdf/kfs', authenticate, async (req, res) => {
         res.status(500).json({ message: 'Failed to generate KFS PDF' });
     }
 });
-app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
+app.get('/api/offers/:id/pdf/schedule', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
         const offerDoc = await db.collection('offers').doc(id).get();
@@ -808,6 +808,107 @@ app.get('/offers/:id/pdf/schedule', authenticate, async (req, res) => {
     catch (error) {
         console.error('Schedule PDF generation error:', error);
         res.status(500).json({ message: 'Failed to generate schedule PDF' });
+    }
+});
+// NOTIFICATION ENDPOINTS (CRITICAL - THESE WERE MISSING!)
+// Get user notifications
+app.get('/api/notifications', authenticate, async (req, res) => {
+    try {
+        const snapshot = await db.collection('notifications')
+            .where('userId', '==', req.userId)
+            .orderBy('createdAt', 'desc')
+            .limit(50)
+            .get();
+        const notifications = snapshot.docs.map(doc => {
+            var _a, _b, _c;
+            return (Object.assign(Object.assign({ id: doc.id }, doc.data()), { createdAt: ((_c = (_b = (_a = doc.data().createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || null }));
+        });
+        res.json({ notifications });
+    }
+    catch (error) {
+        console.error('Get notifications error:', error);
+        res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+});
+// Demo endpoint for test notifications
+app.post('/api/notifications/demo', authenticate, async (req, res) => {
+    var _a, _b, _c;
+    try {
+        const { type = 'test', priority = 'medium', title, message } = req.body;
+        console.log('📬 Demo notification request:', { userId: req.userId, title, message, type, priority });
+        const notificationData = {
+            userId: req.userId,
+            type: type,
+            priority: priority,
+            title: title || 'Test Notification',
+            message: message || 'This is a demo notification to test real-time updates via onSnapshot',
+            isRead: false,
+            metadata: { demo: true, timestamp: new Date().toISOString() },
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        const notificationRef = await db.collection('notifications').add(notificationData);
+        const createdNotification = await notificationRef.get();
+        const createdData = createdNotification.data();
+        console.log('📬 Demo notification created:', notificationRef.id);
+        res.json({
+            success: true,
+            notificationId: notificationRef.id,
+            message: 'Demo notification created successfully',
+            notification: Object.assign(Object.assign({ id: notificationRef.id }, createdData), { createdAt: ((_c = (_b = (_a = createdData === null || createdData === void 0 ? void 0 : createdData.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) === null || _c === void 0 ? void 0 : _c.toISOString()) || new Date().toISOString() })
+        });
+    }
+    catch (error) {
+        console.error('Demo notification error:', error);
+        res.status(500).json({
+            message: 'Failed to create demo notification',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+// Mark notification as read
+app.patch('/api/notifications/:id/mark-read', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const notificationRef = db.collection('notifications').doc(id);
+        const notification = await notificationRef.get();
+        if (!notification.exists) {
+            return res.status(404).json({ message: 'Notification not found' });
+        }
+        const notificationData = notification.data();
+        if ((notificationData === null || notificationData === void 0 ? void 0 : notificationData.userId) !== req.userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        await notificationRef.update({
+            isRead: true,
+            readAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        res.json({ success: true });
+    }
+    catch (error) {
+        console.error('Mark notification read error:', error);
+        res.status(500).json({ message: 'Failed to mark notification as read' });
+    }
+});
+// Mark all notifications as read
+app.patch('/api/notifications/mark-all-read', authenticate, async (req, res) => {
+    try {
+        const batch = db.batch();
+        const snapshot = await db.collection('notifications')
+            .where('userId', '==', req.userId)
+            .where('isRead', '==', false)
+            .get();
+        snapshot.docs.forEach(doc => {
+            batch.update(doc.ref, {
+                isRead: true,
+                readAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        });
+        await batch.commit();
+        res.json({ success: true, updatedCount: snapshot.docs.length });
+    }
+    catch (error) {
+        console.error('Mark all notifications read error:', error);
+        res.status(500).json({ message: 'Failed to mark all notifications as read' });
     }
 });
 // Set global options for Firebase Functions v2
