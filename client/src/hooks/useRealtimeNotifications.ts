@@ -22,7 +22,10 @@ export function useRealtimeNotifications() {
     
     // Use the stored user data instead of Firebase auth user
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    if (!userData?.id || !db) return;
+    if (!userData?.id || !db) {
+      console.log('🔔 No user data or db available, skipping notification setup');
+      return;
+    }
 
     console.log('🔔 Setting up enhanced real-time notifications for user:', userData.id);
 

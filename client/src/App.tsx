@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import AuthGuard from "@/components/auth/auth-guard";
+import NotificationManager from "@/components/notifications/notification-manager";
 import Landing from "@/pages/landing";
 import Login from "@/pages/auth/login";
 import VerifyOtp from "@/pages/auth/verify-otp";
@@ -140,6 +141,7 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <div className="min-h-screen bg-background text-foreground">
+              <NotificationManager />
               <Router />
               <Toaster />
             </div>

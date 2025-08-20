@@ -8,7 +8,6 @@ import LoadingScreen from "@/components/ui/loading-screen";
 import { wsService } from "@/lib/websocket";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { useFirestoreRealtime } from "@/hooks/useFirestoreRealtime";
-import NotificationManager from "@/components/notifications/notification-manager";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -144,7 +143,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   return (
     <>
-      <NotificationManager />
       {children}
     </>
   );
