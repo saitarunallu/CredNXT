@@ -23,6 +23,8 @@ export default function Navbar() {
   const { data: notifications, error: notificationsError } = useQuery({
     queryKey: ['/api/notifications'],
     enabled: !!user,
+    staleTime: 0, // Always consider data stale so it re-renders on cache updates
+    refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // If auth error, try to refresh token once
       if (error?.message?.includes('401') && failureCount === 0) {
@@ -33,6 +35,10 @@ export default function Navbar() {
     }
   });
 
+  // Debug logging to see what we're getting
+  console.log('🔔 Navbar notifications data:', notifications);
+  console.log('🔔 Navbar notifications array:', (notifications as any)?.notifications);
+  
   const unreadCount = (notifications as any)?.notifications?.filter((n: any) => !n.isRead).length || 0;
 
   const markAsReadMutation = useMutation({

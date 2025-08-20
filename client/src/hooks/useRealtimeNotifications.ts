@@ -64,7 +64,11 @@ export function useRealtimeNotifications() {
         });
 
         // Update React Query cache directly
+        console.log('🔔 Real-time: Setting cache with notifications:', notifications.length);
         queryClient.setQueryData(['/api/notifications'], { notifications });
+        
+        // Force invalidate to trigger re-renders
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
 
         // Show toast for new notifications (skip on first load)
         if (!isFirstLoad.current) {
